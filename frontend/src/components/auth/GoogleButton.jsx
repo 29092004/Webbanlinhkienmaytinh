@@ -1,8 +1,15 @@
-export function GoogleButton({ children }) {
+export function GoogleButton({
+  children,
+  onClick,
+  disabled = false,
+  className = "",
+}) {
   return (
     <button
       type="button"
-      className="flex h-[56px] w-full items-center justify-center gap-3 rounded-[12px] border border-[#dde2eb] bg-white text-[17px] font-medium text-[#2c313b] transition hover:border-[#c8d0dc] hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-[#0b2d4d]/12"
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex h-[56px] w-full items-center justify-center gap-3 rounded-[12px] border border-[#dde2eb] bg-white text-[17px] font-medium text-[#2c313b] transition hover:border-[#c8d0dc] hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-[#0b2d4d]/12 disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
     >
       <svg className="size-5" viewBox="0 0 24 24" aria-hidden="true">
         <path

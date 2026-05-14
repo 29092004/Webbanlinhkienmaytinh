@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
+  envPrefix: ['VITE_', 'GOOGLE_'],
   plugins: [
     react(),
     tailwindcss(),

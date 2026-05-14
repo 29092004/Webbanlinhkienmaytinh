@@ -1,6 +1,13 @@
 import { useId } from "react";
 
-export function AuthCheckbox({ label, name }) {
+export function AuthCheckbox({
+  label,
+  name,
+  checked,
+  defaultChecked,
+  onChange,
+  disabled = false,
+}) {
   const generatedId = useId();
   const id = name ?? generatedId;
 
@@ -13,6 +20,10 @@ export function AuthCheckbox({ label, name }) {
         id={id}
         name={name}
         type="checkbox"
+        checked={checked}
+        defaultChecked={defaultChecked}
+        onChange={onChange}
+        disabled={disabled}
         className="size-5 shrink-0 cursor-pointer rounded border border-[#b9c1cf] accent-[#0b2d4d] transition focus:outline-none focus:ring-4 focus:ring-[#0b2d4d]/12"
       />
       <span>{label}</span>

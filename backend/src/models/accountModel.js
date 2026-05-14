@@ -27,18 +27,34 @@ const AccountModel = {
         return rows[0] || null;
     },
 
-    create: async (username, password, role) => {
-        const [result] = await db.query(
-            `INSERT INTO ${table_name} (username, password, role) VALUES (?, ?, ?)`,
-            [username, password, role]
+    create: async (username, password, role, refreshToken = null, executor = db) => {
+        const [result] = await executor.query(
+            `INSERT INTO ${table_name} (username, password, role, refresh_token) VALUES (?, ?, ?, ?)`,
+            [username, password, role, refreshToken]
         );
         return result.insertId;
     },
 
-    update: async (id, username, password, role) => {
+    update: async (id, username, password, role, refreshToken = null) => {
         const [result] = await db.query(
-            `UPDATE ${table_name} SET username = ?, password = ?, role = ? WHERE id = ?`,
-            [username, password, role, id]
+            `UPDATE ${table_name} SET username = ?, password = ?, role = ?, refresh_token = COALESCE(?, refresh_token) WHERE id = ?`,
+            [username, password, role, refreshToken, id]
+        );
+        return result.affectedRows;
+    },
+
+    updateRefreshToken: async (id, refreshToken, executor = db) => {
+        const [result] = await executor.query(
+            `UPDATE ${table_name} SET refresh_token = ? WHERE id = ?`,
+            [refreshToken, id]
+        );
+        return result.affectedRows;
+    },
+
+    clearRefreshToken: async (id) => {
+        const [result] = await db.query(
+            `UPDATE ${table_name} SET refresh_token = NULL WHERE id = ?`,
+            [id]
         );
         return result.affectedRows;
     },

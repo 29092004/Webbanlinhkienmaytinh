@@ -1,4 +1,4 @@
-export function OtpResend({ seconds = 59, onResend }) {
+export function OtpResend({ seconds = 59, onResend, disabled = false }) {
   return (
     <div className="mt-8 text-center">
       <p className="text-[16px] font-medium text-[#4a4f59]">Không nhận được mã?</p>
@@ -6,7 +6,8 @@ export function OtpResend({ seconds = 59, onResend }) {
         <button
           type="button"
           onClick={onResend}
-          className="font-medium text-[#07111f] transition hover:text-[#0b2d4d] hover:underline"
+          disabled={disabled}
+          className="font-medium text-[#07111f] transition hover:text-[#0b2d4d] hover:underline disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline"
         >
           Gửi lại mã
         </button>
