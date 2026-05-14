@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Otp from "./pages/Otp";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 function App() {
   return (
@@ -16,6 +17,9 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/otp" element={<Otp />} />
+
+        {/* Admin Routes */}
+        <Route path="/admin" element={<AdminDashboard />} />
 
       </Routes>
 
