@@ -4,6 +4,8 @@ import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
 import accountModel from '../models/accountModel.js';
+import customerModel from '../models/customerModel.js';
+import db from '../config/mysql.js';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const ALLOWED_ROLES = ['admin', 'user'];
@@ -29,6 +31,31 @@ const sanitizeUser = (user) => ({
 const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
 const generateOtpCode = () => Math.floor(100000 + Math.random() * 900000).toString();
+
+const splitFullName = (fullName = '') => {
+    const normalizedName = fullName.trim().replace(/\s+/g, ' ');
+
+    if (!normalizedName) {
+        return {
+            firstName: '',
+            lastName: '',
+        };
+    }
+
+    const parts = normalizedName.split(' ');
+
+    if (parts.length === 1) {
+        return {
+            firstName: parts[0],
+            lastName: '',
+        };
+    }
+
+    return {
+        firstName: parts.slice(0, -1).join(' '),
+        lastName: parts[parts.length - 1],
+    };
+};
 
 const storeOtp = async (email, otp) => {
     const otpHash = await bcrypt.hash(otp, 10);
@@ -90,11 +117,12 @@ const setRefreshTokenCookie = (res, refreshToken) => {
     });
 };
 
-const issueAuthResponse = (res, user, extraData = {}) => {
+const issueAuthResponse = async (res, user, extraData = {}) => {
     const safeUser = sanitizeUser(user);
     const accessToken = buildAccessToken(user);
     const refreshToken = buildRefreshToken(user);
 
+    await accountModel.updateRefreshToken(user.id, refreshToken);
     setRefreshTokenCookie(res, refreshToken);
 
     return res.json({
@@ -155,6 +183,8 @@ const authController = {
             const password = req.body.password;
             const role = req.body.role || 'user';
             const otp = req.body.otp;
+            const fullName = req.body.fullName ?? '';
+            const phone = req.body.phone ?? '';
 
             if (!username || !password || !otp) {
                 return res.status(400).json({ message: 'Username, password and otp are required' });
@@ -182,10 +212,47 @@ const authController = {
                 return res.status(400).json({ message: otpValidation.message });
             }
 
-            const hashedPassword = await bcrypt.hash(password, 10);
-            const accountId = await accountModel.create(username, hashedPassword, role);
+            const connection = await db.getConnection();
 
-            res.status(201).json({ success: true, accountId });
+            const hashedPassword = await bcrypt.hash(password, 10);
+            let accountId;
+            let customerId;
+
+            try {
+                await connection.beginTransaction();
+
+                accountId = await accountModel.create(
+                    username,
+                    hashedPassword,
+                    role,
+                    null,
+                    connection
+                );
+
+                const refreshToken = buildRefreshToken({ id: accountId, role });
+                await accountModel.updateRefreshToken(accountId, refreshToken, connection);
+
+                const { firstName, lastName } = splitFullName(fullName);
+                customerId = await customerModel.create(
+                    firstName || username,
+                    lastName,
+                    '',
+                    username,
+                    phone,
+                    '',
+                    accountId,
+                    connection
+                );
+
+                await connection.commit();
+            } catch (transactionError) {
+                await connection.rollback();
+                throw transactionError;
+            } finally {
+                connection.release();
+            }
+
+            res.status(201).json({ success: true, accountId, customerId });
         } catch (error) {
             next(error);
         }
@@ -245,13 +312,18 @@ const authController = {
             if (!user) {
                 const randomPassword = crypto.randomBytes(32).toString('hex');
                 const hashedPassword = await bcrypt.hash(randomPassword, 10);
+                const accountId = await accountModel.create(payload.email, hashedPassword, 'user', null);
+                const refreshToken = buildRefreshToken({
+                    id: accountId,
+                    role: 'user',
+                });
 
-                await accountModel.create(payload.email, hashedPassword, 'user');
+                await accountModel.updateRefreshToken(accountId, refreshToken);
                 user = await accountModel.findByUsername(payload.email);
                 isNewUser = true;
             }
 
-            return issueAuthResponse(res, user, {
+            return await issueAuthResponse(res, user, {
                 isNewUser,
                 googleProfile: {
                     email: payload.email,
@@ -286,7 +358,11 @@ const authController = {
                 return res.status(404).json({ message: 'Account not found' });
             }
 
-            return issueAuthResponse(res, user);
+            if (user.refresh_token !== refreshToken) {
+                return res.status(401).json({ message: 'Refresh token does not match current session' });
+            }
+
+            return await issueAuthResponse(res, user);
         } catch (error) {
             if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError') {
                 return res.status(401).json({ message: 'Invalid or expired refresh token' });
@@ -305,6 +381,21 @@ const authController = {
 
     logout: async (req, res) => {
         try {
+            const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+
+            if (refreshToken) {
+                try {
+                    const decoded = jwt.verify(
+                        refreshToken,
+                        process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET
+                    );
+
+                    await accountModel.clearRefreshToken(decoded.id);
+                } catch {
+                    // Clear cookie even if token verification fails.
+                }
+            }
+
             res.clearCookie('refreshToken');
             res.json({ success: true, message: 'Logout success' });
         } catch (error) {

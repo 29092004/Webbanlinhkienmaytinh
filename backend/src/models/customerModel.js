@@ -19,18 +19,18 @@ const CustomerModel = {
         return rows[0] || null;
     },
 
-    create: async (firstName, lastName, gender, email, phone, address) => {
-        const [result] = await db.query(
-            `INSERT INTO ${table_name} (first_name, last_name, gender, email, phone, address) VALUES (?, ?, ?, ?, ?, ?)`,
-            [firstName, lastName, gender, email, phone, address]
+    create: async (firstName, lastName, gender, email, phone, address, accountId = null, executor = db) => {
+        const [result] = await executor.query(
+            `INSERT INTO ${table_name} (first_name, last_name, gender, email, phone, address, account_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [firstName, lastName, gender, email, phone, address, accountId]
         );
         return result.insertId;
     },
 
-    update: async (customerId, firstName, lastName, gender, email, phone, address) => {
+    update: async (customerId, firstName, lastName, gender, email, phone, address, accountId = null) => {
         const [result] = await db.query(
-            `UPDATE ${table_name} SET first_name = ?, last_name = ?, gender = ?, email = ?, phone = ?, address = ? WHERE customer_id = ?`,
-            [firstName, lastName, gender, email, phone, address, customerId]
+            `UPDATE ${table_name} SET first_name = ?, last_name = ?, gender = ?, email = ?, phone = ?, address = ?, account_id = COALESCE(?, account_id) WHERE customer_id = ?`,
+            [firstName, lastName, gender, email, phone, address, accountId, customerId]
         );
         return result.affectedRows;
     },

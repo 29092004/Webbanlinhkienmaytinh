@@ -1,23 +1,19 @@
 import { DollarSign, ShoppingCart, Package, Users } from "lucide-react";
 import { AdminSidebar } from "../../components/admin/layout/AdminSidebar";
-import { AdminHeader } from "../../components/admin/layout/AdminHeader";
 import { StatCard } from "../../components/admin/dashboard/StatCard";
 import { RevenueAnalysis } from "../../components/admin/dashboard/RevenueAnalysis";
 import { InventoryStatus } from "../../components/admin/dashboard/InventoryStatus";
 import { WorkReminder } from "../../components/admin/dashboard/WorkReminder";
 import { RecentOrders } from "../../components/admin/dashboard/RecentOrders";
 import { PromotionBanner } from "../../components/admin/dashboard/PromotionBanner";
-import { AdminFooter } from "../../components/admin/layout/AdminFooter";
 
 function AdminDashboard() {
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans flex">
       <AdminSidebar />
 
-      <div className="flex-1 ml-64 flex flex-col min-h-screen relative">
-        <AdminHeader />
-
-        <main className="flex-grow p-8 w-full max-w-[1600px] mx-auto">
+      <div className="flex-1 ml-80 flex flex-col min-h-screen relative">
+        <main className="flex-grow p-8 w-full max-w-[1600px]">
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <StatCard
@@ -70,8 +66,6 @@ function AdminDashboard() {
           <div className="mb-12">
             <PromotionBanner />
           </div>
-
-          <AdminFooter />
         </main>
       </div>
     </div>

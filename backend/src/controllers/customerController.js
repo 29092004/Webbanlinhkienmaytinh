@@ -27,13 +27,14 @@ const customerController = {
         try {
             const firstName = req.body.firstName ?? req.body.first_name;
             const lastName = req.body.lastName ?? req.body.last_name;
+            const accountId = req.body.accountId ?? req.body.account_id ?? null;
             const { gender, email, phone, address } = req.body;
 
             if (!firstName || !lastName || !gender || !email || !phone || !address) {
                 return res.status(400).json({ message: 'Invalid input' });
             }
 
-            const customerId = await customerModel.create(firstName, lastName, gender, email, phone, address);
+            const customerId = await customerModel.create(firstName, lastName, gender, email, phone, address, accountId);
             res.status(201).json({ success: true, customerId });
         } catch (error) {
             next(error);
@@ -45,13 +46,14 @@ const customerController = {
             const { customerId } = req.params;
             const firstName = req.body.firstName ?? req.body.first_name;
             const lastName = req.body.lastName ?? req.body.last_name;
+            const accountId = req.body.accountId ?? req.body.account_id ?? null;
             const { gender, email, phone, address } = req.body;
 
             if (!firstName || !lastName || !gender || !email || !phone || !address) {
                 return res.status(400).json({ message: 'Invalid input' });
             }
 
-            const affectedRows = await customerModel.update(customerId, firstName, lastName, gender, email, phone, address);
+            const affectedRows = await customerModel.update(customerId, firstName, lastName, gender, email, phone, address, accountId);
             if (affectedRows === 0) {
                 return res.status(404).json({ message: 'Customer not found' });
             }

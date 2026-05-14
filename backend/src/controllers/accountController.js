@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import accountModel from '../models/accountModel.js';
 
 const ALLOWED_ROLES = ['admin', 'user'];
-const sanitizeAccount = ({ password, ...account }) => account;
+const sanitizeAccount = ({ password, refresh_token, ...account }) => account;
 
 const accountController = {
     getAccounts: async (req, res) => {
@@ -44,7 +44,7 @@ const accountController = {
             }
 
             const hashedPassword = await bcrypt.hash(password, 10);
-            const accountId = await accountModel.create(username, hashedPassword, role);
+            const accountId = await accountModel.create(username, hashedPassword, role, null);
             res.status(201).json({ success: true, accountId });
         } catch (error) {
             next(error);
@@ -69,7 +69,7 @@ const accountController = {
             }
 
             const hashedPassword = await bcrypt.hash(password, 10);
-            const affectedRows = await accountModel.update(id, username, hashedPassword, role);
+            const affectedRows = await accountModel.update(id, username, hashedPassword, role, null);
             if (affectedRows === 0) {
                 return res.status(404).json({ message: 'Account not found' });
             }
