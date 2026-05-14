@@ -1,15 +1,15 @@
-import { Header } from "@/components/home/Header";
 import { HeroSection } from "@/components/home/HeroSection";
 import { CategorySection } from "@/components/home/CategorySection";
 import { FlashSaleSection } from "@/components/home/FlashSaleSection";
 import { FeaturedProductsSection } from "@/components/home/FeaturedProductsSection";
-import { Footer } from "@/components/home/Footer";
+import { Header } from "@/components/ui/Header";
+import { Footer } from "@/components/ui/Footer";
 
 function Home() {
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900 relative">
       <Header />
-      
+
       {/* Left Sticky Banner */}
       <div className="hidden xl:block fixed top-32 left-0 w-[160px] h-[70vh] z-40">
         <img 

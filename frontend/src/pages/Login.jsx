@@ -1,65 +1,70 @@
-import { Mail, Lock, ArrowRight } from "lucide-react";
+import { AtSign, Lock } from "lucide-react";
+
+import { AuthCard } from "@/components/auth/AuthCard";
+import { AuthCheckbox } from "@/components/auth/AuthCheckbox";
+import { AuthDivider } from "@/components/auth/AuthDivider";
 import { AuthLayout } from "@/components/auth/AuthLayout";
-import { AuthHeader } from "@/components/auth/AuthHeader";
-import { AuthFooter } from "@/components/auth/AuthFooter";
+import { AuthSwitch } from "@/components/auth/AuthSwitch";
+import { GoogleButton } from "@/components/auth/GoogleButton";
 import { InputField } from "@/components/auth/InputField";
+import { Button } from "@/components/ui/button";
 
 export default function Login() {
   return (
-    <AuthLayout>
-      <AuthHeader title="Chào mừng quay trở lại" />
-
-      {/* Form */}
-      <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
-        
-        <InputField 
-          label="Email của bạn" 
-          icon={Mail} 
-          type="email" 
-          placeholder="example@exocore.vn" 
-        />
-
-        <InputField 
-          label="Mật khẩu" 
-          icon={Lock} 
-          type="password" 
-          placeholder="........" 
-          extraLabel={
-            <a href="#" className="text-[11px] text-[#0052cc] hover:underline font-medium">
-              Quên mật khẩu?
-            </a>
-          }
-        />
-
-        {/* Remember me */}
-        <div className="flex items-center pt-1">
-          <input 
-            id="remember-me" 
-            name="remember-me" 
-            type="checkbox" 
-            className="h-4 w-4 text-[#0052cc] focus:ring-[#0052cc] border-gray-300 rounded cursor-pointer"
+    <AuthLayout variant="login">
+      <AuthCard title="Đăng nhập" subtitle="Chào mừng bạn quay lại" align="center">
+        <form className="space-y-5" onSubmit={(event) => event.preventDefault()}>
+          <InputField
+            label="Email hoặc số điện thoại"
+            icon={AtSign}
+            type="text"
+            name="identifier"
+            autoComplete="username"
+            placeholder="name@example.com"
           />
-          <label htmlFor="remember-me" className="ml-2.5 block text-[13px] font-bold text-gray-700 cursor-pointer">
-            Duy trì đăng nhập
-          </label>
-        </div>
 
-        {/* Submit */}
-        <button 
-          type="submit" 
-          className="w-full flex justify-center items-center gap-2 py-3 px-4 rounded shadow-sm text-sm font-bold text-white bg-[#0052cc] hover:bg-[#0047b3] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0052cc] transition-colors tracking-wide mt-2"
-        >
-          ĐĂNG NHẬP
-          <ArrowRight className="w-4 h-4" />
-        </button>
-      </form>
+          <InputField
+            label="Mật khẩu"
+            icon={Lock}
+            type="password"
+            name="password"
+            autoComplete="current-password"
+            placeholder="••••••••"
+            showPasswordToggle
+          />
 
-      <AuthFooter 
-        dividerText="Hoặc tiếp tục với"
-        bottomText="Bạn chưa có tài khoản?"
-        linkText="Đăng ký ngay"
-        linkHref="/register"
-      />
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <AuthCheckbox name="remember" label="Ghi nhớ đăng nhập" />
+            <button
+              type="button"
+              className="text-[16px] font-medium text-[#0b2d4d] underline underline-offset-2"
+            >
+              Quên mật khẩu?
+            </button>
+          </div>
+
+          <Button
+            type="submit"
+            className="h-[58px] w-full rounded-[12px] bg-[#0b2d4d] text-[17px] font-bold text-white shadow-[0_10px_20px_rgba(7,17,31,0.2)] hover:bg-[#08243e]"
+          >
+            Đăng nhập
+          </Button>
+
+          <div className="pt-2">
+            <AuthDivider />
+          </div>
+
+          <GoogleButton>Đăng nhập với Google</GoogleButton>
+
+          <div className="pt-3">
+            <AuthSwitch
+              text="Chưa có tài khoản?"
+              linkText="Đăng ký ngay"
+              to="/register"
+            />
+          </div>
+        </form>
+      </AuthCard>
     </AuthLayout>
   );
 }

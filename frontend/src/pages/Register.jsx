@@ -1,74 +1,82 @@
-import { Mail, Lock, User, ArrowRight } from "lucide-react";
+import { ArrowRight, Lock, Mail, Phone, User } from "lucide-react";
+
+import { AuthCard } from "@/components/auth/AuthCard";
+import { AuthCheckbox } from "@/components/auth/AuthCheckbox";
 import { AuthLayout } from "@/components/auth/AuthLayout";
-import { AuthHeader } from "@/components/auth/AuthHeader";
-import { AuthFooter } from "@/components/auth/AuthFooter";
+import { AuthSwitch } from "@/components/auth/AuthSwitch";
 import { InputField } from "@/components/auth/InputField";
+import { Button } from "@/components/ui/button";
 
 export default function Register() {
   return (
-    <AuthLayout>
-      <AuthHeader title="Tạo tài khoản mới" />
-
-      {/* Form */}
-      <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
-        
-        <InputField 
-          label="Họ và tên" 
-          icon={User} 
-          type="text" 
-          placeholder="Nguyễn Văn A" 
-        />
-
-        <InputField 
-          label="Email của bạn" 
-          icon={Mail} 
-          type="email" 
-          placeholder="example@exocore.vn" 
-        />
-
-        <InputField 
-          label="Mật khẩu" 
-          icon={Lock} 
-          type="password" 
-          placeholder="........" 
-        />
-
-        <InputField 
-          label="Nhập lại mật khẩu" 
-          icon={Lock} 
-          type="password" 
-          placeholder="........" 
-        />
-
-        {/* Terms */}
-        <div className="flex items-start pt-1">
-          <input 
-            id="terms" 
-            name="terms" 
-            type="checkbox" 
-            className="h-4 w-4 mt-0.5 text-[#0052cc] focus:ring-[#0052cc] border-gray-300 rounded cursor-pointer"
+    <AuthLayout variant="register">
+      <AuthCard
+        title="Đăng ký tài khoản"
+        subtitle="Tạo tài khoản để mua linh kiện nhanh chóng hơn"
+        className="max-w-[540px]"
+      >
+        <form className="space-y-5" onSubmit={(event) => event.preventDefault()}>
+          <InputField
+            label="Họ và tên"
+            icon={User}
+            type="text"
+            name="fullName"
+            autoComplete="name"
+            placeholder="Nguyễn Văn A"
           />
-          <label htmlFor="terms" className="ml-2.5 block text-xs text-gray-500 cursor-pointer">
-            Tôi đồng ý với các <a href="#" className="text-[#0052cc] hover:underline">Điều khoản dịch vụ</a> và <a href="#" className="text-[#0052cc] hover:underline">Chính sách bảo mật</a>
-          </label>
-        </div>
 
-        {/* Submit */}
-        <button 
-          type="submit" 
-          className="w-full flex justify-center items-center gap-2 py-3 px-4 rounded shadow-sm text-sm font-bold text-white bg-[#0052cc] hover:bg-[#0047b3] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0052cc] transition-colors tracking-wide mt-2"
-        >
-          ĐĂNG KÝ
-          <ArrowRight className="w-4 h-4" />
-        </button>
-      </form>
+          <InputField
+            label="Email"
+            icon={Mail}
+            type="email"
+            name="email"
+            autoComplete="email"
+            placeholder="example@gmail.com"
+          />
 
-      <AuthFooter 
-        dividerText="Hoặc đăng ký bằng"
-        bottomText="Bạn đã có tài khoản?"
-        linkText="Đăng nhập"
-        linkHref="/login"
-      />
+          <InputField
+            label="Số điện thoại"
+            icon={Phone}
+            type="tel"
+            name="phone"
+            autoComplete="tel"
+            placeholder="0123 456 789"
+          />
+
+          <div className="grid gap-6 sm:grid-cols-2">
+            <InputField
+              label="Mật khẩu"
+              icon={Lock}
+              type="password"
+              name="password"
+              autoComplete="new-password"
+              placeholder="••••••••"
+            />
+            <InputField
+              label="Xác nhận mật khẩu"
+              icon={Lock}
+              type="password"
+              name="confirmPassword"
+              autoComplete="new-password"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <AuthCheckbox name="terms" label="Tôi đồng ý với điều khoản sử dụng" />
+
+          <Button
+            type="submit"
+            className="h-[58px] w-full rounded-[12px] bg-[#021326] text-[17px] font-bold text-white shadow-[0_10px_20px_rgba(7,17,31,0.2)] hover:bg-[#061d36]"
+          >
+            Đăng ký
+            <ArrowRight className="size-5" />
+          </Button>
+
+          <div className="pt-3">
+            <AuthSwitch text="Đã có tài khoản?" linkText="Đăng nhập" to="/login" />
+          </div>
+        </form>
+      </AuthCard>
     </AuthLayout>
   );
 }

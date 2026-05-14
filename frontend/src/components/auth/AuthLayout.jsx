@@ -1,12 +1,13 @@
-export function AuthLayout({ children }) {
+import { AuthVisualPanel } from "./AuthVisualPanel";
+
+export function AuthLayout({ children, variant = "login" }) {
   return (
-    <div className="min-h-screen bg-[#f8f9fa] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 sm:p-10 border border-gray-100 relative overflow-hidden">
+    <main className="min-h-svh bg-[#eef3ff] text-slate-950 lg:grid lg:grid-cols-2">
+      <AuthVisualPanel variant={variant} />
+
+      <section className="flex min-h-svh items-center justify-center px-5 py-6 sm:px-8 lg:px-10 lg:py-5">
         {children}
-        
-        {/* Bottom decorative border */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#0052cc]"></div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
