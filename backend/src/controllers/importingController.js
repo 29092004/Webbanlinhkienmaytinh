@@ -1,5 +1,22 @@
 import importingModel from '../models/importingModel.js';
 
+const normalizeImportingDetails = (value) => {
+    if (Array.isArray(value)) {
+        return value;
+    }
+
+    if (typeof value === 'string' && value.trim()) {
+        try {
+            const parsedValue = JSON.parse(value);
+            return Array.isArray(parsedValue) ? parsedValue : [];
+        } catch {
+            return [];
+        }
+    }
+
+    return [];
+};
+
 const importingController = {
     getImportings: async (req, res) => {
         try {
@@ -28,12 +45,13 @@ const importingController = {
             const { date } = req.body;
             const totalPrice = req.body.totalPrice ?? req.body.total_price;
             const supplierId = req.body.supplierId ?? req.body.id_supplier;
+            const details = normalizeImportingDetails(req.body.details);
 
             if (!date || totalPrice === undefined || !supplierId) {
                 return res.status(400).json({ message: 'Invalid input' });
             }
 
-            const importingId = await importingModel.create(date, totalPrice, supplierId);
+            const importingId = await importingModel.create(date, totalPrice, supplierId, details);
             res.status(201).json({ success: true, importingId });
         } catch (error) {
             next(error);
@@ -46,12 +64,13 @@ const importingController = {
             const { date } = req.body;
             const totalPrice = req.body.totalPrice ?? req.body.total_price;
             const supplierId = req.body.supplierId ?? req.body.id_supplier;
+            const details = normalizeImportingDetails(req.body.details);
 
             if (!date || totalPrice === undefined || !supplierId) {
                 return res.status(400).json({ message: 'Invalid input' });
             }
 
-            const affectedRows = await importingModel.update(id, date, totalPrice, supplierId);
+            const affectedRows = await importingModel.update(id, date, totalPrice, supplierId, details);
             if (affectedRows === 0) {
                 return res.status(404).json({ message: 'Importing not found' });
             }

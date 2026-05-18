@@ -7,6 +7,7 @@ import { OtpResend } from "@/components/auth/OtpResend";
 import { OtpVerificationCard } from "@/components/auth/OtpVerificationCard";
 import { Button } from "@/components/ui/button";
 import {
+  clearOtpAutoSentState,
   clearPendingRegistration,
   getPendingRegistration,
   hasOtpBeenAutoSent,
@@ -45,11 +46,13 @@ export default function Otp() {
 
     const sendOtp = async () => {
       try {
+        markOtpAutoSent(pendingRegistration.username);
         await api.post("/auth/send-register-otp", {
           username: pendingRegistration.username,
         });
-        markOtpAutoSent(pendingRegistration.username);
       } catch (requestError) {
+        clearOtpAutoSentState();
+
         if (!isMounted) {
           return;
         }
@@ -102,7 +105,6 @@ export default function Otp() {
       await api.post("/auth/register", {
         username: pendingRegistration.username,
         password: pendingRegistration.password,
-        fullName: pendingRegistration.fullName,
         phone: pendingRegistration.phone,
         otp,
       });

@@ -2,35 +2,57 @@ import db from '../config/mysql.js';
 
 const table_name = 'customer';
 
+const normalizeCustomerRow = (row) => {
+    if (!row) {
+        return null;
+    }
+
+    return {
+        ...row,
+        firstName: row.first_name ?? '',
+        lastName: row.last_name ?? '',
+    };
+};
+
 const CustomerModel = {
     getAll: async () => {
         const [rows] = await db.query(`
-            SELECT *
-            FROM ${table_name}
+            SELECT
+                c.*,
+                a.username AS account_username,
+                a.role AS account_role
+            FROM ${table_name} c
+            LEFT JOIN account a ON a.id = c.customer_id
         `);
-        return rows;
+        return rows.map(normalizeCustomerRow);
     },
 
     getById: async (customerId) => {
         const [rows] = await db.query(
-            `SELECT * FROM ${table_name} WHERE customer_id = ?`,
+            `SELECT
+                c.*,
+                a.username AS account_username,
+                a.role AS account_role
+            FROM ${table_name} c
+            LEFT JOIN account a ON a.id = c.customer_id
+            WHERE c.customer_id = ?`,
             [customerId]
         );
-        return rows[0] || null;
+        return normalizeCustomerRow(rows[0] || null);
     },
 
-    create: async (firstName, lastName, gender, email, phone, address, accountId = null, executor = db) => {
+    create: async (customerId, firstName, lastName, email, phone, address, executor = db) => {
         const [result] = await executor.query(
-            `INSERT INTO ${table_name} (first_name, last_name, gender, email, phone, address, account_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [firstName, lastName, gender, email, phone, address, accountId]
+            `INSERT INTO ${table_name} (customer_id, first_name, last_name, email, phone, address) VALUES (?, ?, ?, ?, ?, ?)`,
+            [customerId, firstName, lastName, email, phone, address]
         );
         return result.insertId;
     },
 
-    update: async (customerId, firstName, lastName, gender, email, phone, address, accountId = null) => {
+    update: async (customerId, firstName, lastName, email, phone, address) => {
         const [result] = await db.query(
-            `UPDATE ${table_name} SET first_name = ?, last_name = ?, gender = ?, email = ?, phone = ?, address = ?, account_id = COALESCE(?, account_id) WHERE customer_id = ?`,
-            [firstName, lastName, gender, email, phone, address, accountId, customerId]
+            `UPDATE ${table_name} SET first_name = ?, last_name = ?, email = ?, phone = ?, address = ? WHERE customer_id = ?`,
+            [firstName, lastName, email, phone, address, customerId]
         );
         return result.affectedRows;
     },

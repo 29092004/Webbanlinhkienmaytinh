@@ -21,7 +21,7 @@ const VoucherModel = {
 
     create: async (voucherCode, voucherValue, expiredDate, isActive, usageLimit, useCount, forSingleUse) => {
         const [result] = await db.query(
-            `INSERT INTO ${table_name} (voucher_code, voucher_value, expired_date, isActive, usageLimit, useCount, ForSingleUse) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO ${table_name} (voucher_code, voucher_value, expired_date, isActive, usageLimit, useCount, forSingleUse) VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [voucherCode, voucherValue, expiredDate, isActive, usageLimit, useCount, forSingleUse]
         );
         return result.insertId;
@@ -29,7 +29,7 @@ const VoucherModel = {
 
     update: async (id, voucherCode, voucherValue, expiredDate, isActive, usageLimit, useCount, forSingleUse) => {
         const [result] = await db.query(
-            `UPDATE ${table_name} SET voucher_code = ?, voucher_value = ?, expired_date = ?, isActive = ?, usageLimit = ?, useCount = ?, ForSingleUse = ? WHERE id = ?`,
+            `UPDATE ${table_name} SET voucher_code = ?, voucher_value = ?, expired_date = ?, isActive = ?, usageLimit = ?, useCount = ?, forSingleUse = ? WHERE id = ?`,
             [voucherCode, voucherValue, expiredDate, isActive, usageLimit, useCount, forSingleUse, id]
         );
         return result.affectedRows;

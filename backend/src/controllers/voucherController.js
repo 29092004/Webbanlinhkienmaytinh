@@ -1,5 +1,46 @@
 import voucherModel from '../models/voucherModel.js';
 
+const normalizeDateInput = (value) => {
+    if (!value) {
+        return '';
+    }
+
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value.trim())) {
+        return value.trim();
+    }
+
+    if (typeof value === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(value.trim())) {
+        const [day, month, year] = value.trim().split('/');
+        return `${year}-${month}-${day}`;
+    }
+
+    const parsedDate = new Date(value);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+        return '';
+    }
+
+    return parsedDate.toISOString().slice(0, 10);
+};
+
+const parseOptionalInteger = (value, fallback = undefined) => {
+    if (value === undefined || value === null || value === '') {
+        return fallback;
+    }
+
+    const parsed = Number.parseInt(value, 10);
+    return Number.isNaN(parsed) ? fallback : parsed;
+};
+
+const parseRequiredNumber = (value) => {
+    if (value === undefined || value === null || value === '') {
+        return null;
+    }
+
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+};
+
 const voucherController = {
     getVouchers: async (req, res) => {
         try {
@@ -25,16 +66,28 @@ const voucherController = {
 
     createVoucher: async (req, res, next) => {
         try {
-            const voucherCode = req.body.voucherCode ?? req.body.voucher_code;
-            const voucherValue = req.body.voucherValue ?? req.body.voucher_value;
-            const expiredDate = req.body.expiredDate ?? req.body.expired_date;
-            const isActive = req.body.isActive;
-            const usageLimit = req.body.usageLimit;
-            const useCount = req.body.useCount;
-            const forSingleUse = req.body.forSingleUse ?? req.body.ForSingleUse;
+            const voucherCode = String(req.body.voucherCode ?? req.body.voucher_code ?? '').trim();
+            const voucherValue = parseRequiredNumber(req.body.voucherValue ?? req.body.voucher_value);
+            const expiredDate = normalizeDateInput(req.body.expiredDate ?? req.body.expired_date);
+            const isActive = parseOptionalInteger(req.body.isActive, 1);
+            const usageLimit = parseOptionalInteger(req.body.usageLimit);
+            const useCount = parseOptionalInteger(req.body.useCount, 0);
+            const forSingleUse = parseOptionalInteger(req.body.forSingleUse, 0);
 
-            if (!voucherCode || voucherValue === undefined || !expiredDate || isActive === undefined || usageLimit === undefined || useCount === undefined || forSingleUse === undefined) {
-                return res.status(400).json({ message: 'Invalid input' });
+            if (!voucherCode) {
+                return res.status(400).json({ message: 'Vui long nhap ma voucher.' });
+            }
+
+            if (voucherValue === null || voucherValue < 0) {
+                return res.status(400).json({ message: 'Gia tri giam khong hop le.' });
+            }
+
+            if (!expiredDate) {
+                return res.status(400).json({ message: 'Ngay het han khong hop le.' });
+            }
+
+            if (usageLimit === undefined || usageLimit < 0) {
+                return res.status(400).json({ message: 'So luot dung toi da khong hop le.' });
             }
 
             const voucherId = await voucherModel.create(voucherCode, voucherValue, expiredDate, isActive, usageLimit, useCount, forSingleUse);
@@ -47,16 +100,38 @@ const voucherController = {
     updateVoucher: async (req, res, next) => {
         try {
             const { id } = req.params;
-            const voucherCode = req.body.voucherCode ?? req.body.voucher_code;
-            const voucherValue = req.body.voucherValue ?? req.body.voucher_value;
-            const expiredDate = req.body.expiredDate ?? req.body.expired_date;
-            const isActive = req.body.isActive;
-            const usageLimit = req.body.usageLimit;
-            const useCount = req.body.useCount;
-            const forSingleUse = req.body.forSingleUse ?? req.body.ForSingleUse;
+            const voucherCode = String(req.body.voucherCode ?? req.body.voucher_code ?? '').trim();
+            const voucherValue = parseRequiredNumber(req.body.voucherValue ?? req.body.voucher_value);
+            const expiredDate = normalizeDateInput(req.body.expiredDate ?? req.body.expired_date);
+            const isActive = parseOptionalInteger(req.body.isActive, 1);
+            const usageLimit = parseOptionalInteger(req.body.usageLimit);
+            let useCount = parseOptionalInteger(req.body.useCount);
+            const forSingleUse = parseOptionalInteger(req.body.forSingleUse, 0);
 
-            if (!voucherCode || voucherValue === undefined || !expiredDate || isActive === undefined || usageLimit === undefined || useCount === undefined || forSingleUse === undefined) {
-                return res.status(400).json({ message: 'Invalid input' });
+            if (!voucherCode) {
+                return res.status(400).json({ message: 'Vui long nhap ma voucher.' });
+            }
+
+            if (voucherValue === null || voucherValue < 0) {
+                return res.status(400).json({ message: 'Gia tri giam khong hop le.' });
+            }
+
+            if (!expiredDate) {
+                return res.status(400).json({ message: 'Ngay het han khong hop le.' });
+            }
+
+            if (usageLimit === undefined || usageLimit < 0) {
+                return res.status(400).json({ message: 'So luot dung toi da khong hop le.' });
+            }
+
+            if (useCount === undefined) {
+                const existingVoucher = await voucherModel.getById(id);
+
+                if (!existingVoucher) {
+                    return res.status(404).json({ message: 'Voucher not found' });
+                }
+
+                useCount = existingVoucher.useCount ?? 0;
             }
 
             const affectedRows = await voucherModel.update(id, voucherCode, voucherValue, expiredDate, isActive, usageLimit, useCount, forSingleUse);

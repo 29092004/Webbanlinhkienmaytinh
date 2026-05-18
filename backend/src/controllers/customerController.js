@@ -25,17 +25,17 @@ const customerController = {
 
     createCustomer: async (req, res, next) => {
         try {
-            const firstName = req.body.firstName ?? req.body.first_name;
-            const lastName = req.body.lastName ?? req.body.last_name;
-            const accountId = req.body.accountId ?? req.body.account_id ?? null;
-            const { gender, email, phone, address } = req.body;
+            const customerId = req.body.customerId ?? req.body.customer_id ?? req.body.accountId ?? req.body.account_id;
+            const firstName = String(req.body.firstName ?? req.body.first_name ?? '').trim();
+            const lastName = String(req.body.lastName ?? req.body.last_name ?? '').trim();
+            const { email, phone, address } = req.body;
 
-            if (!firstName || !lastName || !gender || !email || !phone || !address) {
+            if (!customerId || !firstName || !email || !phone || !address) {
                 return res.status(400).json({ message: 'Invalid input' });
             }
 
-            const customerId = await customerModel.create(firstName, lastName, gender, email, phone, address, accountId);
-            res.status(201).json({ success: true, customerId });
+            const insertedCustomerId = await customerModel.create(customerId, firstName, lastName, email, phone, address);
+            res.status(201).json({ success: true, customerId: insertedCustomerId || Number(customerId) });
         } catch (error) {
             next(error);
         }
@@ -44,16 +44,15 @@ const customerController = {
     updateCustomer: async (req, res, next) => {
         try {
             const { customerId } = req.params;
-            const firstName = req.body.firstName ?? req.body.first_name;
-            const lastName = req.body.lastName ?? req.body.last_name;
-            const accountId = req.body.accountId ?? req.body.account_id ?? null;
-            const { gender, email, phone, address } = req.body;
+            const firstName = String(req.body.firstName ?? req.body.first_name ?? '').trim();
+            const lastName = String(req.body.lastName ?? req.body.last_name ?? '').trim();
+            const { email, phone, address } = req.body;
 
-            if (!firstName || !lastName || !gender || !email || !phone || !address) {
+            if (!firstName || !email || !phone || !address) {
                 return res.status(400).json({ message: 'Invalid input' });
             }
 
-            const affectedRows = await customerModel.update(customerId, firstName, lastName, gender, email, phone, address, accountId);
+            const affectedRows = await customerModel.update(customerId, firstName, lastName, email, phone, address);
             if (affectedRows === 0) {
                 return res.status(404).json({ message: 'Customer not found' });
             }

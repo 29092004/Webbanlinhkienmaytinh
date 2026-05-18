@@ -1,7 +1,6 @@
 import dotenv from 'dotenv';
 import app from './app.js';
 import db from './config/mysql.js';
-import connectMongoDB from './config/mongodb.js';
 
 dotenv.config();
 
@@ -19,7 +18,6 @@ const connectMySQL = async () => {
 
 const startServer = async () => {
     await connectMySQL();
-    await connectMongoDB();
 
     app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);

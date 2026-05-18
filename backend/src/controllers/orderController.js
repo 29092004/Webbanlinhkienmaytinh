@@ -1,5 +1,31 @@
 import orderModel from '../models/orderModel.js';
 
+const normalizeOrderDetails = (value, fallbackProductId = null) => {
+    if (Array.isArray(value)) {
+        return value;
+    }
+
+    if (typeof value === 'string' && value.trim()) {
+        try {
+            const parsedValue = JSON.parse(value);
+            return Array.isArray(parsedValue) ? parsedValue : [];
+        } catch {
+            return [];
+        }
+    }
+
+    if (fallbackProductId) {
+        return [{
+            productId: fallbackProductId,
+            quantity: 1,
+            subtotalPrice: null,
+            note: null,
+        }];
+    }
+
+    return [];
+};
+
 const orderController = {
     getOrders: async (req, res) => {
         try {
@@ -28,14 +54,26 @@ const orderController = {
             const createdAt = req.body.createdAt ?? req.body.created_at;
             const paymentMethod = req.body.paymentMethod ?? req.body.payment_method;
             const { status } = req.body;
-            const productId = req.body.productId ?? req.body.product_id;
             const accountId = req.body.accountId ?? req.body.account_id;
+            const voucherId = req.body.voucherId ?? req.body.voucher_id ?? null;
+            const totalPrice = req.body.totalPrice ?? req.body.total_price;
+            const legacyProductId = req.body.productId ?? req.body.product_id ?? null;
+            const details = normalizeOrderDetails(req.body.details, legacyProductId);
 
-            if (!createdAt || !paymentMethod || !status || !productId || !accountId) {
+            if (!createdAt || !paymentMethod || !status || !accountId || totalPrice === undefined) {
                 return res.status(400).json({ message: 'Invalid input' });
             }
 
-            const orderId = await orderModel.create(createdAt, paymentMethod, status, productId, accountId);
+            const orderId = await orderModel.create(
+                createdAt,
+                paymentMethod,
+                status,
+                accountId,
+                voucherId,
+                totalPrice,
+                details
+            );
+
             res.status(201).json({ success: true, orderId });
         } catch (error) {
             next(error);
@@ -48,14 +86,27 @@ const orderController = {
             const createdAt = req.body.createdAt ?? req.body.created_at;
             const paymentMethod = req.body.paymentMethod ?? req.body.payment_method;
             const { status } = req.body;
-            const productId = req.body.productId ?? req.body.product_id;
             const accountId = req.body.accountId ?? req.body.account_id;
+            const voucherId = req.body.voucherId ?? req.body.voucher_id ?? null;
+            const totalPrice = req.body.totalPrice ?? req.body.total_price;
+            const legacyProductId = req.body.productId ?? req.body.product_id ?? null;
+            const details = normalizeOrderDetails(req.body.details, legacyProductId);
 
-            if (!createdAt || !paymentMethod || !status || !productId || !accountId) {
+            if (!createdAt || !paymentMethod || !status || !accountId || totalPrice === undefined) {
                 return res.status(400).json({ message: 'Invalid input' });
             }
 
-            const affectedRows = await orderModel.update(id, createdAt, paymentMethod, status, productId, accountId);
+            const affectedRows = await orderModel.update(
+                id,
+                createdAt,
+                paymentMethod,
+                status,
+                accountId,
+                voucherId,
+                totalPrice,
+                details
+            );
+
             if (affectedRows === 0) {
                 return res.status(404).json({ message: 'Order not found' });
             }

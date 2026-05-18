@@ -27,15 +27,14 @@ const shippingController = {
         try {
             const { date, status } = req.body;
             const deliveryMethod = req.body.deliveryMethod ?? req.body.delivery_method;
-            const customerId = req.body.customerId ?? req.body.id_customer;
-            const orderId = req.body.orderId ?? req.body.id_order;
+            const orderId = req.body.orderId ?? req.body.order_id ?? req.body.id_order;
             const shippingAddress = req.body.shippingAddress ?? req.body.shipping_address;
 
-            if (!date || !deliveryMethod || !status || !customerId || !orderId || !shippingAddress) {
+            if (!date || !deliveryMethod || !status || !orderId || !shippingAddress) {
                 return res.status(400).json({ message: 'Invalid input' });
             }
 
-            const shippingId = await shippingModel.create(date, deliveryMethod, status, customerId, orderId, shippingAddress);
+            const shippingId = await shippingModel.create(date, deliveryMethod, status, orderId, shippingAddress);
             res.status(201).json({ success: true, shippingId });
         } catch (error) {
             next(error);
@@ -47,15 +46,14 @@ const shippingController = {
             const { id } = req.params;
             const { date, status } = req.body;
             const deliveryMethod = req.body.deliveryMethod ?? req.body.delivery_method;
-            const customerId = req.body.customerId ?? req.body.id_customer;
-            const orderId = req.body.orderId ?? req.body.id_order;
+            const orderId = req.body.orderId ?? req.body.order_id ?? req.body.id_order;
             const shippingAddress = req.body.shippingAddress ?? req.body.shipping_address;
 
-            if (!date || !deliveryMethod || !status || !customerId || !orderId || !shippingAddress) {
+            if (!date || !deliveryMethod || !status || !orderId || !shippingAddress) {
                 return res.status(400).json({ message: 'Invalid input' });
             }
 
-            const affectedRows = await shippingModel.update(id, date, deliveryMethod, status, customerId, orderId, shippingAddress);
+            const affectedRows = await shippingModel.update(id, date, deliveryMethod, status, orderId, shippingAddress);
             if (affectedRows === 0) {
                 return res.status(404).json({ message: 'Shipping not found' });
             }
