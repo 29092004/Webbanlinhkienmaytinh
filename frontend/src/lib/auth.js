@@ -8,6 +8,37 @@ function notifyAuthStateChanged() {
   window.dispatchEvent(new Event(AUTH_STATE_EVENT));
 }
 
+function decodeJwtPayload(token) {
+  if (!token || typeof token !== "string") {
+    return null;
+  }
+
+  const parts = token.split(".");
+
+  if (parts.length !== 3) {
+    return null;
+  }
+
+  try {
+    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const normalized = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+    const payload = atob(normalized);
+    return JSON.parse(payload);
+  } catch {
+    return null;
+  }
+}
+
+function isAccessTokenExpired(token) {
+  const payload = decodeJwtPayload(token);
+
+  if (!payload?.exp) {
+    return true;
+  }
+
+  return payload.exp * 1000 <= Date.now();
+}
+
 export function saveAuthSession({ accessToken, user }) {
   localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
   localStorage.setItem(USER_KEY, JSON.stringify(user));
@@ -21,10 +52,25 @@ export function clearAuthSession() {
 }
 
 export function getAccessToken() {
-  return localStorage.getItem(ACCESS_TOKEN_KEY);
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+
+  if (!token) {
+    return null;
+  }
+
+  if (isAccessTokenExpired(token)) {
+    clearAuthSession();
+    return null;
+  }
+
+  return token;
 }
 
 export function getStoredUser() {
+  if (!getAccessToken()) {
+    return null;
+  }
+
   const rawUser = localStorage.getItem(USER_KEY);
 
   if (!rawUser) {

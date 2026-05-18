@@ -10,7 +10,7 @@ const attachProductDetails = async (products) => {
     const productIds = products.map((product) => product.id);
 
     const [imageRows] = await db.query(
-        'SELECT id, product_id, URL FROM product_image WHERE product_id IN (?) ORDER BY id ASC',
+        'SELECT id, product_id, url FROM product_image WHERE product_id IN (?) ORDER BY id ASC',
         [productIds]
     );
     const [specRows] = await db.query(
@@ -25,7 +25,7 @@ const attachProductDetails = async (products) => {
         }
         imagesByProductId.get(image.product_id).push({
             id: image.id,
-            url: image.URL,
+            url: image.url,
         });
     }
 
@@ -63,7 +63,7 @@ const replaceProductDetails = async (connection, productId, specs, images) => {
     let primaryImageId = null;
     for (const url of images) {
         const [result] = await connection.query(
-            'INSERT INTO product_image (product_id, URL) VALUES (?, ?)',
+            'INSERT INTO product_image (product_id, url) VALUES (?, ?)',
             [productId, url]
         );
 
@@ -71,11 +71,6 @@ const replaceProductDetails = async (connection, productId, specs, images) => {
             primaryImageId = result.insertId;
         }
     }
-
-    await connection.query(
-        `UPDATE ${table_name} SET image_id = ? WHERE id = ?`,
-        [primaryImageId, productId]
-    );
 };
 
 const ProductModel = {
@@ -107,8 +102,8 @@ const ProductModel = {
             await connection.beginTransaction();
 
             const [result] = await connection.query(
-                `INSERT INTO ${table_name} (name, description, import_price, retail_price, image_id, brand_id, category_id, origin, warranty, quantity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [name, description, importPrice, retailPrice, null, brandId, categoryId, origin, warranty, quantity]
+                `INSERT INTO ${table_name} (name, description, import_price, retail_price, brand_id, category_id, origin, warranty, quantity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [name, description, importPrice, retailPrice, brandId, categoryId, origin, warranty, quantity]
             );
 
             await replaceProductDetails(connection, result.insertId, specs, images);

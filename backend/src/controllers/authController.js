@@ -32,31 +32,6 @@ const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
 const generateOtpCode = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-const splitFullName = (fullName = '') => {
-    const normalizedName = fullName.trim().replace(/\s+/g, ' ');
-
-    if (!normalizedName) {
-        return {
-            firstName: '',
-            lastName: '',
-        };
-    }
-
-    const parts = normalizedName.split(' ');
-
-    if (parts.length === 1) {
-        return {
-            firstName: parts[0],
-            lastName: '',
-        };
-    }
-
-    return {
-        firstName: parts.slice(0, -1).join(' '),
-        lastName: parts[parts.length - 1],
-    };
-};
-
 const storeOtp = async (email, otp) => {
     const otpHash = await bcrypt.hash(otp, 10);
 
@@ -183,7 +158,6 @@ const authController = {
             const password = req.body.password;
             const role = req.body.role || 'user';
             const otp = req.body.otp;
-            const fullName = req.body.fullName ?? '';
             const phone = req.body.phone ?? '';
 
             if (!username || !password || !otp) {
@@ -232,15 +206,13 @@ const authController = {
                 const refreshToken = buildRefreshToken({ id: accountId, role });
                 await accountModel.updateRefreshToken(accountId, refreshToken, connection);
 
-                const { firstName, lastName } = splitFullName(fullName);
                 customerId = await customerModel.create(
-                    firstName || username,
-                    lastName,
+                    accountId,
+                    '',
                     '',
                     username,
                     phone,
                     '',
-                    accountId,
                     connection
                 );
 
@@ -323,6 +295,24 @@ const authController = {
                 isNewUser = true;
             }
 
+            const existingCustomer = await (async () => {
+                return db.query(
+                    'SELECT customer_id FROM customer WHERE customer_id = ? LIMIT 1',
+                    [user.id]
+                );
+            })();
+
+            if (!existingCustomer[0]?.length) {
+                await customerModel.create(
+                    user.id,
+                    '',
+                    '',
+                    payload.email,
+                    '',
+                    ''
+                );
+            }
+
             return await issueAuthResponse(res, user, {
                 isNewUser,
                 googleProfile: {
@@ -358,7 +348,7 @@ const authController = {
                 return res.status(404).json({ message: 'Account not found' });
             }
 
-            if (user.refresh_token !== refreshToken) {
+            if (await accountModel.supportsRefreshToken() && user.refresh_token !== refreshToken) {
                 return res.status(401).json({ message: 'Refresh token does not match current session' });
             }
 

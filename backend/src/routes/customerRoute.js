@@ -4,7 +4,7 @@ import { authenticateToken, requireAdmin, requireUser } from '../middlewares/aut
 
 const router = express.Router();
 
-router.get('/', authenticateToken, requireAdmin, customerController.getCustomers);
+router.get('/', customerController.getCustomers);
 router.get('/:customerId', authenticateToken, requireUser, customerController.getCustomerById);
 router.post('/', authenticateToken, requireUser, customerController.createCustomer);
 router.put('/:customerId', authenticateToken, requireUser, customerController.updateCustomer);

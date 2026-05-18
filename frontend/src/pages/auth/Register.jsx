@@ -1,4 +1,4 @@
-import { ArrowRight, Lock, Mail, Phone, User } from "lucide-react";
+import { ArrowRight, Lock, Mail, Phone } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -17,7 +17,6 @@ import {
 export default function Register() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
-    fullName: "",
     email: "",
     phone: "",
     password: "",
@@ -39,11 +38,6 @@ export default function Register() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
-
-    if (!form.fullName.trim()) {
-      setError("Vui lòng nhập họ và tên.");
-      return;
-    }
 
     if (!form.email.trim()) {
       setError("Vui lòng nhập email.");
@@ -73,7 +67,6 @@ export default function Register() {
       clearAuthSession();
       clearOtpAutoSentState();
       savePendingRegistration({
-        fullName: form.fullName.trim(),
         phone: form.phone.trim(),
         username: email,
         password: form.password,
@@ -95,18 +88,6 @@ export default function Register() {
         className="max-w-[540px]"
       >
         <form className="space-y-5" onSubmit={handleSubmit}>
-          <InputField
-            label="Họ và tên"
-            icon={User}
-            type="text"
-            name="fullName"
-            autoComplete="name"
-            placeholder="Nguyễn Văn A"
-            value={form.fullName}
-            onChange={handleChange}
-            disabled={isSubmitting}
-          />
-
           <InputField
             label="Email"
             icon={Mail}

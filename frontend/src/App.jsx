@@ -6,6 +6,13 @@ import Register from "./pages/auth/Register";
 import Otp from "./pages/auth/Otp";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminBrands from "./pages/admin/AdminBrands";
+import AdminCategories from "./pages/admin/AdminCategories";
+import AdminVouchers from "./pages/admin/AdminVouchers";
+import AdminCustomers from "./pages/admin/AdminCustomers";
+import AdminProducts from "./pages/admin/AdminProducts";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminShipping from "./pages/admin/AdminShipping";
+import AdminAccounts from "./pages/admin/AdminAccounts";
 
 function App() {
   return (
@@ -22,6 +29,13 @@ function App() {
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/brands" element={<AdminBrands />} />
+        <Route path="/admin/categories" element={<AdminCategories />} />
+        <Route path="/admin/vouchers" element={<AdminVouchers />} />
+        <Route path="/admin/accounts" element={<AdminAccounts />} />
+        <Route path="/admin/customers" element={<AdminCustomers />} />
+        <Route path="/admin/products" element={<AdminProducts />} />
+        <Route path="/admin/orders" element={<AdminOrders />} />
+        <Route path="/admin/shipping" element={<AdminShipping />} />
 
       </Routes>
 

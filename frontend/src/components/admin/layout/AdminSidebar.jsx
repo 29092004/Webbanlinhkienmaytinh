@@ -1,4 +1,5 @@
 import {
+  BadgeCheck,
   BadgePercent,
   Boxes,
   Headset,
@@ -23,7 +24,9 @@ export function AdminSidebar() {
     { icon: <BadgePercent className="w-5 h-5" />, label: "Thương hiệu", path: "/admin/brands" },
     { icon: <ShoppingBag className="w-5 h-5" />, label: "Đơn hàng", path: "/admin/orders" },
     { icon: <Tag className="w-5 h-5" />, label: "Khuyến mãi", path: "/admin/vouchers" },
+    { icon: <BadgeCheck className="w-5 h-5" />, label: "Tài khoản", path: "/admin/accounts" },
     { icon: <Users className="w-5 h-5" />, label: "Người dùng", path: "/admin/customers" },
+    { icon: <Boxes className="w-5 h-5" />, label: "Vận chuyển", path: "/admin/shipping" },
     { icon: <Headset className="w-5 h-5" />, label: "Hỗ trợ Chat", path: "/admin/support" },
   ];
 

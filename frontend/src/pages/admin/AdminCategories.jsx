@@ -1,11 +1,11 @@
-import { Pencil, Plus, Search, Tag, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Search, Layers, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { AdminSidebar } from "@/components/admin/layout/AdminSidebar";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 
-function BrandModal({
+function CategoryModal({
   open,
   title,
   submitLabel,
@@ -40,25 +40,25 @@ function BrandModal({
         <form className="mt-5" onSubmit={onSubmit}>
           {isDelete ? (
             <p className="text-sm leading-7 text-slate-600">
-              Bạn có chắc muốn xóa brand{" "}
+              Bạn có chắc muốn xóa danh mục{" "}
               <span className="font-bold text-slate-900">{value}</span> không?
             </p>
           ) : (
             <div>
               <label
-                htmlFor="brand-name"
+                htmlFor="category-name"
                 className="mb-2 block text-sm font-semibold text-slate-700"
               >
-                Tên brand
+                Tên danh mục
               </label>
               <input
-                id="brand-name"
+                id="category-name"
                 type="text"
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
                 disabled={isSubmitting}
                 className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
-                placeholder="Nhập tên brand"
+                placeholder="Nhập tên danh mục"
               />
             </div>
           )}
@@ -95,28 +95,28 @@ function BrandModal({
   );
 }
 
-function AdminBrands() {
-  const [brands, setBrands] = useState([]);
+function AdminCategories() {
+  const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [modalMode, setModalMode] = useState(null);
-  const [selectedBrand, setSelectedBrand] = useState(null);
-  const [brandName, setBrandName] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [categoryName, setCategoryName] = useState("");
   const [modalError, setModalError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const loadBrands = async () => {
+  const loadCategories = async () => {
     setIsLoading(true);
     setError("");
 
     try {
-      const { data } = await api.get("/brands");
-      setBrands(data.data ?? []);
+      const { data } = await api.get("/categories");
+      setCategories(data.data ?? []);
     } catch (requestError) {
       setError(
         requestError.response?.data?.message ||
-          "Không tải được dữ liệu brand từ database."
+          "Không tải được dữ liệu danh mục từ database."
       );
     } finally {
       setIsLoading(false);
@@ -124,22 +124,22 @@ function AdminBrands() {
   };
 
   useEffect(() => {
-    loadBrands();
+    loadCategories();
   }, []);
 
-  const filteredBrands = useMemo(() => {
+  const filteredCategories = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
     if (!normalizedSearch) {
-      return brands;
+      return categories;
     }
 
-    return brands.filter((brand) =>
-      String(brand.brand_name ?? "")
+    return categories.filter((category) =>
+      String(category.name ?? "")
         .toLowerCase()
         .includes(normalizedSearch)
     );
-  }, [brands, searchTerm]);
+  }, [categories, searchTerm]);
 
   const closeModal = () => {
     if (isSubmitting) {
@@ -147,29 +147,29 @@ function AdminBrands() {
     }
 
     setModalMode(null);
-    setSelectedBrand(null);
-    setBrandName("");
+    setSelectedCategory(null);
+    setCategoryName("");
     setModalError("");
   };
 
   const openCreateModal = () => {
     setModalMode("create");
-    setSelectedBrand(null);
-    setBrandName("");
+    setSelectedCategory(null);
+    setCategoryName("");
     setModalError("");
   };
 
-  const openEditModal = (brand) => {
+  const openEditModal = (category) => {
     setModalMode("edit");
-    setSelectedBrand(brand);
-    setBrandName(brand.brand_name ?? "");
+    setSelectedCategory(category);
+    setCategoryName(category.name ?? "");
     setModalError("");
   };
 
-  const openDeleteModal = (brand) => {
+  const openDeleteModal = (category) => {
     setModalMode("delete");
-    setSelectedBrand(brand);
-    setBrandName(brand.brand_name ?? "");
+    setSelectedCategory(category);
+    setCategoryName(category.name ?? "");
     setModalError("");
   };
 
@@ -177,8 +177,8 @@ function AdminBrands() {
     event.preventDefault();
     setModalError("");
 
-    if (modalMode !== "delete" && !brandName.trim()) {
-      setModalError("Vui lòng nhập tên brand.");
+    if (modalMode !== "delete" && !categoryName.trim()) {
+      setModalError("Vui lòng nhập tên danh mục.");
       return;
     }
 
@@ -186,25 +186,25 @@ function AdminBrands() {
 
     try {
       if (modalMode === "create") {
-        await api.post("/brands", { brandName: brandName.trim() });
+        await api.post("/categories", { name: categoryName.trim() });
       }
 
-      if (modalMode === "edit" && selectedBrand) {
-        await api.put(`/brands/${selectedBrand.brand_id}`, {
-          brandName: brandName.trim(),
+      if (modalMode === "edit" && selectedCategory) {
+        await api.put(`/categories/${selectedCategory.id}`, {
+          name: categoryName.trim(),
         });
       }
 
-      if (modalMode === "delete" && selectedBrand) {
-        await api.delete(`/brands/${selectedBrand.brand_id}`);
+      if (modalMode === "delete" && selectedCategory) {
+        await api.delete(`/categories/${selectedCategory.id}`);
       }
 
       closeModal();
-      await loadBrands();
+      await loadCategories();
     } catch (requestError) {
       setModalError(
         requestError.response?.data?.message ||
-          "Không thể cập nhật dữ liệu brand."
+          "Không thể cập nhật dữ liệu danh mục."
       );
     } finally {
       setIsSubmitting(false);
@@ -220,7 +220,7 @@ function AdminBrands() {
           <section className="rounded-[24px] border border-[#dbe3ef] bg-white px-7 py-6 shadow-[0_10px_35px_rgba(15,23,42,0.04)]">
             <div className="flex flex-col gap-4">
               <h2 className="m-0 text-2xl font-bold tracking-tight text-[#071328]">
-                Trang thương hiệu
+                Trang danh mục
               </h2>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <Button
@@ -229,7 +229,7 @@ function AdminBrands() {
                   className="h-10 rounded-xl bg-[#2563eb] px-4 text-[0.88rem] font-semibold text-white hover:bg-[#1d4ed8]"
                 >
                   <Plus className="mr-1.5 size-4" />
-                  Thêm thương hiệu
+                  Thêm danh mục
                 </Button>
 
                 <div className="relative">
@@ -253,12 +253,12 @@ function AdminBrands() {
 
             <div className="mt-7 grid gap-5 lg:grid-cols-3">
               <div className="rounded-2xl border border-[#d7e0ec] bg-white px-6 py-6 shadow-sm">
-                <p className="text-[0.85rem] text-slate-500">Tổng thương hiệu</p>
-                <p className="mt-2 text-2xl font-bold leading-none text-slate-950">{brands.length}</p>
+                <p className="text-[0.85rem] text-slate-500">Tổng danh mục</p>
+                <p className="mt-2 text-2xl font-bold leading-none text-slate-950">{categories.length}</p>
               </div>
               <div className="rounded-2xl border border-[#d7e0ec] bg-white px-6 py-6 shadow-sm">
                 <p className="text-[0.85rem] text-slate-500">Đang hoạt động</p>
-                <p className="mt-2 text-2xl font-bold leading-none text-slate-950">{brands.length}</p>
+                <p className="mt-2 text-2xl font-bold leading-none text-slate-950">{categories.length}</p>
               </div>
               <div className="rounded-2xl border border-[#d7e0ec] bg-white px-6 py-6 shadow-sm">
                 <p className="text-[0.85rem] text-slate-500">Đang ẩn</p>
@@ -272,7 +272,7 @@ function AdminBrands() {
                   <thead className="bg-white">
                     <tr className="border-b border-[#d7e0ec] text-left text-[0.9rem] font-bold text-slate-900">
                       <th className="px-6 py-4">ID</th>
-                      <th className="px-6 py-4">Tên thương hiệu</th>
+                      <th className="px-6 py-4">Tên danh mục</th>
                       <th className="px-6 py-4">Trạng thái</th>
                       <th className="px-6 py-4 text-right">Hành động</th>
                     </tr>
@@ -287,31 +287,31 @@ function AdminBrands() {
                           Đang tải dữ liệu...
                         </td>
                       </tr>
-                    ) : filteredBrands.length === 0 ? (
+                    ) : filteredCategories.length === 0 ? (
                       <tr>
                         <td
                           colSpan={4}
                           className="px-6 py-8 text-center text-sm font-medium text-slate-500"
                         >
-                          Chưa có dữ liệu brand trong database.
+                          Chưa có dữ liệu danh mục trong database.
                         </td>
                       </tr>
                     ) : (
-                      filteredBrands.map((brand) => (
+                      filteredCategories.map((category) => (
                         <tr
-                          key={brand.brand_id}
+                          key={category.id}
                           className="text-sm text-slate-700 transition hover:bg-slate-50/70"
                         >
                           <td className="px-6 py-4 font-medium text-slate-900">
-                            {brand.brand_id}
+                            {category.id}
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
                               <div className="flex size-10 items-center justify-center rounded-xl bg-[#eef3f9] text-slate-500">
-                                <Tag className="size-4" />
+                                <Layers className="size-4" />
                               </div>
                               <div className="text-[0.9rem] font-semibold text-slate-950">
-                                {brand.brand_name}
+                                {category.name}
                               </div>
                             </div>
                           </td>
@@ -324,7 +324,7 @@ function AdminBrands() {
                             <div className="flex justify-end gap-2">
                               <button
                                 type="button"
-                                onClick={() => openEditModal(brand)}
+                                onClick={() => openEditModal(category)}
                                 className="inline-flex items-center gap-1.5 rounded-lg bg-[#ffc107] px-3 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#e9b000]"
                               >
                                 <Pencil className="size-3.5" />
@@ -332,7 +332,7 @@ function AdminBrands() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => openDeleteModal(brand)}
+                                onClick={() => openDeleteModal(category)}
                                 className="inline-flex items-center gap-1.5 rounded-lg bg-[#ff0a0a] px-3 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#e00000]"
                               >
                                 <Trash2 className="size-3.5" />
@@ -351,36 +351,36 @@ function AdminBrands() {
         </main>
       </div>
 
-      <BrandModal
+      <CategoryModal
         open={modalMode === "create"}
-        title="Thêm brand"
-        submitLabel="Tạo brand"
-        value={brandName}
-        onChange={setBrandName}
+        title="Thêm danh mục"
+        submitLabel="Tạo danh mục"
+        value={categoryName}
+        onChange={setCategoryName}
         onClose={closeModal}
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
         error={modalError}
       />
 
-      <BrandModal
+      <CategoryModal
         open={modalMode === "edit"}
-        title="Sửa brand"
+        title="Sửa danh mục"
         submitLabel="Lưu thay đổi"
-        value={brandName}
-        onChange={setBrandName}
+        value={categoryName}
+        onChange={setCategoryName}
         onClose={closeModal}
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
         error={modalError}
       />
 
-      <BrandModal
+      <CategoryModal
         open={modalMode === "delete"}
-        title="Xóa brand"
+        title="Xóa danh mục"
         submitLabel="Xóa"
-        value={brandName}
-        onChange={setBrandName}
+        value={categoryName}
+        onChange={setCategoryName}
         onClose={closeModal}
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
@@ -391,4 +391,4 @@ function AdminBrands() {
   );
 }
 
-export default AdminBrands;
+export default AdminCategories;
