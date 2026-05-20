@@ -159,6 +159,7 @@ const authController = {
             const role = req.body.role || 'user';
             const otp = req.body.otp;
             const phone = req.body.phone ?? '';
+            const fullName = req.body.fullName?.trim() ?? '';
 
             if (!username || !password || !otp) {
                 return res.status(400).json({ message: 'Username, password and otp are required' });
@@ -206,10 +207,20 @@ const authController = {
                 const refreshToken = buildRefreshToken({ id: accountId, role });
                 await accountModel.updateRefreshToken(accountId, refreshToken, connection);
 
+                let firstName = '';
+                let lastName = '';
+                if (fullName) {
+                    const nameParts = fullName.split(/\s+/);
+                    if (nameParts.length > 0) {
+                        firstName = nameParts.pop();
+                        lastName = nameParts.join(' ');
+                    }
+                }
+
                 customerId = await customerModel.create(
                     accountId,
-                    '',
-                    '',
+                    firstName,
+                    lastName,
                     username,
                     phone,
                     '',
@@ -303,10 +314,20 @@ const authController = {
             })();
 
             if (!existingCustomer[0]?.length) {
+                let googleFirstName = '';
+                let googleLastName = '';
+                if (payload.name) {
+                    const nameParts = payload.name.trim().split(/\s+/);
+                    if (nameParts.length > 0) {
+                        googleFirstName = nameParts.pop();
+                        googleLastName = nameParts.join(' ');
+                    }
+                }
+
                 await customerModel.create(
                     user.id,
-                    '',
-                    '',
+                    googleFirstName,
+                    googleLastName,
                     payload.email,
                     '',
                     ''

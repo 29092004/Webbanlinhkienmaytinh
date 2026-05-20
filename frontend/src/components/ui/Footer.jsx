@@ -1,16 +1,17 @@
-import { Globe, Mail, MapPin, MessageCircle, Phone, Share2 } from "lucide-react";
+import { Globe, MessageCircle, Share2, ArrowRight } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="border-t border-gray-100 bg-white py-12">
+    <footer className="bg-[#0f1115] text-gray-400 py-16 border-t border-gray-800">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-12 grid grid-cols-1 gap-8 md:grid-cols-5">
-          <div className="col-span-1">
-            <a href="/" className="mb-4 block text-lg font-extrabold uppercase tracking-wide text-gray-900">
-              TECHSPEC PC
+        <div className="mb-12 grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* Brand Info */}
+          <div>
+            <a href="/" className="mb-4 block text-lg font-extrabold uppercase tracking-widest text-white">
+              EXO CORE
             </a>
-            <p className="mb-6 text-[12px] leading-relaxed text-gray-500">
-              Đơn vị cung cấp giải pháp máy tính cao cấp, chuyên nghiệp và tối ưu hiệu năng cho người dùng Việt.
+            <p className="mb-6 text-[12px] leading-relaxed text-gray-400">
+              Leading provider of high-performance PC systems and premium components. Build your dream machine with EXO CORE engineering.
             </p>
             <div className="flex gap-3">
               <SocialLink>
@@ -25,47 +26,54 @@ export function Footer() {
             </div>
           </div>
 
+          {/* Support Column */}
           <FooterColumn
-            title="Về chúng tôi"
-            links={["Giới thiệu", "Tin tức", "Hệ thống cửa hàng", "Liên hệ"]}
-          />
-          <FooterColumn
-            title="Chính sách"
-            links={["Bảo hành", "Đổi trả", "Vận chuyển", "Thanh toán"]}
-          />
-          <FooterColumn
-            title="Hỗ trợ"
-            links={["Kỹ thuật", "Xây dựng cấu hình", "Tra cứu bảo hành", "Tuyển dụng"]}
+            title="SUPPORT"
+            links={[
+              { text: "Help Center", href: "#" },
+              { text: "Warranty Support", href: "#" },
+              { text: "Shipping Info", href: "#" },
+              { text: "Return Policy", href: "#" }
+            ]}
           />
 
+          {/* Legal Column */}
+          <FooterColumn
+            title="LEGAL"
+            links={[
+              { text: "Terms of Service", href: "#" },
+              { text: "Privacy Policy", href: "#" },
+              { text: "Cookie Policy", href: "#" },
+              { text: "Disclaimer", href: "#" }
+            ]}
+          />
+
+          {/* Newsletter Column */}
           <div>
-            <h4 className="mb-4 text-sm font-bold text-gray-900">Liên hệ</h4>
-            <ul className="space-y-4 text-[13px] text-gray-500">
-              <li className="flex items-start gap-3">
-                <MapPin className="mt-0.5 size-4 shrink-0 text-blue-600" />
-                <span>123 Đường Công Nghệ, Quận 1, TP. HCM</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Phone className="size-4 shrink-0 text-blue-600" />
-                <span>1900 0111</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Mail className="size-4 shrink-0 text-blue-600" />
-                <span>contact@techspec.vn</span>
-              </li>
-            </ul>
+            <h4 className="mb-4 text-xs font-bold uppercase tracking-wider text-white">NEWSLETTER</h4>
+            <p className="mb-4 text-[12px] leading-relaxed text-gray-400">
+              Stay updated with the latest hardware news and exclusive deals.
+            </p>
+            <form className="flex rounded-md overflow-hidden bg-[#1f222b] border border-gray-700" onSubmit={(e) => e.preventDefault()}>
+              <input
+                type="email"
+                placeholder="your email"
+                className="flex-1 bg-transparent px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none"
+                required
+              />
+              <button type="submit" className="bg-[#2d323f] hover:bg-gray-700 text-white px-3 flex items-center justify-center transition-colors">
+                <ArrowRight className="size-4" />
+              </button>
+            </form>
           </div>
         </div>
 
-        <div className="flex flex-col items-center justify-between border-t border-gray-100 pt-8 text-[11px] text-gray-400 md:flex-row">
-          <p>© 2024 TECHSPEC PC. All rights reserved. Precision. Performance. Aesthetic.</p>
+        {/* Bottom Bar */}
+        <div className="flex flex-col items-center justify-between border-t border-gray-800 pt-8 text-[11px] text-gray-500 md:flex-row">
+          <p>© 2024 EXO CORE High-Performance Systems. All rights reserved.</p>
           <div className="mt-4 flex gap-4 md:mt-0">
-            <a href="#" className="transition-colors hover:text-gray-600">
-              Chính sách bảo mật
-            </a>
-            <a href="#" className="transition-colors hover:text-gray-600">
-              Điều khoản sử dụng
-            </a>
+            <span className="cursor-pointer hover:text-white transition-colors">EN</span>
+            <span className="cursor-pointer hover:text-white transition-colors">VN</span>
           </div>
         </div>
       </div>
@@ -76,12 +84,12 @@ export function Footer() {
 function FooterColumn({ title, links }) {
   return (
     <div>
-      <h4 className="mb-4 text-sm font-bold text-gray-900">{title}</h4>
-      <ul className="space-y-3 text-[13px] text-gray-500">
-        {links.map((link) => (
-          <li key={link}>
-            <a href="#" className="transition-colors hover:text-blue-600">
-              {link}
+      <h4 className="mb-4 text-xs font-bold uppercase tracking-wider text-white">{title}</h4>
+      <ul className="space-y-3 text-[12px]">
+        {links.map((link, idx) => (
+          <li key={idx}>
+            <a href={link.href} className="transition-colors hover:text-white">
+              {link.text}
             </a>
           </li>
         ))}
@@ -94,7 +102,7 @@ function SocialLink({ children }) {
   return (
     <a
       href="#"
-      className="flex size-8 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-blue-600 hover:text-white"
+      className="flex size-8 items-center justify-center rounded-full bg-[#1f222b] hover:bg-blue-600 text-gray-400 hover:text-white transition-colors border border-gray-800"
     >
       {children}
     </a>

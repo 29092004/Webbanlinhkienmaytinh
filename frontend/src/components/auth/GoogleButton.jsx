@@ -9,7 +9,7 @@ export function GoogleButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex h-[56px] w-full items-center justify-center gap-3 rounded-[12px] border border-[#dde2eb] bg-white text-[17px] font-medium text-[#2c313b] transition hover:border-[#c8d0dc] hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-[#0b2d4d]/12 disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+      className={`flex h-[52px] w-full items-center justify-center gap-3 rounded-full border border-slate-200 bg-white text-[16px] font-semibold text-slate-700 transition hover:bg-slate-50 hover:border-slate-300 focus:outline-none focus:ring-4 focus:ring-slate-100 disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
     >
       <svg className="size-5" viewBox="0 0 24 24" aria-hidden="true">
         <path

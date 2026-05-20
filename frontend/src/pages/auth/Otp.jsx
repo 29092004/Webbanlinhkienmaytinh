@@ -106,6 +106,7 @@ export default function Otp() {
         username: pendingRegistration.username,
         password: pendingRegistration.password,
         phone: pendingRegistration.phone,
+        fullName: pendingRegistration.fullName,
         otp,
       });
 
