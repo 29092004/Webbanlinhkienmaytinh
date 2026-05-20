@@ -1,6 +1,6 @@
 import { Search, ShoppingCart, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 import {
   clearAuthSession,
@@ -12,6 +12,7 @@ import { api } from "@/lib/api";
 
 export function Header() {
   const navigate = useNavigate();
+  const location = useLocation();
   const menuRef = useRef(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [authState, setAuthState] = useState({
@@ -62,10 +63,10 @@ export function Header() {
               EXO CORE
             </Link>
             <nav className="hidden space-x-8 text-sm md:flex">
-              <Link to="/" className="border-b-2 border-blue-600 pb-1 font-semibold text-blue-600">
+              <Link to="/" className={location.pathname === "/" ? "border-b-2 border-blue-600 pb-1 font-semibold text-blue-600" : "font-medium text-gray-500 hover:text-gray-900"}>
                 Home
               </Link>
-              <Link to="/products" className="font-medium text-gray-500 hover:text-gray-900">
+              <Link to="/products" className={location.pathname === "/products" ? "border-b-2 border-blue-600 pb-1 font-semibold text-blue-600" : "font-medium text-gray-500 hover:text-gray-900"}>
                 Products
               </Link>
               <Link to="/pc-builder" className="font-medium text-gray-500 hover:text-gray-900">
