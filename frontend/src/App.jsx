@@ -5,6 +5,7 @@ import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import Otp from "./pages/auth/Otp";
 import Products from "./pages/Products";
+import ProductDetail from "./pages/ProductDetail";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminBrands from "./pages/admin/AdminBrands";
 import AdminCategories from "./pages/admin/AdminCategories";
@@ -27,6 +28,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/otp" element={<Otp />} />
         <Route path="/products" element={<Products />} />
+        <Route path="/product/:id" element={<ProductDetail />} />
 
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminDashboard />} />
