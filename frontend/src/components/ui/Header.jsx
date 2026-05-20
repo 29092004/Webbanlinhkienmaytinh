@@ -88,9 +88,12 @@ export function Header() {
             <button type="button" className="transition-colors hover:text-gray-900">
               <Search className="size-5" />
             </button>
-            <button type="button" className="transition-colors hover:text-gray-900">
+            <Link to="/cart" className="relative transition-colors hover:text-gray-900">
               <ShoppingCart className="size-5" />
-            </button>
+              <span className="absolute -top-1.5 -right-1.5 bg-blue-600 text-white text-[9px] font-black size-4 flex items-center justify-center rounded-full border-2 border-white">
+                3
+              </span>
+            </Link>
             <div className="relative" ref={menuRef}>
               <button
                 type="button"

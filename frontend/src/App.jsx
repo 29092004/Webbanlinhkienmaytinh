@@ -6,6 +6,7 @@ import Register from "./pages/auth/Register";
 import Otp from "./pages/auth/Otp";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
+import Cart from "./pages/Cart";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminBrands from "./pages/admin/AdminBrands";
 import AdminCategories from "./pages/admin/AdminCategories";
@@ -29,6 +30,7 @@ function App() {
         <Route path="/otp" element={<Otp />} />
         <Route path="/products" element={<Products />} />
         <Route path="/product/:id" element={<ProductDetail />} />
+        <Route path="/cart" element={<Cart />} />
 
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminDashboard />} />
