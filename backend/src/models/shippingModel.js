@@ -14,7 +14,10 @@ const ShippingModel = {
                 c.email AS customer_email,
                 c.phone AS customer_phone,
                 a.username AS account_username,
-                o.account_id AS order_account_id
+                o.account_id AS order_account_id,
+                o.payment_method,
+                o.status AS order_status,
+                o.total_price
             FROM ${table_name} s
             LEFT JOIN \`order\` o ON o.id = s.order_id
             LEFT JOIN customer c ON c.customer_id = o.account_id
@@ -34,7 +37,10 @@ const ShippingModel = {
                 c.email AS customer_email,
                 c.phone AS customer_phone,
                 a.username AS account_username,
-                o.account_id AS order_account_id
+                o.account_id AS order_account_id,
+                o.payment_method,
+                o.status AS order_status,
+                o.total_price
             FROM ${table_name} s
             LEFT JOIN \`order\` o ON o.id = s.order_id
             LEFT JOIN customer c ON c.customer_id = o.account_id

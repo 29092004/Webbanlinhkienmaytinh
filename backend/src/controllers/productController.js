@@ -1,4 +1,5 @@
 import fs from 'fs/promises';
+import path from 'path';
 import XLSX from 'xlsx';
 import productModel from '../models/productModel.js';
 
@@ -42,6 +43,14 @@ const getUploadedImages = (files) => {
 };
 
 const parseSpecificationFile = async (file) => {
+    const extension = path.extname(file.originalname).toLowerCase();
+
+    if (extension === '.json') {
+        const content = await fs.readFile(file.path, 'utf8');
+        const parsedJson = JSON.parse(content);
+        return JSON.stringify(parsedJson);
+    }
+
     const workbook = XLSX.readFile(file.path);
     const sheetName = workbook.SheetNames[0];
 
@@ -102,6 +111,26 @@ const productController = {
         }
     },
 
+    previewSpecificationFile: async (req, res, next) => {
+        try {
+            const specFile = req.files?.specFile?.[0] ?? null;
+
+            if (!specFile) {
+                return res.status(400).json({ message: 'Specification file is required' });
+            }
+
+            const specs = await parseSpecificationFile(specFile);
+            res.json({
+                success: true,
+                data: JSON.parse(specs),
+            });
+        } catch (error) {
+            next(error);
+        } finally {
+            await cleanupUploadedFiles(req.files?.specFile ?? []);
+        }
+    },
+
     createProduct: async (req, res, next) => {
         try {
             const { name, description, origin, warranty, quantity } = req.body;
@@ -109,6 +138,7 @@ const productController = {
             const retailPrice = req.body.retailPrice ?? req.body.retail_price;
             const brandId = req.body.brandId ?? req.body.brand_id;
             const categoryId = req.body.categoryId ?? req.body.category_id;
+            const saleId = req.body.saleId ?? req.body.sale_id ?? null;
             const specFile = req.files?.specFile?.[0] ?? null;
             const specs = await resolveSpecs(req.body, specFile);
             const images = getUploadedImages(req.files?.images);
@@ -124,6 +154,7 @@ const productController = {
                 retailPrice,
                 brandId,
                 categoryId,
+                saleId,
                 origin,
                 warranty,
                 quantity,
@@ -151,6 +182,7 @@ const productController = {
             if (!currentProduct) {
                 return res.status(404).json({ message: 'Product not found' });
             }
+            const saleId = req.body.saleId ?? req.body.sale_id ?? currentProduct.sale_id ?? null;
 
             const specFile = req.files?.specFile?.[0] ?? null;
             const specs = await resolveSpecs(req.body, specFile, currentProduct.specs);
@@ -174,6 +206,7 @@ const productController = {
                 retailPrice,
                 brandId,
                 categoryId,
+                saleId,
                 origin,
                 warranty,
                 quantity,

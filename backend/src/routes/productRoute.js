@@ -6,13 +6,22 @@ import { uploadProductAssets } from '../middlewares/uploadMiddleware.js';
 const router = express.Router();
 
 router.get('/', productController.getProducts);
+router.post(
+    '/spec-preview',
+    authenticateToken,
+    requireAdmin,
+    uploadProductAssets.fields([
+        { name: 'specFile', maxCount: 1 },
+    ]),
+    productController.previewSpecificationFile
+);
 router.get('/:id', productController.getProductById);
 router.post(
     '/',
     authenticateToken,
     requireAdmin,
     uploadProductAssets.fields([
-        { name: 'images', maxCount: 10 },
+        { name: 'images', maxCount: 3 },
         { name: 'specFile', maxCount: 1 },
     ]),
     productController.createProduct
@@ -22,7 +31,7 @@ router.put(
     authenticateToken,
     requireAdmin,
     uploadProductAssets.fields([
-        { name: 'images', maxCount: 10 },
+        { name: 'images', maxCount: 3 },
         { name: 'specFile', maxCount: 1 },
     ]),
     productController.updateProduct

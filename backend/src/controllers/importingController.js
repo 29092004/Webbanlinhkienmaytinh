@@ -1,6 +1,6 @@
 import importingModel from '../models/importingModel.js';
 
-const normalizeImportingDetails = (value) => {
+const normalizeImportingDetails = (value, fallbackProductId = null, fallbackQuantity = null, fallbackSubtotalPrice = null) => {
     if (Array.isArray(value)) {
         return value;
     }
@@ -12,6 +12,14 @@ const normalizeImportingDetails = (value) => {
         } catch {
             return [];
         }
+    }
+
+    if (fallbackProductId && fallbackQuantity !== null && fallbackQuantity !== undefined) {
+        return [{
+            productId: fallbackProductId,
+            quantity: fallbackQuantity,
+            subtotalPrice: fallbackSubtotalPrice,
+        }];
     }
 
     return [];
@@ -45,7 +53,10 @@ const importingController = {
             const { date } = req.body;
             const totalPrice = req.body.totalPrice ?? req.body.total_price;
             const supplierId = req.body.supplierId ?? req.body.id_supplier;
-            const details = normalizeImportingDetails(req.body.details);
+            const productId = req.body.productId ?? req.body.id_product ?? null;
+            const quantity = req.body.quantity ?? null;
+            const subtotalPrice = req.body.subtotalPrice ?? req.body.subtotalprice ?? null;
+            const details = normalizeImportingDetails(req.body.details, productId, quantity, subtotalPrice);
 
             if (!date || totalPrice === undefined || !supplierId) {
                 return res.status(400).json({ message: 'Invalid input' });
@@ -64,7 +75,10 @@ const importingController = {
             const { date } = req.body;
             const totalPrice = req.body.totalPrice ?? req.body.total_price;
             const supplierId = req.body.supplierId ?? req.body.id_supplier;
-            const details = normalizeImportingDetails(req.body.details);
+            const productId = req.body.productId ?? req.body.id_product ?? null;
+            const quantity = req.body.quantity ?? null;
+            const subtotalPrice = req.body.subtotalPrice ?? req.body.subtotalprice ?? null;
+            const details = normalizeImportingDetails(req.body.details, productId, quantity, subtotalPrice);
 
             if (!date || totalPrice === undefined || !supplierId) {
                 return res.status(400).json({ message: 'Invalid input' });

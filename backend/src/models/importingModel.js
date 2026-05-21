@@ -32,6 +32,10 @@ const attachImportingDetails = async (importings) => {
     return importings.map((importing) => ({
         ...importing,
         details: detailsByImportingId.get(importing.id) ?? [],
+        id_product: detailsByImportingId.get(importing.id)?.[0]?.id_product ?? null,
+        quantity: detailsByImportingId.get(importing.id)?.[0]?.quantity ?? null,
+        subtotalprice: detailsByImportingId.get(importing.id)?.[0]?.subtotalprice ?? null,
+        product_name: detailsByImportingId.get(importing.id)?.[0]?.product_name ?? null,
     }));
 };
 
@@ -54,15 +58,29 @@ const replaceImportingDetails = async (connection, importingId, details = []) =>
 const ImportingModel = {
     getAll: async () => {
         const [rows] = await db.query(`
-            SELECT *
-            FROM ${table_name}
+            SELECT
+                i.*,
+                s.name AS supplier_name,
+                s.phonenumber AS supplier_phonenumber,
+                s.email AS supplier_email,
+                s.address AS supplier_address
+            FROM ${table_name} i
+            LEFT JOIN supplier s ON s.id = i.id_supplier
         `);
         return attachImportingDetails(rows);
     },
 
     getById: async (id) => {
         const [rows] = await db.query(
-            `SELECT * FROM ${table_name} WHERE id = ?`,
+            `SELECT
+                i.*,
+                s.name AS supplier_name,
+                s.phonenumber AS supplier_phonenumber,
+                s.email AS supplier_email,
+                s.address AS supplier_address
+            FROM ${table_name} i
+            LEFT JOIN supplier s ON s.id = i.id_supplier
+            WHERE i.id = ?`,
             [id]
         );
 

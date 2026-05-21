@@ -29,6 +29,9 @@ const attachCartItems = async (carts) => {
     return carts.map((cart) => ({
         ...cart,
         items: itemsByCartId.get(cart.id) ?? [],
+        product_id: itemsByCartId.get(cart.id)?.[0]?.product_id ?? null,
+        product_name: itemsByCartId.get(cart.id)?.[0]?.product_name ?? null,
+        quantity: itemsByCartId.get(cart.id)?.[0]?.quantity ?? null,
     }));
 };
 
@@ -46,15 +49,31 @@ const replaceCartItems = async (connection, cartId, items = []) => {
 const CartModel = {
     getAll: async () => {
         const [rows] = await db.query(`
-            SELECT *
-            FROM ${table_name}
+            SELECT
+                c.*,
+                cu.first_name AS customer_first_name,
+                cu.last_name AS customer_last_name,
+                cu.email AS customer_email,
+                a.username AS account_username
+            FROM ${table_name} c
+            LEFT JOIN customer cu ON cu.customer_id = c.customer_id
+            LEFT JOIN account a ON a.id = c.customer_id
         `);
         return attachCartItems(rows);
     },
 
     getById: async (id) => {
         const [rows] = await db.query(
-            `SELECT * FROM ${table_name} WHERE id = ?`,
+            `SELECT
+                c.*,
+                cu.first_name AS customer_first_name,
+                cu.last_name AS customer_last_name,
+                cu.email AS customer_email,
+                a.username AS account_username
+            FROM ${table_name} c
+            LEFT JOIN customer cu ON cu.customer_id = c.customer_id
+            LEFT JOIN account a ON a.id = c.customer_id
+            WHERE c.id = ?`,
             [id]
         );
 
@@ -68,7 +87,17 @@ const CartModel = {
 
     getByCustomerId: async (customerId) => {
         const [rows] = await db.query(
-            `SELECT * FROM ${table_name} WHERE customer_id = ? ORDER BY id DESC`,
+            `SELECT
+                c.*,
+                cu.first_name AS customer_first_name,
+                cu.last_name AS customer_last_name,
+                cu.email AS customer_email,
+                a.username AS account_username
+            FROM ${table_name} c
+            LEFT JOIN customer cu ON cu.customer_id = c.customer_id
+            LEFT JOIN account a ON a.id = c.customer_id
+            WHERE c.customer_id = ?
+            ORDER BY c.id DESC`,
             [customerId]
         );
         return attachCartItems(rows);

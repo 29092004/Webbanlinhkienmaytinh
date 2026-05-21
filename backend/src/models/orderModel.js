@@ -31,6 +31,11 @@ const attachOrderDetails = async (orders) => {
         voucherId: order.voucher_id ?? null,
         totalPrice: order.total_price ?? null,
         details: detailsByOrderId.get(order.id) ?? [],
+        product_id: detailsByOrderId.get(order.id)?.[0]?.product_id ?? null,
+        product_name: detailsByOrderId.get(order.id)?.[0]?.product_name ?? null,
+        quantity: detailsByOrderId.get(order.id)?.[0]?.quantity ?? null,
+        subtotal_price: detailsByOrderId.get(order.id)?.[0]?.subtotal_price ?? null,
+        note: detailsByOrderId.get(order.id)?.[0]?.note ?? null,
     }));
 };
 
@@ -64,7 +69,8 @@ const OrderModel = {
                 c.first_name AS customer_first_name,
                 c.last_name AS customer_last_name,
                 c.email AS customer_email,
-                c.phone AS customer_phone
+                c.phone AS customer_phone,
+                c.address AS customer_address
             FROM ${table_name} o
             LEFT JOIN account a ON a.id = o.account_id
             LEFT JOIN voucher v ON v.id = o.voucher_id
@@ -86,7 +92,8 @@ const OrderModel = {
                 c.first_name AS customer_first_name,
                 c.last_name AS customer_last_name,
                 c.email AS customer_email,
-                c.phone AS customer_phone
+                c.phone AS customer_phone,
+                c.address AS customer_address
             FROM ${table_name} o
             LEFT JOIN account a ON a.id = o.account_id
             LEFT JOIN voucher v ON v.id = o.voucher_id

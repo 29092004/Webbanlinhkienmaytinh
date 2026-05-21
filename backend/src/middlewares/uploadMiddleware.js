@@ -31,7 +31,7 @@ const storage = multer.diskStorage({
     },
 });
 
-const allowedSpecExtensions = new Set(['.xlsx', '.xls']);
+const allowedSpecExtensions = new Set(['.xlsx', '.xls', '.json']);
 
 const uploadFileFilter = (req, file, cb) => {
     if (file.fieldname === 'images' && file.mimetype.startsWith('image/')) {
@@ -44,14 +44,14 @@ const uploadFileFilter = (req, file, cb) => {
         return;
     }
 
-    cb(new Error('Only image files and Excel specification files are allowed'));
+    cb(new Error('Only image files and specification files in Excel or JSON format are allowed'));
 };
 
 const uploadProductAssets = multer({
     storage,
     fileFilter: uploadFileFilter,
     limits: {
-        files: 11,
+        files: 4,
         fileSize: 5 * 1024 * 1024,
     },
 });
