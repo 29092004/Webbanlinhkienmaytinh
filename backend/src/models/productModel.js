@@ -2,6 +2,40 @@ import db from '../config/mysql.js';
 
 const table_name = 'product';
 
+const normalizeSpecsForStorage = (specs) => {
+    if (specs === null || specs === undefined || specs === '') {
+        return '';
+    }
+
+    if (typeof specs === 'string') {
+        return specs;
+    }
+
+    try {
+        return JSON.stringify(specs);
+    } catch (error) {
+        return String(specs);
+    }
+};
+
+const normalizeImageUrlsForStorage = (images) => {
+    if (!Array.isArray(images)) {
+        return [];
+    }
+
+    return images
+        .flat()
+        .map((url) => {
+            if (url === null || url === undefined) {
+                return '';
+            }
+
+            return typeof url === 'string' ? url : String(url);
+        })
+        .map((url) => url.trim())
+        .filter(Boolean);
+};
+
 const attachProductDetails = async (products) => {
     if (products.length === 0) {
         return products;
@@ -44,6 +78,9 @@ const attachProductDetails = async (products) => {
 };
 
 const replaceProductDetails = async (connection, productId, specs, images) => {
+    const normalizedSpecs = normalizeSpecsForStorage(specs);
+    const normalizedImages = normalizeImageUrlsForStorage(images);
+
     await connection.query(
         'DELETE FROM technical_specification WHERE product_id = ?',
         [productId]
@@ -53,15 +90,15 @@ const replaceProductDetails = async (connection, productId, specs, images) => {
         [productId]
     );
 
-    if (specs) {
+    if (normalizedSpecs) {
         await connection.query(
             'INSERT INTO technical_specification (specs, product_id) VALUES (?, ?)',
-            [specs, productId]
+            [normalizedSpecs, productId]
         );
     }
 
     let primaryImageId = null;
-    for (const url of images) {
+    for (const url of normalizedImages) {
         const [result] = await connection.query(
             'INSERT INTO product_image (product_id, url) VALUES (?, ?)',
             [productId, url]

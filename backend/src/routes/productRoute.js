@@ -21,7 +21,7 @@ router.post(
     authenticateToken,
     requireAdmin,
     uploadProductAssets.fields([
-        { name: 'images', maxCount: 3 },
+        { name: 'images' },
         { name: 'specFile', maxCount: 1 },
     ]),
     productController.createProduct
@@ -31,7 +31,7 @@ router.put(
     authenticateToken,
     requireAdmin,
     uploadProductAssets.fields([
-        { name: 'images', maxCount: 3 },
+        { name: 'images' },
         { name: 'specFile', maxCount: 1 },
     ]),
     productController.updateProduct

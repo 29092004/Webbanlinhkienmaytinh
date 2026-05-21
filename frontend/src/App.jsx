@@ -1,5 +1,7 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 
+import { subscribeToSessionExpired } from "./lib/auth";
 import Home from "./pages/Home";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
@@ -17,9 +19,30 @@ import AdminOrders from "./pages/admin/AdminOrders";
 import AdminShipping from "./pages/admin/AdminShipping";
 import AdminAccounts from "./pages/admin/AdminAccounts";
 
+function SessionExpiredHandler() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    return subscribeToSessionExpired(() => {
+      window.alert("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tiếp tục sử dụng hệ thống.");
+
+      if (location.pathname !== "/login") {
+        navigate("/login", {
+          replace: true,
+          state: { redirectedFrom: location.pathname },
+        });
+      }
+    });
+  }, [location.pathname, navigate]);
+
+  return null;
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <SessionExpiredHandler />
 
       <Routes>
 

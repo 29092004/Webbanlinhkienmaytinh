@@ -51,7 +51,6 @@ const uploadProductAssets = multer({
     storage,
     fileFilter: uploadFileFilter,
     limits: {
-        files: 4,
         fileSize: 5 * 1024 * 1024,
     },
 });
