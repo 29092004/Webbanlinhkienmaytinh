@@ -1,0 +1,262 @@
+import { useState, useMemo } from "react";
+import { Header } from "@/components/ui/Header";
+import { Footer } from "@/components/ui/Footer";
+import { CartItemRow } from "@/components/cart/CartItemRow";
+import { CartSummary } from "@/components/cart/CartSummary";
+import { ShoppingBag, ArrowLeft, ChevronRight, ShoppingCart } from "lucide-react";
+import { Link } from "react-router-dom";
+
+const initialCartItems = [
+  {
+    id: 1,
+    name: "ASUS ROG Strix RTX 4090 OC",
+    details: "24GB GDDR6X | Triple Fan | Aura Sync RGB",
+    price: 45500000,
+    originalPrice: 48900000,
+    quantity: 1,
+    image: "https://images.unsplash.com/photo-1591488320449-011701bb6704?q=80&w=400&auto=format&fit=crop"
+  },
+  {
+    id: 2,
+    name: "AMD Ryzen 9 7950X3D",
+    details: "16 Cores | 32 Threads | 144MB Cache",
+    price: 16200000,
+    quantity: 1,
+    image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?q=80&w=400&auto=format&fit=crop"
+  },
+  {
+    id: 3,
+    name: "Corsair Dominator Platinum 32GB",
+    details: "DDR5 6000MHz | CL30 | RGB Lighting",
+    price: 4850000,
+    quantity: 1,
+    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400&auto=format&fit=crop"
+  }
+];
+
+const mockSuggestions = [
+  {
+    id: 201,
+    name: "ASUS ProArt 32\" 4K HDR",
+    price: 18450000,
+    image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?q=80&w=400&auto=format&fit=crop"
+  },
+  {
+    id: 202,
+    name: "Keychron Q1 Max Custom",
+    price: 4200000,
+    image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?q=80&w=400&auto=format&fit=crop"
+  },
+  {
+    id: 203,
+    name: "Logitech G Pro X Superlight",
+    price: 3150000,
+    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400&auto=format&fit=crop"
+  },
+  {
+    id: 204,
+    name: "SteelSeries Arctis Nova Pro",
+    price: 8600000,
+    image: "https://images.unsplash.com/photo-1591488320449-011701bb6704?q=80&w=400&auto=format&fit=crop"
+  }
+];
+
+function Cart() {
+  const [cartItems, setCartItems] = useState(initialCartItems);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponApplied, setCouponApplied] = useState(false);
+
+  const handleQuantityChange = (id, newQty) => {
+    if (newQty < 1) return;
+    setCartItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, quantity: newQty } : item))
+    );
+  };
+
+  const handleRemove = (id) => {
+    setCartItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const handleApplyCoupon = () => {
+    if (couponCode.trim().toUpperCase() === "EXOCORE2024") {
+      setCouponApplied(true);
+    } else {
+      alert("Mã giảm giá không hợp lệ. Vui lòng thử lại với EXOCORE2024!");
+    }
+  };
+
+  const handleAddSuggestionToCart = (product) => {
+    setCartItems((prev) => {
+      const existing = prev.find((item) => item.name === product.name);
+      if (existing) {
+        return prev.map((item) =>
+          item.name === product.name
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [
+        ...prev,
+        {
+          id: Date.now(),
+          name: product.name,
+          details: "Premium Accessory | High Performance",
+          price: product.price,
+          quantity: 1,
+          image: product.image
+        }
+      ];
+    });
+  };
+
+  // Math Calculations
+  const rawSubtotal = useMemo(() => {
+    return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  }, [cartItems]);
+
+  const discountAmount = useMemo(() => {
+    return couponApplied ? Math.round(rawSubtotal * 0.1) : 0;
+  }, [rawSubtotal, couponApplied]);
+
+  const subtotal = rawSubtotal - discountAmount;
+  const vat = Math.round(subtotal * 0.1);
+  const total = subtotal + vat;
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
+      <Header />
+
+      {/* Main Container */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1 space-y-8">
+        {/* Breadcrumbs */}
+        <nav className="flex items-center gap-1.5 text-[11px] font-bold text-gray-500 uppercase tracking-wide">
+          <Link to="/" className="hover:text-blue-600 transition-colors">Home</Link>
+          <ChevronRight className="size-3 text-gray-400" />
+          <span className="text-gray-400">Giỏ hàng</span>
+        </nav>
+
+        {/* Title */}
+        <div>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">
+            Giỏ hàng của bạn
+          </h1>
+          <p className="text-xs text-gray-500 font-semibold mt-1">
+            {cartItems.length} sản phẩm — Kiểm tra lại sản phẩm trước khi thanh toán
+          </p>
+        </div>
+
+        {cartItems.length === 0 ? (
+          /* Empty State */
+          <div className="bg-white border border-slate-100 rounded-xl p-12 text-center shadow-sm max-w-xl mx-auto space-y-5">
+            <div className="size-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto">
+              <ShoppingBag className="size-8" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-extrabold text-gray-900 text-lg">Giỏ hàng của bạn trống!</h3>
+              <p className="text-gray-500 text-xs font-semibold">
+                Hãy chọn thêm linh kiện chất lượng cao và quay lại sau nhé.
+              </p>
+            </div>
+            <Link
+              to="/products"
+              className="inline-block bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2.5 px-6 text-xs font-bold transition-colors uppercase"
+            >
+              QUAY LẠI CỬA HÀNG
+            </Link>
+          </div>
+        ) : (
+          /* Shopping Layout grid */
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left Column: Cart items */}
+            <div className="lg:col-span-8 space-y-4">
+              <div className="space-y-3">
+                {cartItems.map((item) => (
+                  <CartItemRow
+                    key={item.id}
+                    item={item}
+                    onQuantityChange={handleQuantityChange}
+                    onRemove={handleRemove}
+                  />
+                ))}
+              </div>
+
+              {/* Continue Shopping Link */}
+              <Link
+                to="/products"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors pt-2"
+              >
+                <ArrowLeft className="size-3.5" />
+                Tiếp tục mua sắm
+              </Link>
+            </div>
+
+            {/* Right Column: Order summary */}
+            <div className="lg:col-span-4 shrink-0">
+              <CartSummary
+                subtotal={subtotal}
+                vat={vat}
+                total={total}
+                discountAmount={discountAmount}
+                couponCode={couponCode}
+                onCouponCodeChange={setCouponCode}
+                onApplyCoupon={handleApplyCoupon}
+                couponApplied={couponApplied}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Suggestion Products Section */}
+        <div className="border-t border-slate-200 pt-8 space-y-6">
+          <div className="flex items-end justify-between">
+            <div>
+              <h2 className="font-black text-gray-900 text-xl tracking-tight">Có thể bạn cũng thích</h2>
+            </div>
+            <Link to="/products" className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors">
+              Xem tất cả
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {mockSuggestions.map((product) => (
+              <div
+                key={product.id}
+                className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 flex flex-col relative group hover:shadow-md transition-shadow"
+              >
+                <div className="aspect-square bg-slate-50 rounded-lg overflow-hidden p-2 flex items-center justify-center mb-4">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="object-cover w-full h-full rounded group-hover:scale-102 transition-transform duration-300"
+                  />
+                </div>
+
+                <h3 className="font-bold text-gray-900 text-sm mb-2 line-clamp-1">
+                  {product.name}
+                </h3>
+
+                <span className="text-blue-600 font-extrabold text-sm mb-4">
+                  {product.price.toLocaleString("vi-VN")}đ
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => handleAddSuggestionToCart(product)}
+                  className="mt-auto w-full border-2 border-blue-600 hover:bg-blue-50 text-blue-600 rounded-lg py-2 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <ShoppingCart className="size-3.5" />
+                  Thêm vào giỏ
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
+
+      <Footer />
+    </div>
+  );
+}
+
+export default Cart;
