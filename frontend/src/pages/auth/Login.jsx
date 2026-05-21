@@ -1,12 +1,10 @@
-import { AtSign, Lock } from "lucide-react";
+import { AtSign, Lock, Cpu } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
-import { AuthCard } from "@/components/auth/AuthCard";
 import { AuthCheckbox } from "@/components/auth/AuthCheckbox";
 import { AuthDivider } from "@/components/auth/AuthDivider";
 import { AuthLayout } from "@/components/auth/AuthLayout";
-import { AuthSwitch } from "@/components/auth/AuthSwitch";
 import { GoogleButton } from "@/components/auth/GoogleButton";
 import { InputField } from "@/components/auth/InputField";
 import { Button } from "@/components/ui/button";
@@ -135,11 +133,28 @@ export default function Login() {
   };
 
   return (
-    <AuthLayout variant="login">
-      <AuthCard title="Đăng nhập" subtitle="Chào mừng bạn quay lại" align="center">
-        <form className="space-y-5" onSubmit={handleSubmit}>
+    <AuthLayout>
+      {/* Header outside the card */}
+      <div className="flex flex-col items-center text-center mb-7 select-none">
+        <div className="flex items-center justify-center size-14 rounded-full bg-[#081e35] border border-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.15)] mb-3">
+          <Cpu className="size-7 text-blue-400" />
+        </div>
+        <span className="text-[16px] font-bold text-white/90 tracking-wide">
+          LinhKienMayTinh
+        </span>
+        <h1 className="mt-1 text-3xl font-extrabold !text-white leading-none">
+          Đăng nhập
+        </h1>
+        <p className="mt-2 text-[14px] text-slate-400">
+          Chào mừng bạn quay lại hệ thống
+        </p>
+      </div>
+
+      {/* Main card */}
+      <div className="w-full max-w-[460px] rounded-[32px] bg-white px-7 py-8 shadow-[0_20px_50px_rgba(3,21,37,0.4)] sm:px-9 sm:py-10">
+        <form className="space-y-6" onSubmit={handleSubmit}>
           <InputField
-            label="Email"
+            label="Email hoặc số điện thoại"
             icon={AtSign}
             type="text"
             name="identifier"
@@ -173,7 +188,7 @@ export default function Login() {
             />
             <button
               type="button"
-              className="text-[16px] font-medium text-[#0b2d4d] underline underline-offset-2"
+              className="text-[14px] font-semibold text-blue-600 hover:text-blue-700 hover:underline"
             >
               Quên mật khẩu?
             </button>
@@ -186,12 +201,12 @@ export default function Login() {
           <Button
             type="submit"
             disabled={isSubmitting || isGoogleSubmitting}
-            className="h-[58px] w-full rounded-[12px] bg-[#0b2d4d] text-[17px] font-bold text-white shadow-[0_10px_20px_rgba(7,17,31,0.2)] hover:bg-[#08243e]"
+            className="h-[52px] w-full rounded-full bg-[#031525] text-[16px] font-bold text-white shadow-md hover:bg-[#0c2238] transition active:scale-[0.98] cursor-pointer"
           >
             {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
           </Button>
 
-          <div className="pt-2">
+          <div className="pt-1">
             <AuthDivider />
           </div>
 
@@ -199,18 +214,18 @@ export default function Login() {
             onClick={handleGoogleLogin}
             disabled={isSubmitting || isGoogleSubmitting}
           >
-            {isGoogleSubmitting ? "Đang xử lý Google..." : "Đăng nhập với Google"}
+            {isGoogleSubmitting ? "Đang xử lý Google..." : "Tiếp tục với Google"}
           </GoogleButton>
-
-          <div className="pt-3">
-            <AuthSwitch
-              text="Chưa có tài khoản?"
-              linkText="Đăng ký ngay"
-              to="/register"
-            />
-          </div>
         </form>
-      </AuthCard>
+      </div>
+
+      {/* Footer below the card */}
+      <div className="mt-8 text-center text-[15px] font-medium text-slate-400 select-none">
+        Chưa có tài khoản?{" "}
+        <Link to="/register" className="font-semibold text-blue-400 hover:underline">
+          Đăng ký ngay
+        </Link>
+      </div>
     </AuthLayout>
   );
 }

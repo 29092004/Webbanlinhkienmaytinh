@@ -1,4 +1,4 @@
-import { ShoppingCart, User } from "lucide-react";
+import { Search, ShoppingCart, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -84,6 +84,9 @@ export function Header() {
           </div>
 
           <div className="flex items-center space-x-6 text-gray-500">
+            <button type="button" className="transition-colors hover:text-gray-900">
+              <Search className="size-5" />
+            </button>
             <button type="button" className="transition-colors hover:text-gray-900">
               <ShoppingCart className="size-5" />
             </button>

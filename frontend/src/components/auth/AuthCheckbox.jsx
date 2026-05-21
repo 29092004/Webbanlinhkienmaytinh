@@ -14,18 +14,22 @@ export function AuthCheckbox({
   return (
     <label
       htmlFor={id}
-      className="flex cursor-pointer items-center gap-3 text-[16px] font-medium leading-6 text-[#2c313b]"
+      className="flex cursor-pointer items-center gap-3 text-[15px] font-medium leading-6 text-slate-600 select-none"
     >
-      <input
-        id={id}
-        name={name}
-        type="checkbox"
-        checked={checked}
-        defaultChecked={defaultChecked}
-        onChange={onChange}
-        disabled={disabled}
-        className="size-5 shrink-0 cursor-pointer rounded border border-[#b9c1cf] accent-[#0b2d4d] transition focus:outline-none focus:ring-4 focus:ring-[#0b2d4d]/12"
-      />
+      <div className="relative flex items-center justify-center">
+        <input
+          id={id}
+          name={name}
+          type="checkbox"
+          checked={checked}
+          defaultChecked={defaultChecked}
+          onChange={onChange}
+          disabled={disabled}
+          className="peer size-5 shrink-0 cursor-pointer appearance-none rounded-full border border-slate-300 bg-white transition-all checked:border-[#031525] focus:outline-none focus:ring-2 focus:ring-slate-200"
+        />
+        {/* Center dot inside the circle when checked */}
+        <span className="pointer-events-none absolute scale-0 rounded-full bg-[#031525] transition-transform peer-checked:scale-100 size-2.5" />
+      </div>
       <span>{label}</span>
     </label>
   );
