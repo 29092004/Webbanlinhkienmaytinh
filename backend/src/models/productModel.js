@@ -76,15 +76,35 @@ const replaceProductDetails = async (connection, productId, specs, images) => {
 const ProductModel = {
     getAll: async () => {
         const [rows] = await db.query(`
-            SELECT *
-            FROM ${table_name}
+            SELECT
+                p.*,
+                b.brand_name,
+                c.name AS category_name,
+                se.sale_type,
+                se.sale_value,
+                se.sale_duration
+            FROM ${table_name} p
+            LEFT JOIN brand b ON b.brand_id = p.brand_id
+            LEFT JOIN category c ON c.id = p.category_id
+            LEFT JOIN sale_event se ON se.sale_id = p.sale_id
         `);
         return attachProductDetails(rows);
     },
 
     getById: async (id) => {
         const [rows] = await db.query(
-            `SELECT * FROM ${table_name} WHERE id = ?`,
+            `SELECT
+                p.*,
+                b.brand_name,
+                c.name AS category_name,
+                se.sale_type,
+                se.sale_value,
+                se.sale_duration
+            FROM ${table_name} p
+            LEFT JOIN brand b ON b.brand_id = p.brand_id
+            LEFT JOIN category c ON c.id = p.category_id
+            LEFT JOIN sale_event se ON se.sale_id = p.sale_id
+            WHERE p.id = ?`,
             [id]
         );
         if (rows.length === 0) {
@@ -95,15 +115,15 @@ const ProductModel = {
         return product;
     },
 
-    create: async (name, description, importPrice, retailPrice, brandId, categoryId, origin, warranty, quantity, specs, images) => {
+    create: async (name, description, importPrice, retailPrice, brandId, categoryId, saleId, origin, warranty, quantity, specs, images) => {
         const connection = await db.getConnection();
 
         try {
             await connection.beginTransaction();
 
             const [result] = await connection.query(
-                `INSERT INTO ${table_name} (name, description, import_price, retail_price, brand_id, category_id, origin, warranty, quantity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [name, description, importPrice, retailPrice, brandId, categoryId, origin, warranty, quantity]
+                `INSERT INTO ${table_name} (name, description, import_price, retail_price, brand_id, category_id, sale_id, origin, warranty, quantity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [name, description, importPrice, retailPrice, brandId, categoryId, saleId ?? null, origin, warranty, quantity]
             );
 
             await replaceProductDetails(connection, result.insertId, specs, images);
@@ -118,15 +138,15 @@ const ProductModel = {
         }
     },
 
-    update: async (id, name, description, importPrice, retailPrice, brandId, categoryId, origin, warranty, quantity, specs, images) => {
+    update: async (id, name, description, importPrice, retailPrice, brandId, categoryId, saleId, origin, warranty, quantity, specs, images) => {
         const connection = await db.getConnection();
 
         try {
             await connection.beginTransaction();
 
             const [result] = await connection.query(
-                `UPDATE ${table_name} SET name = ?, description = ?, import_price = ?, retail_price = ?, brand_id = ?, category_id = ?, origin = ?, warranty = ?, quantity = ? WHERE id = ?`,
-                [name, description, importPrice, retailPrice, brandId, categoryId, origin, warranty, quantity, id]
+                `UPDATE ${table_name} SET name = ?, description = ?, import_price = ?, retail_price = ?, brand_id = ?, category_id = ?, sale_id = ?, origin = ?, warranty = ?, quantity = ? WHERE id = ?`,
+                [name, description, importPrice, retailPrice, brandId, categoryId, saleId ?? null, origin, warranty, quantity, id]
             );
 
             if (result.affectedRows === 0) {

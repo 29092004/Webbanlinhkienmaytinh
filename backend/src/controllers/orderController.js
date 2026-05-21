@@ -1,6 +1,6 @@
 import orderModel from '../models/orderModel.js';
 
-const normalizeOrderDetails = (value, fallbackProductId = null) => {
+const normalizeOrderDetails = (value, fallbackProductId = null, fallbackQuantity = 1, fallbackSubtotalPrice = null, fallbackNote = null) => {
     if (Array.isArray(value)) {
         return value;
     }
@@ -17,9 +17,9 @@ const normalizeOrderDetails = (value, fallbackProductId = null) => {
     if (fallbackProductId) {
         return [{
             productId: fallbackProductId,
-            quantity: 1,
-            subtotalPrice: null,
-            note: null,
+            quantity: fallbackQuantity,
+            subtotalPrice: fallbackSubtotalPrice,
+            note: fallbackNote,
         }];
     }
 
@@ -58,7 +58,10 @@ const orderController = {
             const voucherId = req.body.voucherId ?? req.body.voucher_id ?? null;
             const totalPrice = req.body.totalPrice ?? req.body.total_price;
             const legacyProductId = req.body.productId ?? req.body.product_id ?? null;
-            const details = normalizeOrderDetails(req.body.details, legacyProductId);
+            const quantity = req.body.quantity ?? 1;
+            const subtotalPrice = req.body.subtotalPrice ?? req.body.subtotal_price ?? totalPrice ?? null;
+            const note = req.body.note ?? null;
+            const details = normalizeOrderDetails(req.body.details, legacyProductId, quantity, subtotalPrice, note);
 
             if (!createdAt || !paymentMethod || !status || !accountId || totalPrice === undefined) {
                 return res.status(400).json({ message: 'Invalid input' });
@@ -90,7 +93,10 @@ const orderController = {
             const voucherId = req.body.voucherId ?? req.body.voucher_id ?? null;
             const totalPrice = req.body.totalPrice ?? req.body.total_price;
             const legacyProductId = req.body.productId ?? req.body.product_id ?? null;
-            const details = normalizeOrderDetails(req.body.details, legacyProductId);
+            const quantity = req.body.quantity ?? 1;
+            const subtotalPrice = req.body.subtotalPrice ?? req.body.subtotal_price ?? totalPrice ?? null;
+            const note = req.body.note ?? null;
+            const details = normalizeOrderDetails(req.body.details, legacyProductId, quantity, subtotalPrice, note);
 
             if (!createdAt || !paymentMethod || !status || !accountId || totalPrice === undefined) {
                 return res.status(400).json({ message: 'Invalid input' });

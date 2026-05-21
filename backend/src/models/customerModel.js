@@ -9,6 +9,7 @@ const normalizeCustomerRow = (row) => {
 
     return {
         ...row,
+        account_id: row.customer_id ?? null,
         firstName: row.first_name ?? '',
         lastName: row.last_name ?? '',
     };
