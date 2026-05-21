@@ -1,4 +1,5 @@
 import { Grid, List, ChevronLeft, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { ProductCard } from "./ProductCard";
 
 export function ProductGrid({
@@ -116,20 +117,25 @@ export function ProductGrid({
                 </div>
 
                 {/* Image */}
-                <div className="w-32 h-32 bg-slate-50 rounded-lg overflow-hidden p-2 flex items-center justify-center shrink-0">
+                <Link
+                  to={`/product/${product.id || 3}`}
+                  className="w-32 h-32 bg-slate-50 rounded-lg overflow-hidden p-2 flex items-center justify-center shrink-0"
+                >
                   <img
                     src={product.image}
                     alt={product.name}
                     className="object-cover w-full h-full rounded group-hover:scale-102 transition-transform duration-300"
                   />
-                </div>
+                </Link>
 
                 {/* Details */}
                 <div className="flex-1 flex flex-col justify-between py-1">
                   <div>
-                    <h3 className="font-bold text-gray-900 text-sm mb-1 hover:text-blue-600 transition-colors">
-                      {product.name}
-                    </h3>
+                    <Link to={`/product/${product.id || 3}`}>
+                      <h3 className="font-bold text-gray-900 text-sm mb-1 hover:text-blue-600 transition-colors">
+                        {product.name}
+                      </h3>
+                    </Link>
                     <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-2">
                       Hãng: {product.brand} | VRAM: {product.vram}
                     </span>

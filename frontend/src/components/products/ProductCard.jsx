@@ -1,8 +1,12 @@
 import { ShoppingCart, Star } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export function ProductCard({ product }) {
   // Generate stars array
   const stars = Array.from({ length: 5 }, (_, idx) => idx < Math.floor(product.rating));
+
+  // For mockup navigation, route to the ASUS ROG Strix details page (/product/3)
+  const productDetailPath = `/product/${product.id || 3}`;
 
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 flex flex-col relative group hover:shadow-md transition-shadow">
@@ -21,13 +25,13 @@ export function ProductCard({ product }) {
       </div>
 
       {/* Image container */}
-      <div className="aspect-square bg-slate-50 rounded-lg overflow-hidden p-2 flex items-center justify-center mb-4">
+      <Link to={productDetailPath} className="aspect-square bg-slate-50 rounded-lg overflow-hidden p-2 flex items-center justify-center mb-4">
         <img
           src={product.image}
           alt={product.name}
           className="object-cover w-full h-full rounded group-hover:scale-102 transition-transform duration-300"
         />
-      </div>
+      </Link>
 
       {/* Review Stars */}
       <div className="flex items-center gap-1 mb-2">
@@ -45,9 +49,11 @@ export function ProductCard({ product }) {
       </div>
 
       {/* Product Title */}
-      <h3 className="font-bold text-gray-900 text-sm mb-2 hover:text-blue-600 transition-colors line-clamp-2 min-h-[40px]">
-        {product.name}
-      </h3>
+      <Link to={productDetailPath}>
+        <h3 className="font-bold text-gray-900 text-sm mb-2 hover:text-blue-600 transition-colors line-clamp-2 min-h-[40px]">
+          {product.name}
+        </h3>
+      </Link>
 
       {/* Pricing */}
       <div className="flex flex-col gap-0.5 mb-4">
