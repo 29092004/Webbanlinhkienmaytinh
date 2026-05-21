@@ -1,4 +1,4 @@
-import { ArrowRight, Lock, Mail, Phone, User, Shield, Cpu } from "lucide-react";
+import { ArrowRight, Lock, Mail, Phone, Shield } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -22,7 +22,6 @@ export default function Register() {
   const navigate = useNavigate();
   const googleClientId = import.meta.env.GOOGLE_CLIENT_ID?.trim();
   const [form, setForm] = useState({
-    fullName: "",
     email: "",
     phone: "",
     password: "",
@@ -121,11 +120,6 @@ export default function Register() {
     event.preventDefault();
     setError("");
 
-    if (!form.fullName.trim()) {
-      setError("Vui lòng nhập họ và tên.");
-      return;
-    }
-
     if (!form.email.trim()) {
       setError("Vui lòng nhập email.");
       return;
@@ -159,7 +153,6 @@ export default function Register() {
       clearAuthSession();
       clearOtpAutoSentState();
       savePendingRegistration({
-        fullName: form.fullName.trim(),
         phone: form.phone.trim(),
         username: email,
         password: form.password,
@@ -190,38 +183,13 @@ export default function Register() {
   return (
     <AuthLayout>
       {/* Main card */}
-      <div className="w-full max-w-[620px] rounded-[32px] bg-white px-7 py-8 shadow-[0_20px_50px_rgba(3,21,37,0.4)] sm:px-9 sm:py-10">
-        {/* Header inside the card */}
-        <div className="flex items-center gap-3 mb-6 select-none">
-          <div className="flex items-center justify-center size-10 rounded-full bg-[#031525] text-white">
-            <Cpu className="size-5 text-blue-400" strokeWidth={2.2} />
-          </div>
-          <span className="text-[17px] font-extrabold text-[#031525] tracking-wide">
-            LinhKienMayTinh
-          </span>
-        </div>
-
-        <h2 className="text-[24px] font-extrabold text-[#031525] tracking-tight leading-none">
+      <div className="w-full max-w-[480px] rounded-[32px] bg-white px-6 py-7 shadow-[0_20px_50px_rgba(3,21,37,0.4)] sm:px-7 sm:py-8">
+        <h2 className="text-center text-[24px] font-extrabold text-[#031525] tracking-tight leading-none">
           Đăng ký tài khoản
         </h2>
-        <p className="text-slate-500 text-[14px] mt-2 mb-7">
-          Tham gia cộng đồng linh kiện máy tính cao cấp ngay hôm nay.
-        </p>
 
-        <form className="space-y-6" onSubmit={handleSubmit}>
-          {/* Row 1: Name and Email */}
-          <div className="grid gap-5 sm:grid-cols-2">
-            <InputField
-              label="Họ và tên"
-              icon={User}
-              type="text"
-              name="fullName"
-              placeholder="Nguyễn Văn A"
-              value={form.fullName}
-              onChange={handleChange}
-              disabled={isSubmitting || isGoogleSubmitting}
-            />
-
+        <form className="mx-auto mt-7 flex w-full max-w-[360px] flex-col items-start space-y-4 text-left" onSubmit={handleSubmit}>
+          <div className="w-full">
             <InputField
               label="Email"
               icon={Mail}
@@ -235,21 +203,21 @@ export default function Register() {
             />
           </div>
 
-          {/* Row 2: Phone */}
-          <InputField
-            label="Số điện thoại"
-            icon={Phone}
-            type="tel"
-            name="phone"
-            autoComplete="tel"
-            placeholder="0123 456 789"
-            value={form.phone}
-            onChange={handleChange}
-            disabled={isSubmitting || isGoogleSubmitting}
-          />
+          <div className="w-full">
+            <InputField
+              label="Số điện thoại"
+              icon={Phone}
+              type="tel"
+              name="phone"
+              autoComplete="tel"
+              placeholder="0123 456 789"
+              value={form.phone}
+              onChange={handleChange}
+              disabled={isSubmitting || isGoogleSubmitting}
+            />
+          </div>
 
-          {/* Row 3: Password and Confirmation */}
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="w-full">
             <InputField
               label="Mật khẩu"
               icon={Lock}
@@ -262,8 +230,11 @@ export default function Register() {
               onChange={handleChange}
               disabled={isSubmitting || isGoogleSubmitting}
             />
+          </div>
+
+          <div className="w-full">
             <InputField
-              label="Xác nhận"
+              label="Xác nhận mật khẩu"
               icon={Shield}
               type="password"
               name="confirmPassword"
@@ -285,7 +256,7 @@ export default function Register() {
           />
 
           {error ? (
-            <p className="text-sm font-medium text-red-600">{error}</p>
+            <p className="w-full text-left text-sm font-medium text-red-600">{error}</p>
           ) : null}
 
           <Button
@@ -297,7 +268,7 @@ export default function Register() {
             <ArrowRight className="size-5" />
           </Button>
 
-          <div className="pt-1">
+          <div className="w-full pt-1">
             <AuthDivider />
           </div>
 
@@ -307,15 +278,14 @@ export default function Register() {
           >
             {isGoogleSubmitting ? "Đang xử lý Google..." : "Đăng ký với Google"}
           </GoogleButton>
-        </form>
-      </div>
 
-      {/* Footer below the card */}
-      <div className="mt-8 text-center text-[15px] font-medium text-slate-400 select-none">
-        Đã có tài khoản?{" "}
-        <Link to="/login" className="font-semibold text-blue-400 hover:underline">
-          Đăng nhập
-        </Link>
+          <div className="w-full pt-1 text-center text-[14px] font-medium text-slate-400">
+            Đã có tài khoản?{" "}
+            <Link to="/login" className="font-semibold text-blue-400 hover:underline">
+              Đăng nhập ngay
+            </Link>
+          </div>
+        </form>
       </div>
     </AuthLayout>
   );

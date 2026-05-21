@@ -3,6 +3,9 @@ const USER_KEY = "auth_user";
 const PENDING_REGISTER_KEY = "pending_register";
 const OTP_AUTO_SENT_KEY = "pending_register_otp_sent_for";
 const AUTH_STATE_EVENT = "auth-state-changed";
+const AUTH_SESSION_EXPIRED_EVENT = "auth-session-expired";
+
+let lastSessionExpiredNotificationAt = 0;
 
 function notifyAuthStateChanged() {
   window.dispatchEvent(new Event(AUTH_STATE_EVENT));
@@ -40,6 +43,7 @@ function isAccessTokenExpired(token) {
 }
 
 export function saveAuthSession({ accessToken, user }) {
+  lastSessionExpiredNotificationAt = 0;
   localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
   localStorage.setItem(USER_KEY, JSON.stringify(user));
   notifyAuthStateChanged();
@@ -49,6 +53,18 @@ export function clearAuthSession() {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
   notifyAuthStateChanged();
+}
+
+export function notifySessionExpired() {
+  const now = Date.now();
+
+  if (now - lastSessionExpiredNotificationAt < 3000) {
+    return;
+  }
+
+  lastSessionExpiredNotificationAt = now;
+  clearAuthSession();
+  window.dispatchEvent(new Event(AUTH_SESSION_EXPIRED_EVENT));
 }
 
 export function getAccessToken() {
@@ -120,6 +136,14 @@ export function subscribeToAuthState(callback) {
   return () => {
     window.removeEventListener(AUTH_STATE_EVENT, callback);
     window.removeEventListener("storage", callback);
+  };
+}
+
+export function subscribeToSessionExpired(callback) {
+  window.addEventListener(AUTH_SESSION_EXPIRED_EVENT, callback);
+
+  return () => {
+    window.removeEventListener(AUTH_SESSION_EXPIRED_EVENT, callback);
   };
 }
 
