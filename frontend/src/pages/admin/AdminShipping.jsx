@@ -1,9 +1,104 @@
-import { Pencil, Plus, Search, Trash2, X, Truck, Calendar, MapPin } from "lucide-react";
+import { Calendar, Eye, MapPin, Pencil, Plus, Search, Trash2, Truck, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { AdminSidebar } from "@/components/admin/layout/AdminSidebar";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+
+function formatCurrency(value) {
+  return Number(value || 0).toLocaleString("vi-VN");
+}
+
+function getShippingSortValue(shipping) {
+  const parsedDate = shipping?.date ? new Date(shipping.date).getTime() : 0;
+  if (Number.isFinite(parsedDate) && parsedDate > 0) {
+    return parsedDate;
+  }
+  return Number(shipping?.id || 0);
+}
+
+function getOrderStatusLabel(status) {
+  switch (status?.toUpperCase()) {
+    case "COMPLETED":
+      return "Đã hoàn thành";
+    case "CANCELLED":
+      return "Đã hủy";
+    case "SHIPPING":
+      return "Đang giao";
+    case "PROCESSING":
+      return "Đang xử lý";
+    default:
+      return "Chờ xử lý";
+  }
+}
+
+function OrderDetailsModal({ open, order, onClose }) {
+  if (!open || !order) return null;
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/45 px-4">
+      <div className="w-full max-w-3xl rounded-[24px] bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.22)] max-h-[90vh] overflow-y-auto">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900">Chi tiết đơn hàng #{order.id}</h2>
+            <p className="mt-1 text-sm text-slate-500">Kiểm tra lại thông tin trước khi tạo hoặc hoàn tất vận đơn.</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex size-9 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Khách hàng</p>
+            <p className="mt-2 text-base font-semibold text-slate-900">
+              {[order.customer_first_name, order.customer_last_name].filter(Boolean).join(" ") || order.account_username || "N/A"}
+            </p>
+            <p className="mt-1 text-sm text-slate-600">{order.customer_phone || order.customer_email || "Không có liên hệ"}</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">{order.customer_address || "Chưa có địa chỉ giao hàng"}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Đơn hàng</p>
+            <div className="mt-2 space-y-2 text-sm text-slate-600">
+              <p><span className="font-semibold text-slate-900">Trạng thái:</span> {getOrderStatusLabel(order.status)}</p>
+              <p><span className="font-semibold text-slate-900">Thanh toán:</span> {order.payment_method || "N/A"}</p>
+              <p><span className="font-semibold text-slate-900">Ngày tạo:</span> {order.created_at ? new Date(order.created_at).toLocaleDateString("vi-VN") : "N/A"}</p>
+              <p><span className="font-semibold text-slate-900">Tổng tiền:</span> {formatCurrency(order.total_price)}đ</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-slate-200">
+          <div className="border-b border-slate-200 px-4 py-3">
+            <h3 className="text-sm font-bold text-slate-900">Sản phẩm trong đơn</h3>
+          </div>
+          <div className="divide-y divide-slate-200">
+            {(order.details?.length ? order.details : [order]).map((detail, index) => (
+              <div key={`${detail.product_id || detail.id || index}-${index}`} className="grid gap-2 px-4 py-4 md:grid-cols-[1fr_auto_auto] md:items-center">
+                <div>
+                  <p className="font-semibold text-slate-900">{detail.product_name || "Sản phẩm"}</p>
+                  {detail.note && <p className="mt-1 text-sm text-slate-500">Ghi chú: {detail.note}</p>}
+                </div>
+                <p className="text-sm text-slate-600">SL: {detail.quantity || 1}</p>
+                <p className="text-sm font-semibold text-slate-900">{formatCurrency(detail.subtotal_price || order.total_price)}đ</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-6 flex justify-end">
+          <Button type="button" onClick={onClose} className="h-11 rounded-2xl bg-slate-900 px-5 text-white hover:bg-slate-800">
+            Đóng
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function ShippingModal({
   open,
@@ -17,7 +112,9 @@ function ShippingModal({
   error,
   isDelete = false,
   orders = [],
-  customers = []
+  customers = [],
+  onPreviewOrder,
+  isCreate = false
 }) {
   if (!open) return null;
 
@@ -43,9 +140,64 @@ function ShippingModal({
             </p>
           ) : (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">Đơn hàng</label>
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  {isCreate ? "Đơn hàng đủ điều kiện tạo vận đơn" : "Đơn hàng"}
+                </label>
+                {isCreate ? (
+                  orders.length > 0 ? (
+                    <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                      {orders.map((order) => {
+                        const isSelected = String(formData.orderId) === String(order.id);
+                        const customerName = [order.customer_first_name, order.customer_last_name].filter(Boolean).join(" ");
+
+                        return (
+                          <div
+                            key={order.id}
+                            className={`rounded-2xl border px-4 py-3 transition ${
+                              isSelected ? "border-blue-300 bg-blue-50" : "border-slate-200 bg-white"
+                            }`}
+                          >
+                            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                              <div>
+                                <p className="font-semibold text-slate-900">#{order.id} • {customerName || order.account_username || "Khách hàng"}</p>
+                                <p className="mt-1 text-sm text-slate-500">
+                                  {order.customer_phone || order.customer_email || "Không có liên hệ"} • {getOrderStatusLabel(order.status)}
+                                </p>
+                                <p className="mt-1 text-sm text-slate-500">
+                                  {order.customer_address || "Chưa có địa chỉ giao hàng"}
+                                </p>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => onPreviewOrder?.(order)}
+                                  className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-slate-200 px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                                >
+                                  <Eye className="size-4" /> Xem
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => onChange("orderId", String(order.id))}
+                                  disabled={isSubmitting}
+                                  className={`inline-flex h-10 items-center rounded-xl px-3 text-sm font-semibold text-white transition ${
+                                    isSelected ? "bg-blue-700 hover:bg-blue-700" : "bg-blue-600 hover:bg-blue-700"
+                                  }`}
+                                >
+                                  {isSelected ? "Đã chọn" : "Chọn đơn"}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+                      Chưa có đơn hàng nào đã được duyệt sang trạng thái đang xử lý hoặc các đơn này đã có vận đơn.
+                    </div>
+                  )
+                ) : (
                   <select
                     value={formData.orderId}
                     onChange={(e) => onChange("orderId", e.target.value)}
@@ -54,10 +206,23 @@ function ShippingModal({
                     required
                   >
                     <option value="">Chọn ĐH</option>
-                    {orders.map(o => (
-                      <option key={o.id} value={o.id}>#{o.id} ({o.status})</option>
+                    {orders.map((o) => (
+                      <option key={o.id} value={o.id}>#{o.id} ({getOrderStatusLabel(o.status)})</option>
                     ))}
                   </select>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Mã đơn đã chọn</label>
+                  <input
+                    type="text"
+                    value={formData.orderId ? `#${formData.orderId}` : ""}
+                    readOnly
+                    className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 text-sm text-slate-600 outline-none"
+                    placeholder="Chưa chọn đơn"
+                  />
                 </div>
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-700">Khách hàng</label>
@@ -173,6 +338,7 @@ function AdminShipping() {
   const [selectedShipping, setSelectedShipping] = useState(null);
   const [modalError, setModalError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewOrder, setPreviewOrder] = useState(null);
 
   const initialFormData = {
     orderId: "",
@@ -208,13 +374,34 @@ function AdminShipping() {
   }, []);
 
   const filteredShippings = useMemo(() => {
+    const latestShippingByOrder = new Map();
+
+    shippings.forEach((shipping) => {
+      const orderKey = String(shipping.id_order ?? "");
+      const currentShipping = latestShippingByOrder.get(orderKey);
+
+      if (!currentShipping || getShippingSortValue(shipping) >= getShippingSortValue(currentShipping)) {
+        latestShippingByOrder.set(orderKey, shipping);
+      }
+    });
+
+    const uniqueShippings = Array.from(latestShippingByOrder.values()).sort((a, b) => {
+      return Number(a.id_order || 0) - Number(b.id_order || 0);
+    });
     const normalizedSearch = searchTerm.trim().toLowerCase();
-    if (!normalizedSearch) return shippings;
-    return shippings.filter((s) =>
+    if (!normalizedSearch) return uniqueShippings;
+    return uniqueShippings.filter((s) =>
       String(s.id_order).toLowerCase().includes(normalizedSearch) ||
       String(s.shipping_address).toLowerCase().includes(normalizedSearch)
     );
   }, [shippings, searchTerm]);
+
+  const eligibleOrdersForCreate = useMemo(() => {
+    return orders.filter((order) => {
+      const normalizedStatus = order.status?.toUpperCase();
+      return normalizedStatus === "PROCESSING";
+    });
+  }, [orders]);
 
   const getShippingCustomerLabel = (shipping) => {
     const matchedCustomer = customers.find((c) => String(c.customer_id) === String(shipping.customer_id));
@@ -232,7 +419,17 @@ function AdminShipping() {
   };
 
   const handleFormChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [field]: value };
+
+      if (field === "orderId") {
+        const selectedOrder = orders.find((order) => String(order.id) === String(value));
+        next.customerId = selectedOrder?.customer_id ?? selectedOrder?.account_id ?? "";
+        next.shippingAddress = selectedOrder?.customer_address ?? "";
+      }
+
+      return next;
+    });
   };
 
   const closeModal = () => {
@@ -269,6 +466,10 @@ function AdminShipping() {
     setSelectedShipping(shipping);
     setFormData({ orderId: shipping.id_order });
     setModalError("");
+  };
+
+  const openOrderPreview = (order) => {
+    setPreviewOrder(order);
   };
 
   const handleSubmit = async (event) => {
@@ -382,6 +583,7 @@ function AdminShipping() {
                   <thead className="bg-white">
                     <tr className="border-b border-[#d7e0ec] text-left text-[0.9rem] font-bold text-slate-900">
                       <th className="px-6 py-4">Mã ĐH</th>
+                      <th className="px-6 py-4">Mã KH</th>
                       <th className="px-6 py-4">Khách hàng</th>
                       <th className="px-6 py-4">Địa chỉ giao</th>
                       <th className="px-6 py-4">Ngày giao</th>
@@ -392,13 +594,13 @@ function AdminShipping() {
                   <tbody className="divide-y divide-slate-100 bg-white">
                     {isLoading ? (
                       <tr>
-                        <td colSpan={6} className="px-6 py-8 text-center text-sm font-medium text-slate-500">
+                        <td colSpan={7} className="px-6 py-8 text-center text-sm font-medium text-slate-500">
                           Đang tải dữ liệu...
                         </td>
                       </tr>
                     ) : filteredShippings.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-6 py-8 text-center text-sm font-medium text-slate-500">
+                        <td colSpan={7} className="px-6 py-8 text-center text-sm font-medium text-slate-500">
                           Chưa có thông tin vận chuyển.
                         </td>
                       </tr>
@@ -409,8 +611,11 @@ function AdminShipping() {
                             <td className="px-6 py-4 font-bold text-slate-900">
                               <div className="flex items-center gap-2">
                                 <Truck className="size-4 text-slate-500" />
-                                #{shipping.id_order}
+                                {shipping.id_order}
                               </div>
+                            </td>
+                            <td className="px-6 py-4 font-semibold text-slate-700">
+                              {shipping.customer_id || shipping.order_account_id || "N/A"}
                             </td>
                             <td className="px-6 py-4">
                               <div className="font-semibold text-slate-900">
@@ -437,6 +642,13 @@ function AdminShipping() {
                             </td>
                             <td className="px-6 py-4">
                               <div className="flex justify-end gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => openOrderPreview(orders.find((order) => String(order.id) === String(shipping.id_order)) || null)}
+                                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[0.75rem] font-semibold text-slate-700 transition hover:bg-slate-100"
+                                >
+                                  <Eye className="size-3.5" /> Xem
+                                </button>
                                 <button
                                   type="button"
                                   onClick={() => openEditModal(shipping)}
@@ -475,8 +687,10 @@ function AdminShipping() {
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
         error={modalError}
-        orders={orders}
+        orders={eligibleOrdersForCreate}
         customers={customers}
+        onPreviewOrder={openOrderPreview}
+        isCreate
       />
 
       <ShippingModal
@@ -491,6 +705,7 @@ function AdminShipping() {
         error={modalError}
         orders={orders}
         customers={customers}
+        onPreviewOrder={openOrderPreview}
       />
 
       <ShippingModal
@@ -503,6 +718,12 @@ function AdminShipping() {
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
         error={modalError}
+      />
+
+      <OrderDetailsModal
+        open={Boolean(previewOrder)}
+        order={previewOrder}
+        onClose={() => setPreviewOrder(null)}
       />
     </div>
   );

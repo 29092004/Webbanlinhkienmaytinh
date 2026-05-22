@@ -1,9 +1,33 @@
-import { Pencil, Search, Trash2, X, ShoppingBag, CreditCard, Calendar } from "lucide-react";
+import { Calendar, CheckCheck, Search, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { AdminSidebar } from "@/components/admin/layout/AdminSidebar";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+
+function toMysqlDatetime(value) {
+  if (!value) return value;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return `${value} 00:00:00`;
+  }
+  return value.replace("T", " ").replace("Z", "");
+}
+
+function buildOrderPayload(order, overrides = {}) {
+  return {
+    createdAt: toMysqlDatetime(overrides.createdAt ?? order.created_at ?? order.createdAt),
+    paymentMethod: overrides.paymentMethod ?? order.payment_method ?? order.paymentMethod ?? "COD",
+    status: overrides.status ?? order.status ?? "PENDING",
+    accountId: Number(overrides.accountId ?? order.account_id ?? order.accountId),
+    voucherId: overrides.voucherId ?? order.voucher_id ?? order.voucherId ?? null,
+    totalPrice: Number(overrides.totalPrice ?? order.total_price ?? order.totalPrice ?? 0),
+    details: Array.isArray(overrides.details ?? order.details) ? (overrides.details ?? order.details) : [],
+    productId: Number(overrides.productId ?? order.product_id ?? order.productId ?? 0),
+    quantity: Number(overrides.quantity ?? order.quantity ?? 1),
+    subtotalPrice: Number(overrides.subtotalPrice ?? order.subtotal_price ?? order.subtotalPrice ?? order.total_price ?? order.totalPrice ?? 0),
+    note: overrides.note ?? order.note ?? null,
+  };
+}
 
 function OrderModal({
   open,
@@ -253,6 +277,19 @@ function AdminOrders() {
     setModalError("");
   };
 
+  const approveOrder = async (order) => {
+    setModalError("");
+    setIsSubmitting(true);
+    try {
+      await api.put(`/orders/${order.id}`, buildOrderPayload(order, { status: "PROCESSING" }));
+      await loadData();
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || "Không thể duyệt đơn hàng.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setModalError("");
@@ -264,13 +301,13 @@ function AdminOrders() {
 
     setIsSubmitting(true);
     try {
-      const payload = {
+      const payload = buildOrderPayload(selectedOrder, {
         createdAt: formData.createdAt,
         paymentMethod: formData.paymentMethod,
         status: formData.status,
         productId: Number(formData.productId),
         accountId: Number(formData.accountId),
-      };
+      });
 
       if (modalMode === "edit" && selectedOrder) {
         await api.put(`/orders/${selectedOrder.id}`, payload);
@@ -407,17 +444,21 @@ function AdminOrders() {
                             </td>
                             <td className="px-6 py-4">
                               <div className="flex justify-end gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => openEditModal(order)}
-                                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#ffc107] px-3 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#e9b000]"
-                                >
-                                  <Pencil className="size-3.5" /> Sửa
-                                </button>
+                                {order.status?.toUpperCase() === "PENDING" && (
+                                  <button
+                                    type="button"
+                                    onClick={() => approveOrder(order)}
+                                    disabled={isSubmitting}
+                                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#2563eb] px-3 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    <CheckCheck className="size-3.5" /> Duyệt đơn
+                                  </button>
+                                )}
                                 <button
                                   type="button"
                                   onClick={() => openDeleteModal(order)}
-                                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#ff0a0a] px-3 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#e00000]"
+                                  disabled={isSubmitting}
+                                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#ff0a0a] px-3 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#e00000] disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                   <Trash2 className="size-3.5" /> Xóa
                                 </button>

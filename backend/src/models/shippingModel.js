@@ -19,6 +19,11 @@ const ShippingModel = {
                 o.status AS order_status,
                 o.total_price
             FROM ${table_name} s
+            INNER JOIN (
+                SELECT order_id, MAX(id) AS latest_shipping_id
+                FROM ${table_name}
+                GROUP BY order_id
+            ) latest_shipping ON latest_shipping.latest_shipping_id = s.id
             LEFT JOIN \`order\` o ON o.id = s.order_id
             LEFT JOIN customer c ON c.customer_id = o.account_id
             LEFT JOIN account a ON a.id = o.account_id
@@ -47,6 +52,18 @@ const ShippingModel = {
             LEFT JOIN account a ON a.id = o.account_id
             WHERE s.id = ?`,
             [id]
+        );
+        return rows[0] || null;
+    },
+
+    getByOrderId: async (orderId) => {
+        const [rows] = await db.query(
+            `SELECT *
+            FROM ${table_name}
+            WHERE order_id = ?
+            ORDER BY id DESC
+            LIMIT 1`,
+            [orderId]
         );
         return rows[0] || null;
     },
