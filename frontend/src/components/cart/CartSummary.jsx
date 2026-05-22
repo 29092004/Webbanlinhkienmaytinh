@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export function CartSummary({
   subtotal,
   vat,
@@ -86,12 +88,12 @@ export function CartSummary({
       </div>
 
       {/* Checkout CTA */}
-      <button
-        type="button"
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 px-4 rounded-xl text-sm flex items-center justify-center gap-2 shadow-sm transition-colors uppercase"
+      <Link
+        to="/checkout"
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 px-4 rounded-xl text-sm flex items-center justify-center gap-2 shadow-sm transition-colors uppercase text-center"
       >
         Thanh toán ngay →
-      </button>
+      </Link>
     </div>
   );
 }

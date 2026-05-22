@@ -7,6 +7,7 @@ import Otp from "./pages/auth/Otp";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminBrands from "./pages/admin/AdminBrands";
 import AdminCategories from "./pages/admin/AdminCategories";
@@ -31,6 +32,7 @@ function App() {
         <Route path="/products" element={<Products />} />
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/checkout" element={<Checkout />} />
 
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminDashboard />} />
