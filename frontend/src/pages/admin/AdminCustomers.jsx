@@ -5,6 +5,11 @@ import { AdminSidebar } from "@/components/admin/layout/AdminSidebar";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 
+function getCustomerFullName(customer) {
+  const fullName = `${customer.first_name ?? ""} ${customer.last_name ?? ""}`.trim();
+  return fullName || "Chưa cập nhật tên";
+}
+
 function CustomerModal({
   open,
   title,
@@ -328,6 +333,7 @@ function AdminCustomers() {
                 <table className="min-w-full divide-y divide-slate-100">
                   <thead className="bg-white">
                     <tr className="border-b border-[#d7e0ec] text-left text-[0.9rem] font-bold text-slate-900">
+                      <th className="px-6 py-4">Mã KH</th>
                       <th className="px-6 py-4">Khách hàng</th>
                       <th className="px-6 py-4">Liên hệ</th>
                       <th className="px-6 py-4">Địa chỉ</th>
@@ -337,19 +343,22 @@ function AdminCustomers() {
                   <tbody className="divide-y divide-slate-100 bg-white">
                     {isLoading ? (
                       <tr>
-                        <td colSpan={4} className="px-6 py-8 text-center text-sm font-medium text-slate-500">
+                        <td colSpan={5} className="px-6 py-8 text-center text-sm font-medium text-slate-500">
                           Đang tải dữ liệu...
                         </td>
                       </tr>
                     ) : filteredCustomers.length === 0 ? (
                       <tr>
-                        <td colSpan={4} className="px-6 py-8 text-center text-sm font-medium text-slate-500">
+                        <td colSpan={5} className="px-6 py-8 text-center text-sm font-medium text-slate-500">
                           Chưa có dữ liệu khách hàng trong database.
                         </td>
                       </tr>
                     ) : (
                       filteredCustomers.map((customer) => (
                         <tr key={customer.customer_id} className="text-sm text-slate-700 transition hover:bg-slate-50/70">
+                          <td className="px-6 py-4 font-bold text-slate-900">
+                            {customer.customer_id}
+                          </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
                               <div className="flex size-10 items-center justify-center rounded-xl bg-[#eef3f9] text-slate-500 font-bold">
@@ -357,10 +366,10 @@ function AdminCustomers() {
                               </div>
                               <div>
                                 <div className="text-[0.9rem] font-semibold text-slate-950">
-                                  {customer.first_name} {customer.last_name}
+                                  {getCustomerFullName(customer)}
                                 </div>
                                 <div className="text-[0.75rem] text-slate-500">
-                                  {customer.account_username || (customer.gender === "Male" ? "Nam" : customer.gender === "Female" ? "Nữ" : "Khác")}
+                                  {customer.gender === "Male" ? "Nam" : customer.gender === "Female" ? "Nữ" : "Khác"}
                                 </div>
                               </div>
                             </div>

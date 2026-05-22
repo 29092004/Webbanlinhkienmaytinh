@@ -1,4 +1,38 @@
 import shippingModel from '../models/shippingModel.js';
+import orderModel from '../models/orderModel.js';
+
+const syncOrderStatusWithShipping = async (orderId, shippingStatus) => {
+    const order = await orderModel.getById(orderId);
+
+    if (!order) {
+        return;
+    }
+
+    let nextOrderStatus = order.status;
+
+    switch (shippingStatus?.toUpperCase()) {
+        case 'DELIVERED':
+            nextOrderStatus = 'COMPLETED';
+            break;
+        case 'RETURNED':
+            nextOrderStatus = 'CANCELLED';
+            break;
+        default:
+            nextOrderStatus = 'SHIPPING';
+            break;
+    }
+
+    await orderModel.update(
+        orderId,
+        order.created_at,
+        order.payment_method,
+        nextOrderStatus,
+        order.account_id,
+        order.voucher_id ?? null,
+        order.total_price,
+        order.details ?? []
+    );
+};
 
 const shippingController = {
     getShippings: async (req, res) => {
@@ -34,7 +68,13 @@ const shippingController = {
                 return res.status(400).json({ message: 'Invalid input' });
             }
 
+            const existingShipping = await shippingModel.getByOrderId(orderId);
+            if (existingShipping) {
+                return res.status(400).json({ message: 'Đơn hàng này đã có vận đơn.' });
+            }
+
             const shippingId = await shippingModel.create(date, deliveryMethod, status, orderId, shippingAddress);
+            await syncOrderStatusWithShipping(orderId, status);
             res.status(201).json({ success: true, shippingId });
         } catch (error) {
             next(error);
@@ -57,6 +97,7 @@ const shippingController = {
             if (affectedRows === 0) {
                 return res.status(404).json({ message: 'Shipping not found' });
             }
+            await syncOrderStatusWithShipping(orderId, status);
             res.json({ success: true });
         } catch (error) {
             next(error);
