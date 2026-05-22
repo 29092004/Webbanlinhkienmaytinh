@@ -8,6 +8,7 @@ import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
+import OrderConfirmation from "./pages/OrderConfirmation";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminBrands from "./pages/admin/AdminBrands";
 import AdminCategories from "./pages/admin/AdminCategories";
@@ -33,6 +34,7 @@ function App() {
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/order-confirmation" element={<OrderConfirmation />} />
 
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminDashboard />} />

@@ -159,8 +159,7 @@ export default function Checkout() {
     // Mock api submit order delay
     setTimeout(() => {
       setIsSubmitting(false);
-      alert("🎉 Đặt hàng thành công! Đơn hàng của bạn đang được xử lý.");
-      navigate("/");
+      navigate("/order-confirmation");
     }, 1500);
   };
 

@@ -274,3 +274,23 @@ code {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #9ca3af; 
 }
+
+/* Order Confirmation layout helpers */
+.order-left-col {
+  width: 100%;
+}
+@media (min-width: 1024px) {
+  .order-left-col {
+    width: 60% !important;
+    flex: 1 1 auto !important;
+  }
+}
+.order-right-col {
+  width: 100%;
+}
+@media (min-width: 1024px) {
+  .order-right-col {
+    width: 35% !important;
+    flex-shrink: 0 !important;
+  }
+}
