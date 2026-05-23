@@ -1,4 +1,4 @@
-import { Search, ShoppingCart, User } from "lucide-react";
+import { History, LogOut, Search, ShoppingCart, UserRound } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
@@ -30,6 +30,12 @@ export function Header() {
     isLoggedIn: isAuthenticated(),
     user: getStoredUser(),
   });
+  const displayUser = authState.user || {};
+  const displayName = displayUser.fullName || displayUser.username || "Nguyễn Văn A";
+  const displayEmail = displayUser.email || "nguyenvana@example.com";
+  const avatarUrl =
+    displayUser.avatar ||
+    "https://images.unsplash.com/photo-1607746882042-944635dfe10e?q=80&w=160&auto=format&fit=crop";
 
   useEffect(() => {
     const syncAuthState = () => {
@@ -152,43 +158,57 @@ export function Header() {
               <button
                 type="button"
                 onClick={() => setIsMenuOpen((current) => !current)}
-                className="transition hover:text-blue-700"
+                className="flex size-9 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white transition hover:border-blue-700"
                 aria-label="Tài khoản"
               >
-                <User className="size-5" />
+                <img
+                  src={avatarUrl}
+                  alt={displayName}
+                  className="h-full w-full object-cover"
+                />
               </button>
 
               {isMenuOpen ? (
-                <div className="absolute right-0 top-11 w-64 rounded-lg border border-slate-200 bg-white p-3 text-left text-slate-700 shadow-[0_18px_45px_rgba(15,23,42,0.14)]">
-                  {authState.isLoggedIn && authState.user?.username ? (
-                    <div className="border-b border-slate-100 px-3 pb-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-                        Tài khoản
+                <div className="absolute right-0 top-12 w-80 rounded-2xl border border-slate-200 bg-white p-3 text-left text-slate-700 shadow-[0_18px_45px_rgba(15,23,42,0.14)]">
+                  <div className="flex items-center gap-3 border-b border-slate-100 px-3 pb-4 pt-2">
+                    <img
+                      src={avatarUrl}
+                      alt={displayName}
+                      className="size-12 rounded-full object-cover"
+                    />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black text-slate-950">
+                        {displayName}
                       </p>
-                      <p className="mt-1 break-all text-sm font-semibold text-slate-900">
-                        {authState.user.username}
+                      <p className="mt-1 truncate text-xs font-medium text-slate-500">
+                        {displayEmail}
                       </p>
                     </div>
-                  ) : null}
+                  </div>
 
-                  <div className="pt-2">
-                    {authState.isLoggedIn ? (
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="w-full rounded-md px-3 py-2 text-left text-sm font-medium transition hover:bg-slate-50 hover:text-slate-950"
-                      >
-                        Đăng xuất
-                      </button>
-                    ) : (
-                      <Link
-                        to="/login"
-                        onClick={() => setIsMenuOpen(false)}
-                        className="block w-full rounded-md px-3 py-2 text-sm font-medium transition hover:bg-slate-50 hover:text-slate-950"
-                      >
-                        Đăng nhập
-                      </Link>
-                    )}
+                  <div className="space-y-1 pt-2">
+                    <ProfileMenuLink
+                      to="/profile"
+                      icon={UserRound}
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Hồ sơ cá nhân
+                    </ProfileMenuLink>
+                    <ProfileMenuLink
+                      to="/profile/orders"
+                      icon={History}
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Lịch sử đơn hàng
+                    </ProfileMenuLink>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-red-600 transition hover:bg-red-50"
+                    >
+                      <LogOut className="size-4" />
+                      Đăng xuất
+                    </button>
                   </div>
                 </div>
               ) : null}
@@ -197,5 +217,18 @@ export function Header() {
         </div>
       </div>
     </header>
+  );
+}
+
+function ProfileMenuLink({ to, icon: Icon, onClick, children }) {
+  return (
+    <Link
+      to={to}
+      onClick={onClick}
+      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 hover:text-blue-700"
+    >
+      <Icon className="size-4" />
+      {children}
+    </Link>
   );
 }
