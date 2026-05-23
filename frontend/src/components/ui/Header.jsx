@@ -1,4 +1,4 @@
-import { ShoppingCart, User } from "lucide-react";
+import { Search, ShoppingCart, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
@@ -22,8 +22,10 @@ export function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = `${location.pathname}${location.search}`;
+  const queryFromUrl = new URLSearchParams(location.search).get("q") || "RTX 4090";
   const menuRef = useRef(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(queryFromUrl);
   const [authState, setAuthState] = useState({
     isLoggedIn: isAuthenticated(),
     user: getStoredUser(),
@@ -63,10 +65,25 @@ export function Header() {
     navigate("/login");
   };
 
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    const normalizedQuery = searchTerm.trim() || "RTX 4090";
+
+    navigate(
+      `/search?q=${encodeURIComponent(normalizedQuery)}&category=graphics`,
+    );
+  };
+
+  const isNavActive = (item) => {
+    if (currentPath === item.href) return true;
+
+    return location.pathname === "/search" && item.label === "Graphics";
+  };
+
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-[#f7f8fa]/95 shadow-[0_8px_18px_rgba(15,23,42,0.05)] backdrop-blur">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid h-[78px] grid-cols-[1fr_auto] items-center gap-4 md:grid-cols-[210px_1fr_210px]">
+        <div className="grid min-h-[78px] grid-cols-[1fr_auto] items-center gap-4 py-3 md:grid-cols-[190px_1fr_auto]">
           <Link
             to="/"
             className="text-2xl font-black uppercase tracking-normal text-blue-700"
@@ -80,7 +97,9 @@ export function Header() {
                 key={item.label}
                 to={item.href}
                 className={`transition hover:text-blue-700 ${
-                  currentPath === item.href ? "text-blue-700" : ""
+                  isNavActive(item)
+                    ? "border-b-2 border-blue-700 pb-2 font-black text-blue-700"
+                    : ""
                 }`}
               >
                 {item.label}
@@ -88,10 +107,39 @@ export function Header() {
             ))}
           </nav>
 
-          <div className="flex items-center justify-end gap-7 text-blue-700">
+          <div className="flex items-center justify-end gap-6 text-slate-900">
+            <form
+              onSubmit={handleSearchSubmit}
+              className="hidden h-12 w-[320px] items-center rounded-2xl border border-slate-300 bg-slate-50 px-5 transition focus-within:border-blue-700 focus-within:ring-2 focus-within:ring-blue-100 lg:flex"
+            >
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                className="min-w-0 flex-1 bg-transparent text-base font-medium text-slate-950 outline-none placeholder:text-slate-500"
+                placeholder="Tìm sản phẩm"
+              />
+              <button
+                type="submit"
+                className="text-slate-500 transition hover:text-blue-700"
+                aria-label="Tìm kiếm"
+              >
+                <Search className="size-5" />
+              </button>
+            </form>
+
+            <button
+              type="button"
+              onClick={() => navigate("/search?q=RTX%204090&category=graphics")}
+              className="transition hover:text-blue-700 lg:hidden"
+              aria-label="Tìm kiếm"
+            >
+              <Search className="size-5" />
+            </button>
+
             <Link
               to="/cart"
-              className="transition hover:text-blue-900"
+              className="transition hover:text-blue-700"
               aria-label="Giỏ hàng"
             >
               <ShoppingCart className="size-5" />
@@ -101,7 +149,7 @@ export function Header() {
               <button
                 type="button"
                 onClick={() => setIsMenuOpen((current) => !current)}
-                className="transition hover:text-blue-900"
+                className="transition hover:text-blue-700"
                 aria-label="Tài khoản"
               >
                 <User className="size-5" />
