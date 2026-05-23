@@ -15,14 +15,14 @@ const navItems = [
   { label: "Graphics", href: "/products?category=graphics" },
   { label: "Storage", href: "/products?category=storage" },
   { label: "Memory", href: "/products?category=memory" },
-  { label: "Builds", href: "/products?category=builds" },
+  { label: "Builds", href: "/pc-builder" },
 ];
 
 export function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = `${location.pathname}${location.search}`;
-  const queryFromUrl = new URLSearchParams(location.search).get("q") || "RTX 4090";
+  const queryFromUrl = new URLSearchParams(location.search).get("q") || "";
   const menuRef = useRef(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(queryFromUrl);
@@ -77,7 +77,10 @@ export function Header() {
   const isNavActive = (item) => {
     if (currentPath === item.href) return true;
 
-    return location.pathname === "/search" && item.label === "Graphics";
+    return (
+      (location.pathname === "/search" && item.label === "Graphics") ||
+      (location.pathname === "/pc-builder" && item.label === "Builds")
+    );
   };
 
   return (
@@ -117,7 +120,7 @@ export function Header() {
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 className="min-w-0 flex-1 bg-transparent text-base font-medium text-slate-950 outline-none placeholder:text-slate-500"
-                placeholder="Tìm sản phẩm"
+                placeholder="Tìm kiếm linh kiện..."
               />
               <button
                 type="submit"

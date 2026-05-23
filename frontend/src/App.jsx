@@ -9,6 +9,7 @@ import Otp from "./pages/auth/Otp";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import SearchResults from "./pages/SearchResults";
+import PCBuilder from "./pages/PCBuilder";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
@@ -58,6 +59,7 @@ function App() {
         <Route path="/products" element={<Products />} />
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/search" element={<SearchResults />} />
+        <Route path="/pc-builder" element={<PCBuilder />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/order-confirmation" element={<OrderConfirmation />} />
