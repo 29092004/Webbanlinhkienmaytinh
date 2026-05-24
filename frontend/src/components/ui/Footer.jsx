@@ -1,81 +1,64 @@
-import { Globe, MessageCircle, Share2, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export function Footer() {
   return (
-    <footer className="bg-[#0f1115] text-gray-400 py-16 border-t border-gray-800">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-12 grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Brand Info */}
-          <div>
-            <a href="/" className="mb-4 block text-lg font-extrabold uppercase tracking-widest text-white">
-              EXO CORE
-            </a>
-            <p className="mb-6 text-[12px] leading-relaxed text-gray-400">
-              Leading provider of high-performance PC systems and premium components. Build your dream machine with EXO CORE engineering.
-            </p>
-            <div className="flex gap-3">
-              <SocialLink>
-                <Globe className="size-4" />
-              </SocialLink>
-              <SocialLink>
-                <MessageCircle className="size-4" />
-              </SocialLink>
-              <SocialLink>
-                <Share2 className="size-4" />
-              </SocialLink>
-            </div>
-          </div>
-
-          {/* Support Column */}
-          <FooterColumn
-            title="SUPPORT"
-            links={[
-              { text: "Help Center", href: "#" },
-              { text: "Warranty Support", href: "#" },
-              { text: "Shipping Info", href: "#" },
-              { text: "Return Policy", href: "#" }
-            ]}
-          />
-
-          {/* Legal Column */}
-          <FooterColumn
-            title="LEGAL"
-            links={[
-              { text: "Terms of Service", href: "#" },
-              { text: "Privacy Policy", href: "#" },
-              { text: "Cookie Policy", href: "#" },
-              { text: "Disclaimer", href: "#" }
-            ]}
-          />
-
-          {/* Newsletter Column */}
-          <div>
-            <h4 className="mb-4 text-xs font-bold uppercase tracking-wider text-white">NEWSLETTER</h4>
-            <p className="mb-4 text-[12px] leading-relaxed text-gray-400">
-              Stay updated with the latest hardware news and exclusive deals.
-            </p>
-            <form className="flex rounded-md overflow-hidden bg-[#1f222b] border border-gray-700" onSubmit={(e) => e.preventDefault()}>
-              <input
-                type="email"
-                placeholder="your email"
-                className="flex-1 bg-transparent px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none"
-                required
-              />
-              <button type="submit" className="bg-[#2d323f] hover:bg-gray-700 text-white px-3 flex items-center justify-center transition-colors">
-                <ArrowRight className="size-4" />
-              </button>
-            </form>
-          </div>
+    <footer className="mt-16 bg-[#292f31] text-slate-200">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.5fr_1fr_1fr_1.3fr] lg:px-8">
+        <div>
+          <Link
+            to="/"
+            className="text-3xl font-black uppercase tracking-normal text-white"
+          >
+            EXO CORE
+          </Link>
+          <p className="mt-6 max-w-[230px] text-sm font-medium uppercase leading-relaxed tracking-[0.04em] text-slate-400">
+            Precision engineered performance.
+          </p>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="flex flex-col items-center justify-between border-t border-gray-800 pt-8 text-[11px] text-gray-500 md:flex-row">
-          <p>© 2024 EXO CORE High-Performance Systems. All rights reserved.</p>
-          <div className="mt-4 flex gap-4 md:mt-0">
-            <span className="cursor-pointer hover:text-white transition-colors">EN</span>
-            <span className="cursor-pointer hover:text-white transition-colors">VN</span>
-          </div>
+        <FooterColumn
+          title="Support"
+          links={[
+            { label: "Warranty", href: "#" },
+            { label: "Privacy Policy", href: "#" },
+            { label: "Contact", href: "#" },
+          ]}
+        />
+
+        <FooterColumn
+          title="Company"
+          links={[
+            { label: "Press Kit", href: "#" },
+            { label: "Affiliates", href: "#" },
+          ]}
+        />
+
+        <div>
+          <h4 className="mb-5 text-sm font-black tracking-[0.08em] text-white">
+            Newsletter
+          </h4>
+          <form
+            className="flex max-w-sm gap-2"
+            onSubmit={(event) => event.preventDefault()}
+          >
+            <input
+              type="email"
+              placeholder="Email"
+              className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-600"
+              required
+            />
+            <button
+              type="submit"
+              className="rounded-md bg-blue-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-800"
+            >
+              Join
+            </button>
+          </form>
         </div>
+      </div>
+
+      <div className="border-t border-white/10 py-8 text-center text-sm font-medium uppercase tracking-[0.04em] text-slate-500">
+        © 2024 EXO CORE. Precision engineered performance.
       </div>
     </footer>
   );
@@ -84,27 +67,18 @@ export function Footer() {
 function FooterColumn({ title, links }) {
   return (
     <div>
-      <h4 className="mb-4 text-xs font-bold uppercase tracking-wider text-white">{title}</h4>
-      <ul className="space-y-3 text-[12px]">
-        {links.map((link, idx) => (
-          <li key={idx}>
-            <a href={link.href} className="transition-colors hover:text-white">
-              {link.text}
+      <h4 className="mb-5 text-sm font-black tracking-[0.08em] text-white">
+        {title}
+      </h4>
+      <ul className="space-y-4 text-sm font-medium text-slate-200">
+        {links.map((link) => (
+          <li key={link.label}>
+            <a href={link.href} className="transition hover:text-white">
+              {link.label}
             </a>
           </li>
         ))}
       </ul>
     </div>
-  );
-}
-
-function SocialLink({ children }) {
-  return (
-    <a
-      href="#"
-      className="flex size-8 items-center justify-center rounded-full bg-[#1f222b] hover:bg-blue-600 text-gray-400 hover:text-white transition-colors border border-gray-800"
-    >
-      {children}
-    </a>
   );
 }
