@@ -39,7 +39,7 @@ const getUploadedImages = (files) => {
         return [];
     }
 
-    return files.map((file) => `/uploads/products/${file.filename}`);
+    return files.map((file) => file.filename);
 };
 
 const normalizeImageSlots = (value) => {
