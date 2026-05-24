@@ -15,13 +15,20 @@ export const resolveAssetUrl = (value) => {
     return `http:${value}`;
   }
 
+  let normalizedPath = value;
+  if (!value.startsWith("/") && !value.startsWith("uploads/")) {
+    normalizedPath = `/uploads/products/${value}`;
+  } else if (value.startsWith("uploads/")) {
+    normalizedPath = `/${value}`;
+  }
+
   const apiBaseUrl = api.defaults.baseURL ?? "";
   const apiOrigin = apiBaseUrl.replace(/\/api\/?$/, "");
 
   try {
-    return new URL(value, `${apiOrigin}/`).toString();
+    return new URL(normalizedPath, `${apiOrigin}/`).toString();
   } catch {
-    return `${apiOrigin}${value.startsWith("/") ? value : `/${value}`}`;
+    return `${apiOrigin}${normalizedPath.startsWith("/") ? normalizedPath : `/${normalizedPath}`}`;
   }
 };
 
@@ -89,18 +96,27 @@ export const fillImageSlots = (currentSlots, files) => {
 };
 
 export function renderSpecPreviewContent(specPreview) {
-  if (typeof specPreview === "string") {
+  let normalizedPreview = specPreview;
+
+  if (typeof specPreview === "object" && specPreview !== null && !Array.isArray(specPreview)) {
+    normalizedPreview = Object.entries(specPreview).map(([key, val]) => ({
+      "Thông số": key,
+      "Chi tiết": String(val),
+    }));
+  }
+
+  if (typeof normalizedPreview === "string") {
     return (
       <div className="rounded-[20px] border border-slate-200 bg-slate-50 px-5 py-4">
-        <p className="whitespace-pre-wrap text-sm font-medium leading-7 text-slate-700">{specPreview}</p>
+        <p className="whitespace-pre-wrap text-sm font-medium leading-7 text-slate-700">{normalizedPreview}</p>
       </div>
     );
   }
 
-  if (Array.isArray(specPreview) && specPreview.length > 0 && typeof specPreview[0] !== "object") {
+  if (Array.isArray(normalizedPreview) && normalizedPreview.length > 0 && typeof normalizedPreview[0] !== "object") {
     return (
       <div className="grid gap-3">
-        {specPreview.map((item, index) => (
+        {normalizedPreview.map((item, index) => (
           <div key={`${item}-${index}`} className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
             {String(item)}
           </div>
@@ -109,13 +125,22 @@ export function renderSpecPreviewContent(specPreview) {
     );
   }
 
-  if (Array.isArray(specPreview) && specPreview.length > 0 && typeof specPreview[0] === "object" && specPreview[0] !== null) {
-    const columns = Array.from(
-      specPreview.reduce((set, row) => {
-        Object.keys(row).forEach((key) => set.add(key));
-        return set;
-      }, new Set())
-    );
+  if (Array.isArray(normalizedPreview) && normalizedPreview.length > 0 && typeof normalizedPreview[0] === "object" && normalizedPreview[0] !== null) {
+    const columnsSet = new Set();
+    normalizedPreview.forEach((row) => {
+      Object.keys(row).forEach((key) => columnsSet.add(key));
+    });
+
+    const columns = [];
+    if (columnsSet.has("Thông số")) {
+      columns.push("Thông số");
+      columnsSet.delete("Thông số");
+    }
+    if (columnsSet.has("Chi tiết")) {
+      columns.push("Chi tiết");
+      columnsSet.delete("Chi tiết");
+    }
+    columnsSet.forEach((col) => columns.push(col));
 
     return (
       <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
@@ -130,7 +155,7 @@ export function renderSpecPreviewContent(specPreview) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {specPreview.map((row, rowIndex) => (
+            {normalizedPreview.map((row, rowIndex) => (
               <tr key={rowIndex}>
                 {columns.map((column) => (
                   <td key={`${rowIndex}-${column}`} className="px-4 py-3 align-top text-slate-600">
@@ -147,7 +172,7 @@ export function renderSpecPreviewContent(specPreview) {
 
   return (
     <pre className="overflow-x-auto rounded-[20px] border border-slate-200 bg-slate-50 p-4 text-sm leading-7 text-slate-700">
-      {JSON.stringify(specPreview, null, 2)}
+      {JSON.stringify(normalizedPreview, null, 2)}
     </pre>
   );
 }
@@ -159,3 +184,48 @@ export function SpecPreviewToggle({ isOpen, onToggle }) {
     </span>
   );
 }
+
+export const normalizeExistingImage = (image) => {
+  if (!image) return null;
+  if (typeof image === "string") {
+    return { url: image };
+  }
+  if (typeof image === "object") {
+    return {
+      id: image.id ?? image.image_id ?? null,
+      url: image.url ?? image.image_path ?? "",
+    };
+  }
+  return null;
+};
+
+export const getImageDisplayName = (url, fallback = "") => {
+  if (!url) return fallback;
+  try {
+    const parts = url.split("/");
+    const fileName = parts[parts.length - 1];
+    return fileName || fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+export const parseStoredSpecs = (specs) => {
+  if (specs === null || specs === undefined) {
+    return null;
+  }
+  if (typeof specs === "string") {
+    const trimmed = specs.trim();
+    if (!trimmed) return null;
+    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+      try {
+        return JSON.parse(trimmed);
+      } catch {
+        return trimmed;
+      }
+    }
+    return trimmed;
+  }
+  return specs;
+};
+

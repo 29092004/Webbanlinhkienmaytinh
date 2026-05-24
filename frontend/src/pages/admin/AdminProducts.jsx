@@ -7,6 +7,9 @@ import { ProductRow } from "@/components/admin/product/ProductRow";
 import {
   createImageSlotFromExisting,
   fillImageSlots,
+  getImageDisplayName,
+  normalizeExistingImage,
+  parseStoredSpecs,
   resolveAssetUrl,
 } from "@/components/admin/product/productUtils";
 import { AdminSidebar } from "@/components/admin/layout/AdminSidebar";
@@ -31,6 +34,7 @@ function AdminProducts() {
   const [specPreview, setSpecPreview] = useState(null);
   const [isSpecPreviewOpen, setIsSpecPreviewOpen] = useState(false);
   const [isSpecPreviewLoading, setIsSpecPreviewLoading] = useState(false);
+  const [isProductModalLoading, setIsProductModalLoading] = useState(false);
 
   const initialFormData = {
     name: "",
@@ -89,10 +93,21 @@ function AdminProducts() {
       }
 
       if (slot.kind === "existing") {
+        const existingImage = normalizeExistingImage(slot.image);
+
+        if (!existingImage?.url) {
+          return {
+            key: `empty-${index}`,
+            name: `Vị trí ảnh ${index + 1}`,
+            url: "",
+            kind: "empty",
+          };
+        }
+
         return {
-          key: `existing-${slot.image.id ?? slot.image.url}-${index}`,
-          name: slot.image.url.split("/").pop() || `Ảnh ${index + 1}`,
-          url: resolveAssetUrl(slot.image.url),
+          key: `existing-${existingImage.id ?? existingImage.url}-${index}`,
+          name: getImageDisplayName(existingImage.url, `Ảnh ${index + 1}`),
+          url: resolveAssetUrl(existingImage.url),
           kind: "existing",
         };
       }
@@ -139,18 +154,6 @@ function AdminProducts() {
     regular: filteredProducts.filter((product) => !product.sale_id),
   }), [filteredProducts]);
 
-  const parseStoredSpecs = (value) => {
-    if (typeof value !== "string" || !value.trim()) {
-      return null;
-    }
-
-    try {
-      return JSON.parse(value);
-    } catch {
-      return value;
-    }
-  };
-
   const normalizePriceInputValue = (value) => {
     if (value === null || value === undefined || value === "") {
       return "";
@@ -171,6 +174,38 @@ function AdminProducts() {
     }
 
     return String(value);
+  };
+
+  const normalizeSpecsInputValue = (value) => {
+    if (value === null || value === undefined || value === "") {
+      return "";
+    }
+
+    if (typeof value === "string") {
+      return value;
+    }
+
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  };
+
+  const serializeSpecsValue = (value) => {
+    if (value === null || value === undefined || value === "") {
+      return "";
+    }
+
+    if (typeof value === "string") {
+      return value;
+    }
+
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
   };
 
   const validateProductForm = (data = formData) => {
@@ -351,15 +386,25 @@ function AdminProducts() {
   };
 
   const handleSpecFileChange = async (file) => {
-    handleFormChange("specFile", file);
-    handleFormChange("specFileName", file?.name ?? "");
+    setModalError("");
 
     if (!file) {
+      setFormData((prev) => ({
+        ...prev,
+        specFile: null,
+        specFileName: "",
+      }));
       setSpecPreview(parseStoredSpecs(formData.specs));
       setIsSpecPreviewOpen(false);
       setIsSpecPreviewLoading(false);
       return;
     }
+
+    setFormData((prev) => ({
+      ...prev,
+      specFile: file,
+      specFileName: file.name ?? "",
+    }));
 
     setIsSpecPreviewLoading(true);
     setIsSpecPreviewOpen(true);
@@ -381,6 +426,10 @@ function AdminProducts() {
       }
 
       setModalError("");
+      setFormData((prev) => ({
+        ...prev,
+        specs: serializeSpecsValue(previewData),
+      }));
       setSpecPreview(previewData);
     } catch (requestError) {
       setSpecPreview(null);
@@ -415,7 +464,7 @@ function AdminProducts() {
     setIsSpecPreviewLoading(false);
   };
 
-  const openEditModal = (product) => {
+  const hydrateEditForm = (product) => {
     setModalMode("edit");
     setSelectedProduct(product);
     setFormData({
@@ -433,17 +482,39 @@ function AdminProducts() {
       origin: normalizeTextInputValue(product.origin),
       warranty: normalizeTextInputValue(product.warranty),
       quantity: product.quantity ?? "",
-      specs: normalizeTextInputValue(product.specs),
+      specs: normalizeSpecsInputValue(product.specs),
       specFile: null,
       specFileName: "",
-      imageSlots: (product.images ?? []).map(createImageSlotFromExisting),
+      imageSlots: (product.images ?? [])
+        .map(createImageSlotFromExisting)
+        .filter((slot) => Boolean(slot?.image?.url)),
     });
     setModalError("");
     setValidationErrors({});
     setTouchedFields({});
     setSpecPreview(parseStoredSpecs(product.specs ?? ""));
-    setIsSpecPreviewOpen(false);
+    setIsSpecPreviewOpen(Boolean(product.specs));
     setIsSpecPreviewLoading(false);
+  };
+
+  const fetchProductDetails = async (productId) => {
+    const response = await api.get(`/products/${productId}`);
+    return response.data?.data ?? null;
+  };
+
+  const openEditModal = async (product) => {
+    setModalError("");
+    setIsProductModalLoading(true);
+
+    try {
+      const detailedProduct = await fetchProductDetails(product.id);
+      hydrateEditForm(detailedProduct ?? product);
+    } catch (requestError) {
+      setModalError(requestError.response?.data?.message || "Không tải được chi tiết sản phẩm.");
+      hydrateEditForm(product);
+    } finally {
+      setIsProductModalLoading(false);
+    }
   };
 
   const openDeleteModal = (product) => {
@@ -458,12 +529,20 @@ function AdminProducts() {
     setIsSpecPreviewLoading(false);
   };
 
-  const openDetailModal = (product) => {
-    setDetailProduct(product);
+  const openDetailModal = async (product) => {
+    setError("");
+
+    try {
+      const detailedProduct = await fetchProductDetails(product.id);
+      setDetailProduct(detailedProduct ?? product);
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || "Không tải được chi tiết sản phẩm.");
+      setDetailProduct(product);
+    }
   };
 
   const appendProductPayloadBase = (payload, saleId, options = {}) => {
-    const { includeSpecs = true } = options;
+    const { includeSpecs = true, specsValue = formData.specs } = options;
 
     payload.append("name", normalizeTextInputValue(formData.name).trim());
     payload.append("description", normalizeTextInputValue(formData.description).trim());
@@ -478,9 +557,35 @@ function AdminProducts() {
 
     if (formData.specFile) {
       payload.append("specFile", formData.specFile);
-    } else if (includeSpecs && formData.specs) {
-      payload.append("specs", formData.specs);
     }
+
+    if (includeSpecs && specsValue) {
+      payload.append("specs", specsValue);
+    }
+  };
+
+  const fetchSpecPreviewData = async (file) => {
+    const payload = new FormData();
+    payload.append("specFile", file);
+    const response = await api.post("/products/spec-preview", payload);
+    return response.data?.data ?? null;
+  };
+
+  const resolveSpecsForSubmit = async () => {
+    if (!formData.specFile) {
+      return serializeSpecsValue(formData.specs);
+    }
+
+    const previewData = await fetchSpecPreviewData(formData.specFile);
+    const serializedSpecs = serializeSpecsValue(previewData);
+
+    setSpecPreview(previewData);
+    setFormData((prev) => ({
+      ...prev,
+      specs: serializedSpecs,
+    }));
+
+    return serializedSpecs;
   };
 
   const appendImageSlotsToPayload = (payload) => {
@@ -553,6 +658,7 @@ function AdminProducts() {
     setIsSubmitting(true);
     try {
       let resolvedSaleId = null;
+      let resolvedSpecsValue = serializeSpecsValue(formData.specs);
 
       if (modalMode !== "delete" && formData.isOnSale) {
         const salePayload = {
@@ -570,9 +676,15 @@ function AdminProducts() {
         }
       }
 
+      if (modalMode !== "delete" && formData.specFile) {
+        resolvedSpecsValue = await resolveSpecsForSubmit();
+      }
+
       if (modalMode === "create") {
         const payload = new FormData();
-        appendProductPayloadBase(payload, resolvedSaleId);
+        appendProductPayloadBase(payload, resolvedSaleId, {
+          specsValue: resolvedSpecsValue,
+        });
         appendImageSlotsToPayload(payload);
 
         await api.post("/products", payload);
@@ -580,6 +692,7 @@ function AdminProducts() {
         const payload = new FormData();
         appendProductPayloadBase(payload, resolvedSaleId, {
           includeSpecs: Boolean(formData.specFile),
+          specsValue: resolvedSpecsValue,
         });
         appendImageSlotsToPayload(payload);
 
@@ -770,7 +883,7 @@ function AdminProducts() {
         onChange={handleFormChange}
         onClose={closeModal}
         onSubmit={handleSubmit}
-        isSubmitting={isSubmitting}
+        isSubmitting={isSubmitting || isProductModalLoading}
         error={modalError}
         validationErrors={validationErrors}
         brands={brands}

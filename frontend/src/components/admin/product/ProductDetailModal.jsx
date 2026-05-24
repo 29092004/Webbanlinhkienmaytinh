@@ -2,41 +2,80 @@ import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
 
-import { formatSalePercentage, renderSpecPreviewContent, resolveAssetUrl } from "./productUtils";
+import {
+  formatSalePercentage,
+  normalizeExistingImage,
+  parseStoredSpecs,
+  renderSpecPreviewContent,
+  resolveAssetUrl,
+} from "./productUtils";
 
 export function ProductDetailModal({ open, product, brands = [], categories = [], onClose }) {
   const [isSpecsOpen, setIsSpecsOpen] = useState(false);
+  const [resolvedProduct, setResolvedProduct] = useState(product);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [detailError, setDetailError] = useState("");
 
   useEffect(() => {
-    setIsSpecsOpen(false);
+    setResolvedProduct(product);
+    setIsSpecsOpen(Boolean(product?.specs));
   }, [product?.id, open]);
+
+  useEffect(() => {
+    if (!open || !product?.id) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadProductDetails = async () => {
+      setIsLoadingDetails(true);
+      setDetailError("");
+
+      try {
+        const response = await api.get(`/products/${product.id}`);
+        const nextProduct = response.data?.data ?? product;
+
+        if (isMounted) {
+          setResolvedProduct(nextProduct);
+          setIsSpecsOpen(Boolean(nextProduct?.specs));
+        }
+      } catch (error) {
+        if (isMounted) {
+          setResolvedProduct(product);
+          setDetailError(error.response?.data?.message || "Không tải được thông số kỹ thuật của sản phẩm.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingDetails(false);
+        }
+      }
+    };
+
+    loadProductDetails();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [open, product]);
 
   if (!open || !product) return null;
 
-  const brand = brands.find((item) => item.brand_id === product.brand_id);
-  const category = categories.find((item) => item.id === product.category_id);
-  const parsedSpecs = (() => {
-    if (typeof product.specs !== "string" || !product.specs.trim()) {
-      return null;
-    }
-
-    try {
-      let parsedValue = JSON.parse(product.specs);
-
-      while (typeof parsedValue === "string") {
-        try {
-          parsedValue = JSON.parse(parsedValue);
-        } catch {
-          break;
-        }
-      }
-
-      return parsedValue;
-    } catch {
-      return product.specs;
-    }
-  })();
+  const displayProduct = resolvedProduct ?? product;
+  const brand = brands.find((item) => item.brand_id === displayProduct.brand_id);
+  const category = categories.find((item) => item.id === displayProduct.category_id);
+  const parsedSpecs = parseStoredSpecs(displayProduct.specs);
+  const hasSpecs =
+    parsedSpecs !== null &&
+    parsedSpecs !== undefined &&
+    !(typeof parsedSpecs === "string" && !parsedSpecs.trim()) &&
+    !(Array.isArray(parsedSpecs) && parsedSpecs.length === 0) &&
+    !(typeof parsedSpecs === "object" && !Array.isArray(parsedSpecs) && Object.keys(parsedSpecs).length === 0);
+  const normalizedImages = (displayProduct.images ?? [])
+    .map(normalizeExistingImage)
+    .filter((image) => Boolean(image?.url));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4">
@@ -56,7 +95,7 @@ export function ProductDetailModal({ open, product, brands = [], categories = []
           <div>
             <label className="mb-2 block text-sm font-semibold text-slate-700">Tên sản phẩm</label>
             <div className="border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900">
-              {product.name || "Chưa cập nhật"}
+                {displayProduct.name || "Chưa cập nhật"}
             </div>
           </div>
 
@@ -64,13 +103,13 @@ export function ProductDetailModal({ open, product, brands = [], categories = []
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">Giá nhập</label>
               <div className="border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900">
-                {Number(product.import_price || 0).toLocaleString("vi-VN")} đ
+                {Number(displayProduct.import_price || 0).toLocaleString("vi-VN")} đ
               </div>
             </div>
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">Giá bán</label>
               <div className="border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900">
-                {Number(product.retail_price || 0).toLocaleString("vi-VN")} đ
+                {Number(displayProduct.retail_price || 0).toLocaleString("vi-VN")} đ
               </div>
             </div>
           </div>
@@ -94,19 +133,19 @@ export function ProductDetailModal({ open, product, brands = [], categories = []
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">Xuất xứ</label>
               <div className="border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900">
-                {product.origin || "Chưa cập nhật"}
+                {displayProduct.origin || "Chưa cập nhật"}
               </div>
             </div>
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">Bảo hành</label>
               <div className="border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900">
-                {product.warranty || "Chưa cập nhật"}
+                {displayProduct.warranty || "Chưa cập nhật"}
               </div>
             </div>
             <div>
               <label className="mb-2 block text-sm font-semibold text-slate-700">Số lượng</label>
               <div className="border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900">
-                {product.quantity ?? 0}
+                {displayProduct.quantity ?? 0}
               </div>
             </div>
           </div>
@@ -114,21 +153,21 @@ export function ProductDetailModal({ open, product, brands = [], categories = []
           <div>
             <label className="mb-2 block text-sm font-semibold text-slate-700">Khuyến mãi</label>
             <div className="border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900">
-              {product.sale_id ? (
+              {displayProduct.sale_id ? (
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">
                     Đang sale
                   </span>
                   <span>
-                    {product.sale_type === "fixed" ? "Giảm trực tiếp" : "Giảm phần trăm"}:{" "}
+                    {displayProduct.sale_type === "fixed" ? "Giảm trực tiếp" : "Giảm phần trăm"}:{" "}
                     <strong>
-                      {product.sale_type === "fixed"
-                        ? `${Number(product.sale_value || 0).toLocaleString("vi-VN")} đ`
-                        : formatSalePercentage(product.sale_value)}
+                      {displayProduct.sale_type === "fixed"
+                        ? `${Number(displayProduct.sale_value || 0).toLocaleString("vi-VN")} đ`
+                        : formatSalePercentage(displayProduct.sale_value)}
                     </strong>
                   </span>
-                  {product.sale_duration ? (
-                    <span className="text-slate-500">Thời lượng: {product.sale_duration} ngày</span>
+                  {displayProduct.sale_duration ? (
+                    <span className="text-slate-500">Thời lượng: {displayProduct.sale_duration} ngày</span>
                   ) : null}
                 </div>
               ) : (
@@ -140,7 +179,7 @@ export function ProductDetailModal({ open, product, brands = [], categories = []
           <div>
             <label className="mb-2 block text-sm font-semibold text-slate-700">Mô tả</label>
             <div className="min-h-[100px] border border-slate-200 bg-slate-50 p-4 text-sm leading-7 text-slate-700">
-              {product.description?.trim() ? product.description : "Chưa có mô tả."}
+              {displayProduct.description?.trim() ? displayProduct.description : "Chưa có mô tả."}
             </div>
           </div>
 
@@ -164,12 +203,28 @@ export function ProductDetailModal({ open, product, brands = [], categories = []
               </button>
               {isSpecsOpen && (
                 <div className="p-4">
-                  {parsedSpecs ? (
+                  {isLoadingDetails ? (
+                    <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-8 text-center text-sm text-slate-500">
+                      Đang tải thông số kỹ thuật...
+                    </div>
+                  ) : hasSpecs ? (
                     renderSpecPreviewContent(parsedSpecs)
                   ) : (
-                    <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-8 text-center text-sm text-slate-500">
-                      Chưa có thông số kỹ thuật.
-                    </div>
+                    <>
+                      <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-8 text-center text-sm text-slate-500">
+                        Chưa có thông số kỹ thuật.
+                      </div>
+                      {displayProduct.specs ? (
+                        <pre className="mt-3 overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 text-xs leading-6 text-slate-600">
+                          {typeof displayProduct.specs === "string"
+                            ? displayProduct.specs
+                            : JSON.stringify(displayProduct.specs, null, 2)}
+                        </pre>
+                      ) : null}
+                      {detailError ? (
+                        <p className="mt-3 text-sm font-medium text-rose-600">{detailError}</p>
+                      ) : null}
+                    </>
                   )}
                 </div>
               )}
@@ -181,11 +236,11 @@ export function ProductDetailModal({ open, product, brands = [], categories = []
             <div className="border border-slate-200 bg-slate-50">
               <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 text-sm text-slate-700">
                 <span>Ảnh sản phẩm</span>
-                <span>{product.images?.length ?? 0} ảnh</span>
+                <span>{normalizedImages.length} ảnh</span>
               </div>
-              {product.images?.length ? (
+              {normalizedImages.length ? (
                 <div className="grid gap-4 p-4 sm:grid-cols-3">
-                  {product.images.map((image, index) => (
+                  {normalizedImages.map((image, index) => (
                     <div key={image.id ?? image.url} className="border border-slate-200 bg-white">
                       <div className="border-b border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
                         {index === 0 ? `Ảnh ${index + 1} - Ảnh chính` : `Ảnh ${index + 1}`}

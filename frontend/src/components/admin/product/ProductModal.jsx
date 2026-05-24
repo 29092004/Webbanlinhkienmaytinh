@@ -28,6 +28,12 @@ export function ProductModal({
   if (!open) return null;
 
   const totalSelectedImages = formData.imageSlots.filter(Boolean).length;
+  const hasSpecPreview =
+    specPreview !== null &&
+    specPreview !== undefined &&
+    !(typeof specPreview === "string" && !specPreview.trim()) &&
+    !(Array.isArray(specPreview) && specPreview.length === 0) &&
+    !(typeof specPreview === "object" && !Array.isArray(specPreview) && Object.keys(specPreview).length === 0);
   const salePreview = calculateDiscountedPrice({
     retailPrice: formData.retailPrice,
     saleType: formData.saleType,
@@ -360,7 +366,7 @@ export function ProductModal({
                 <p className="mt-2 text-xs text-slate-500">
                   {formData.specFileName ? `Đã chọn: ${formData.specFileName}` : "Chọn file cấu hình từ máy tính ở định dạng Excel hoặc JSON."}
                 </p>
-                {(formData.specFileName || specPreview) && (
+                {(formData.specFileName || hasSpecPreview) && (
                   <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                     <button
                       type="button"
@@ -384,7 +390,7 @@ export function ProductModal({
                           <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-8 text-center text-sm text-slate-500">
                             Đang tải xem trước thông số kỹ thuật...
                           </div>
-                        ) : specPreview ? (
+                        ) : hasSpecPreview ? (
                           renderSpecPreviewContent(specPreview)
                         ) : (
                           <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-8 text-center text-sm text-slate-500">
@@ -395,7 +401,7 @@ export function ProductModal({
                     )}
                   </div>
                 )}
-                {!formData.specFileName && formData.specs && !specPreview && (
+                {!formData.specFileName && formData.specs && !hasSpecPreview && (
                   <textarea
                     value={formData.specs}
                     readOnly

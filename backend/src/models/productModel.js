@@ -1,3 +1,4 @@
+import path from 'path';
 import db from '../config/mysql.js';
 
 const table_name = 'product';
@@ -33,6 +34,14 @@ const normalizeImageUrlsForStorage = (images) => {
             return typeof url === 'string' ? url : String(url);
         })
         .map((url) => url.trim())
+        .map((url) => {
+            if (!url) {
+                return '';
+            }
+
+            const normalizedUrl = url.split('?')[0].split('#')[0];
+            return path.basename(normalizedUrl.replace(/\\/g, '/'));
+        })
         .filter(Boolean);
 };
 
