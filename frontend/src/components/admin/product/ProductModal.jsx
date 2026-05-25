@@ -229,19 +229,19 @@ export function ProductModal({
                       <div className="grid gap-4 md:grid-cols-3">
                         <div className="rounded-[22px] bg-slate-50 px-5 py-4">
                           <div className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Giá gốc</div>
-                          <div className="mt-3 text-2xl font-extrabold text-slate-900">
+                          <div className="mt-3 whitespace-nowrap text-lg font-extrabold text-slate-900 lg:text-[1.45rem]">
                             {salePreview.basePrice.toLocaleString("vi-VN")} đ
                           </div>
                         </div>
                         <div className="rounded-[22px] bg-rose-50 px-5 py-4">
                           <div className="text-xs font-semibold uppercase tracking-[0.24em] text-rose-500">Mức giảm</div>
-                          <div className="mt-3 text-2xl font-extrabold text-rose-600">
+                          <div className="mt-3 whitespace-nowrap text-lg font-extrabold text-rose-600 lg:text-[1.45rem]">
                             {salePreview.discountAmount.toLocaleString("vi-VN")} đ
                           </div>
                         </div>
                         <div className="rounded-[22px] bg-emerald-50 px-5 py-4">
                           <div className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-600">Giá sau giảm</div>
-                          <div className="mt-3 text-2xl font-extrabold text-emerald-600">
+                          <div className="mt-3 whitespace-nowrap text-lg font-extrabold text-emerald-600 lg:text-[1.45rem]">
                             {salePreview.finalPrice.toLocaleString("vi-VN")} đ
                           </div>
                         </div>

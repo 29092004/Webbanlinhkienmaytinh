@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import XLSX from 'xlsx';
 import productModel from '../models/productModel.js';
+import { productUploadDir, sanitizeFileName } from '../middlewares/uploadMiddleware.js';
 
 const normalizeImageValues = (value) => {
     if (typeof value === 'string') {
@@ -34,12 +35,31 @@ const normalizeImageValues = (value) => {
     return [];
 };
 
-const getUploadedImages = (files) => {
+const finalizeUploadedImages = async (files = []) => {
     if (!Array.isArray(files) || files.length === 0) {
         return [];
     }
 
-    return files.map((file) => file.filename);
+    const finalizedNames = [];
+
+    for (const file of files) {
+        if (!file?.path) {
+            continue;
+        }
+
+        const { baseName, extension } = sanitizeFileName(file.originalname, 'product');
+        const finalName = `${baseName}${extension}`;
+        const finalPath = path.join(productUploadDir, finalName);
+
+        await fs.copyFile(file.path, finalPath);
+        await fs.unlink(file.path).catch(() => null);
+
+        file.filename = finalName;
+        file.path = finalPath;
+        finalizedNames.push(finalName);
+    }
+
+    return finalizedNames;
 };
 
 const normalizeImageSlots = (value) => {
@@ -231,6 +251,19 @@ const cleanupUploadedFiles = async (files = []) => {
     );
 };
 
+const collectUploadedFiles = (fileGroups = {}) =>
+    Object.values(fileGroups)
+        .flat()
+        .filter(Boolean);
+
+const cleanupProductImageNames = async (imageNames = []) => {
+    await Promise.all(
+        imageNames
+            .filter((imageName) => typeof imageName === 'string' && imageName.trim())
+            .map((imageName) => fs.unlink(path.join(productUploadDir, imageName)).catch(() => null))
+    );
+};
+
 const normalizeSaleId = (value, fallback = null) => {
     if (value === undefined) {
         return fallback;
@@ -287,6 +320,8 @@ const productController = {
     },
 
     createProduct: async (req, res, next) => {
+        let shouldCleanupUploadedImages = true;
+
         try {
             const { name, description, origin, warranty, quantity } = req.body;
             const importPrice = req.body.importPrice ?? req.body.import_price;
@@ -296,7 +331,7 @@ const productController = {
             const saleId = normalizeSaleId(req.body.saleId ?? req.body.sale_id, null);
             const specFile = req.files?.specFile?.[0] ?? null;
             const specs = await resolveSpecs(req.body, specFile);
-            const uploadedImages = getUploadedImages(req.files?.images);
+            const uploadedImages = await finalizeUploadedImages(req.files?.images);
             const imageSlots = normalizeImageSlots(req.body.imageSlots ?? req.body.image_slots);
             const images = resolveOrderedImages({
                 uploadedImages,
@@ -323,15 +358,25 @@ const productController = {
                 images
             );
 
+            shouldCleanupUploadedImages = false;
             res.status(201).json({ success: true, productId });
         } catch (error) {
             next(error);
         } finally {
-            await cleanupUploadedFiles(req.files?.specFile ?? []);
+            const uploadedFiles = collectUploadedFiles(req.files);
+            const filesToCleanup = shouldCleanupUploadedImages
+                ? uploadedFiles
+                : (req.files?.specFile ?? []);
+
+            await cleanupUploadedFiles(filesToCleanup);
         }
     },
 
     updateProduct: async (req, res, next) => {
+        let shouldCleanupUploadedImages = true;
+        let previousImageUrls = [];
+        let nextImageUrls = [];
+
         try {
             const { id } = req.params;
             const { name, description, origin, warranty, quantity } = req.body;
@@ -343,6 +388,7 @@ const productController = {
             if (!currentProduct) {
                 return res.status(404).json({ message: 'Product not found' });
             }
+            previousImageUrls = currentProduct.images.map((image) => image.url).filter(Boolean);
             const saleId = normalizeSaleId(
                 req.body.saleId ?? req.body.sale_id,
                 currentProduct.sale_id ?? null
@@ -350,7 +396,7 @@ const productController = {
 
             const specFile = req.files?.specFile?.[0] ?? null;
             const specs = await resolveSpecs(req.body, specFile, currentProduct.specs);
-            const uploadedImages = getUploadedImages(req.files?.images);
+            const uploadedImages = await finalizeUploadedImages(req.files?.images);
             const existingImages = normalizeImageValues(req.body.existingImages ?? req.body.existing_images);
             const imageSlots = normalizeImageSlots(req.body.imageSlots ?? req.body.image_slots);
             const hasExplicitImageSlots = typeof (req.body.imageSlots ?? req.body.image_slots) !== 'undefined';
@@ -363,6 +409,7 @@ const productController = {
             if (!hasExplicitImageSlots && uploadedImages.length === 0 && existingImages.length === 0) {
                 images = currentProduct.images.map((image) => image.url);
             }
+            nextImageUrls = images.filter(Boolean);
 
             if (!name || description === undefined || importPrice === undefined || retailPrice === undefined || !brandId || !categoryId || !origin || warranty === undefined || quantity === undefined) {
                 return res.status(400).json({ message: 'Invalid input' });
@@ -387,21 +434,37 @@ const productController = {
             if (affectedRows === 0) {
                 return res.status(404).json({ message: 'Product not found' });
             }
+
+            shouldCleanupUploadedImages = false;
+            const removedImageUrls = previousImageUrls.filter((imageUrl) => !nextImageUrls.includes(imageUrl));
+            await cleanupProductImageNames(removedImageUrls);
             res.json({ success: true });
         } catch (error) {
             next(error);
         } finally {
-            await cleanupUploadedFiles(req.files?.specFile ?? []);
+            const uploadedFiles = collectUploadedFiles(req.files);
+            const filesToCleanup = shouldCleanupUploadedImages
+                ? uploadedFiles
+                : (req.files?.specFile ?? []);
+
+            await cleanupUploadedFiles(filesToCleanup);
         }
     },
 
     deleteProduct: async (req, res) => {
         try {
             const { id } = req.params;
+            const currentProduct = await productModel.getById(id);
+            if (!currentProduct) {
+                return res.status(404).json({ message: 'Product not found' });
+            }
+
             const affectedRows = await productModel.delete(id);
             if (affectedRows === 0) {
                 return res.status(404).json({ message: 'Product not found' });
             }
+
+            await cleanupProductImageNames(currentProduct.images.map((image) => image.url));
             res.json({ success: true });
         } catch (error) {
             return res.status(500).json({ message: 'Internal Server Error' });

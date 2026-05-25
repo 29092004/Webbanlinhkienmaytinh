@@ -55,8 +55,18 @@ app.use((req, res) => {
 });
 
 app.use((error, req, res, next) => {
-    console.error(error);
-    res.status(500).json({
+    const statusCode = error.status || error.statusCode || 500;
+    const isAbortedRequest = statusCode === 499 || error.message === 'Request aborted' || req.aborted;
+
+    if (!isAbortedRequest) {
+        console.error(error);
+    }
+
+    if (res.headersSent || isAbortedRequest) {
+        return;
+    }
+
+    res.status(statusCode).json({
         success: false,
         message: error.message || 'Internal Server Error',
     });

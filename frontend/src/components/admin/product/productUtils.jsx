@@ -204,7 +204,9 @@ export const getImageDisplayName = (url, fallback = "") => {
   try {
     const parts = url.split("/");
     const fileName = parts[parts.length - 1];
-    return fileName || fallback;
+    const sanitizedFileName = fileName.split("?")[0].split("#")[0];
+    const displayName = sanitizedFileName.replace(/^\d+-/, "");
+    return displayName || sanitizedFileName || fallback;
   } catch {
     return fallback;
   }

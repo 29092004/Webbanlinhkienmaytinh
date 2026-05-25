@@ -7,9 +7,41 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const productUploadDir = path.resolve(__dirname, '../../uploads/products');
+const productTempUploadDir = path.resolve(__dirname, '../../uploads/products-temp');
 const specUploadDir = path.resolve(__dirname, '../../uploads/specs-temp');
 fs.mkdirSync(productUploadDir, { recursive: true });
+fs.mkdirSync(productTempUploadDir, { recursive: true });
 fs.mkdirSync(specUploadDir, { recursive: true });
+
+const sanitizeFileName = (originalName, fallbackName) => {
+    const extension = path.extname(originalName);
+    const rawBaseName = path.basename(originalName, extension);
+    const sanitizedBaseName = rawBaseName
+        .normalize('NFC')
+        .replace(/[<>:"/\\|?*\x00-\x1F]/g, '')
+        .trim()
+        .replace(/\s+/g, '_');
+
+    const normalizedExtension = extension.trim();
+
+    return {
+        baseName: sanitizedBaseName || fallbackName,
+        extension: normalizedExtension,
+    };
+};
+
+const createUniqueFileName = (directory, originalName, fallbackName) => {
+    const { baseName, extension } = sanitizeFileName(originalName, fallbackName);
+    let candidateName = `${baseName}${extension}`;
+    let duplicateIndex = 1;
+
+    while (fs.existsSync(path.join(directory, candidateName))) {
+        duplicateIndex += 1;
+        candidateName = `${baseName}-${duplicateIndex}${extension}`;
+    }
+
+    return candidateName;
+};
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -18,16 +50,18 @@ const storage = multer.diskStorage({
             return;
         }
 
-        cb(null, productUploadDir);
+        cb(null, productTempUploadDir);
     },
     filename: (req, file, cb) => {
-        const extension = path.extname(file.originalname);
-        const baseName = path.basename(file.originalname, extension)
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-+|-+$/g, '');
+        let fileName;
 
-        cb(null, `${Date.now()}-${baseName || 'product'}${extension}`);
+        if (file.fieldname === 'specFile') {
+            fileName = createUniqueFileName(specUploadDir, file.originalname, 'specification');
+        } else {
+            fileName = createUniqueFileName(productTempUploadDir, file.originalname, 'product');
+        }
+
+        cb(null, fileName);
     },
 });
 
@@ -55,4 +89,50 @@ const uploadProductAssets = multer({
     },
 });
 
-export { uploadProductAssets };
+const collectUploadedFiles = (fileGroups = {}) =>
+    Object.values(fileGroups)
+        .flat()
+        .filter((file) => file?.path);
+
+const cleanupUploadedFiles = (files = []) => {
+    files.forEach((file) => {
+        try {
+            fs.unlinkSync(file.path);
+        } catch {
+            // Ignore cleanup failures for aborted/failed uploads.
+        }
+    });
+};
+
+const withProductAssetUpload = (fields) => {
+    const middleware = uploadProductAssets.fields(fields);
+
+    return (req, res, next) => {
+        middleware(req, res, (error) => {
+            if (!error) {
+                next();
+                return;
+            }
+
+            cleanupUploadedFiles(collectUploadedFiles(req.files));
+
+            const storageErrorFiles = (error.storageErrors ?? [])
+                .map((storageError) => storageError?.file)
+                .filter((file) => file?.path);
+            cleanupUploadedFiles(storageErrorFiles);
+
+            if (error instanceof multer.MulterError) {
+                error.status = 400;
+            }
+
+            if (error.message === 'Request aborted' || req.aborted) {
+                error.status = 499;
+            }
+
+            next(error);
+        });
+    };
+};
+
+export { uploadProductAssets, withProductAssetUpload };
+export { createUniqueFileName, productTempUploadDir, productUploadDir, sanitizeFileName };
