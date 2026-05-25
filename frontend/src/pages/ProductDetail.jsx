@@ -5,7 +5,8 @@ import { ProductGallery } from "@/components/products/ProductGallery";
 import { ProductSpecsTable } from "@/components/products/ProductSpecsTable";
 import { ProductReviewsTab } from "@/components/products/ProductReviewsTab";
 import { ProductCard } from "@/components/products/ProductCard";
-import { Shield, Truck, Database, Star, ShoppingBag, CreditCard, ChevronRight } from "lucide-react";
+import { Shield, Truck, Database, Star, ShoppingBag, CreditCard } from "lucide-react";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 
 const mockProduct = {
   id: 3,
@@ -108,15 +109,14 @@ function ProductDetail() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1 space-y-8">
         
         {/* Breadcrumbs */}
-        <nav className="flex items-center gap-1.5 text-[11px] font-bold text-gray-500 uppercase tracking-wide">
-          <a href="/" className="hover:text-blue-600 transition-colors">Trang chủ</a>
-          <ChevronRight className="size-3 text-gray-400" />
-          <a href="/products" className="hover:text-blue-600 transition-colors">Linh kiện PC</a>
-          <ChevronRight className="size-3 text-gray-400" />
-          <a href="/products" className="hover:text-blue-600 transition-colors">Card đồ họa</a>
-          <ChevronRight className="size-3 text-gray-400" />
-          <span className="text-gray-400 truncate max-w-[200px] md:max-w-none">{mockProduct.name}</span>
-        </nav>
+        <Breadcrumb
+          items={[
+            { label: "Trang chủ", href: "/" },
+            { label: "Linh kiện PC", href: "/products" },
+            { label: "Card đồ họa", href: "/products" },
+            { label: mockProduct.name },
+          ]}
+        />
 
         {/* Product Info Section */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">

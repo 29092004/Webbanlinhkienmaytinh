@@ -3,7 +3,8 @@ import { Header } from "@/components/ui/Header";
 import { Footer } from "@/components/ui/Footer";
 import { CartItemRow } from "@/components/cart/CartItemRow";
 import { CartSummary } from "@/components/cart/CartSummary";
-import { ShoppingBag, ArrowLeft, ChevronRight, ShoppingCart } from "lucide-react";
+import { ShoppingBag, ArrowLeft, ShoppingCart } from "lucide-react";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Link } from "react-router-dom";
 
 const initialCartItems = [
@@ -129,11 +130,12 @@ function Cart() {
       {/* Main Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1 space-y-8">
         {/* Breadcrumbs */}
-        <nav className="flex items-center gap-1.5 text-[11px] font-bold text-gray-500 uppercase tracking-wide">
-          <Link to="/" className="hover:text-blue-600 transition-colors">Home</Link>
-          <ChevronRight className="size-3 text-gray-400" />
-          <span className="text-gray-400">Giỏ hàng</span>
-        </nav>
+        <Breadcrumb
+          items={[
+            { label: "Trang chủ", href: "/" },
+            { label: "Giỏ hàng" },
+          ]}
+        />
 
         {/* Title */}
         <div>

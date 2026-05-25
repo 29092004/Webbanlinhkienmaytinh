@@ -1,17 +1,20 @@
-import { ChevronRight } from "lucide-react";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 
 export function ProductBanner({ totalProducts }) {
   return (
     <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Breadcrumbs */}
-        <nav className="flex items-center gap-2 text-xs font-semibold tracking-wider text-blue-100 uppercase mb-4">
-          <a href="/" className="hover:text-white transition-colors">Home</a>
-          <ChevronRight className="size-3 text-blue-300" />
-          <span className="text-blue-300">Products</span>
-          <ChevronRight className="size-3 text-blue-300" />
-          <span className="text-white">GPU</span>
-        </nav>
+        <div className="mb-4">
+          <Breadcrumb
+            isLightBg={false}
+            items={[
+              { label: "Trang chủ", href: "/" },
+              { label: "Sản phẩm", href: "/products" },
+              { label: "Card đồ họa" },
+            ]}
+          />
+        </div>
 
         {/* Title & Description */}
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-2">

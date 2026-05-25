@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronRight, CreditCard, ShoppingBag } from "lucide-react";
+import { CreditCard, ShoppingBag } from "lucide-react";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Header } from "@/components/ui/Header";
 import { Footer } from "@/components/ui/Footer";
 
@@ -184,13 +185,13 @@ export default function Checkout() {
       {/* Main container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1 space-y-6">
         {/* Breadcrumbs */}
-        <nav className="flex items-center gap-1.5 text-[11px] font-bold text-gray-500 uppercase tracking-wide">
-          <Link to="/" className="hover:text-blue-600 transition-colors">Home</Link>
-          <ChevronRight className="size-3 text-gray-400" />
-          <Link to="/cart" className="hover:text-blue-600 transition-colors">Giỏ hàng</Link>
-          <ChevronRight className="size-3 text-gray-400" />
-          <span className="text-gray-400">Thanh toán</span>
-        </nav>
+        <Breadcrumb
+          items={[
+            { label: "Trang chủ", href: "/" },
+            { label: "Giỏ hàng", href: "/cart" },
+            { label: "Thanh toán" },
+          ]}
+        />
 
         {/* Title */}
         <div className="flex items-center gap-2.5 border-b border-slate-200 pb-4">

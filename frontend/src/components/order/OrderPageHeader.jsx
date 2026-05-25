@@ -1,5 +1,5 @@
-import { ChevronRight, FileText, ShieldAlert } from "lucide-react";
-import { Link } from "react-router-dom";
+import { FileText, ShieldAlert } from "lucide-react";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 
 export default function OrderPageHeader({
   orderCode,
@@ -10,13 +10,14 @@ export default function OrderPageHeader({
   return (
     <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
       <div>
-        <nav className="mb-3 flex flex-wrap items-center gap-2 text-[12px] font-medium text-slate-500">
-          <Link to="/" className="transition-colors hover:text-blue-700">
-            Đơn hàng của tôi
-          </Link>
-          <ChevronRight className="size-3.5 text-slate-400" />
-          <span className="text-blue-700">Chi tiết {orderCode}</span>
-        </nav>
+        <div className="mb-3">
+          <Breadcrumb
+            items={[
+              { label: "Đơn hàng của tôi", href: "/profile/orders" },
+              { label: `Chi tiết ${orderCode}` },
+            ]}
+          />
+        </div>
 
         <h1 className="m-0 text-[30px] font-black leading-tight tracking-normal text-slate-950 sm:text-[36px]">
           Chi tiết đơn hàng{" "}
