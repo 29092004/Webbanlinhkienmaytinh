@@ -11,11 +11,12 @@ import {
 import { api } from "@/lib/api";
 
 const navItems = [
-  { label: "Processors", href: "/products?category=processors" },
-  { label: "Graphics", href: "/products?category=graphics" },
-  { label: "Storage", href: "/products?category=storage" },
-  { label: "Memory", href: "/products?category=memory" },
-  { label: "Builds", href: "/pc-builder" },
+  { label: "Trang chủ", href: "/" },
+  { label: "Sản phẩm", href: "/products" },
+  { label: "Xây dựng cấu hình", href: "/pc-builder" },
+  { label: "Khuyến mãi", href: "/promotions" },
+  { label: "Tin tức", href: "/news" },
+  { label: "Liên hệ", href: "/contact" },
 ];
 
 export function Header() {
@@ -81,16 +82,21 @@ export function Header() {
   };
 
   const isNavActive = (item) => {
-    if (currentPath === item.href) return true;
+    if (location.pathname === item.href) return true;
 
-    return (
-      (location.pathname === "/search" && item.label === "Graphics") ||
-      (location.pathname === "/pc-builder" && item.label === "Builds")
-    );
+    if (item.href === "/products") {
+      return (
+        location.pathname.startsWith("/products") ||
+        location.pathname.startsWith("/product/") ||
+        location.pathname === "/search"
+      );
+    }
+
+    return false;
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-[#f7f8fa]/95 shadow-[0_8px_18px_rgba(15,23,42,0.05)] backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 shadow-[0_8px_18px_rgba(15,23,42,0.03)] backdrop-blur">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid min-h-[78px] grid-cols-[1fr_auto] items-center gap-4 py-3 md:grid-cols-[190px_1fr_auto]">
           <Link
@@ -100,15 +106,15 @@ export function Header() {
             EXO CORE
           </Link>
 
-          <nav className="hidden items-center justify-center gap-9 text-sm font-medium text-slate-900 md:flex">
+          <nav className="hidden items-center justify-center gap-10 text-[15px] font-medium text-slate-700 md:flex">
             {navItems.map((item) => (
               <Link
                 key={item.label}
                 to={item.href}
-                className={`transition hover:text-blue-700 ${
+                className={`transition-colors border-b-2 py-1.5 hover:text-blue-600 ${
                   isNavActive(item)
-                    ? "border-b-2 border-blue-700 pb-2 font-black text-blue-700"
-                    : ""
+                    ? "border-blue-600 text-blue-600 font-semibold"
+                    : "border-transparent text-slate-600"
                 }`}
               >
                 {item.label}
