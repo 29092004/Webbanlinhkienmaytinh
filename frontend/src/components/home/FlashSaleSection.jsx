@@ -1,3 +1,4 @@
+import { Zap } from "lucide-react";
 import { ChevronLeft, ChevronRight, ImageOff, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -34,10 +35,11 @@ export function FlashSaleSection({ products = [] }) {
               <span className="bg-gray-900 text-white px-2 py-1 rounded">12</span>
             </div>
           </div>
-          <a href="/sale" className="text-[#d32f2f] hover:underline text-sm font-medium">
+          <Link to="/products" className="text-[#d32f2f] hover:underline text-sm font-medium">
             Xem tất cả deal sốc &rarr;
-          </a>
+          </Link>
         </div>
+
 
         <div className="relative">
           {products.length > pageSize ? (

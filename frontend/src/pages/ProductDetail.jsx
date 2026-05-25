@@ -5,47 +5,43 @@ import { ProductGallery } from "@/components/products/ProductGallery";
 import { ProductSpecsTable } from "@/components/products/ProductSpecsTable";
 import { ProductReviewsTab } from "@/components/products/ProductReviewsTab";
 import { ProductCard } from "@/components/products/ProductCard";
-import { Shield, Truck, Database, Star, ShoppingBag, CreditCard, ChevronRight } from "lucide-react";
+import { Shield, Truck, Database, Star, ShoppingBag, CreditCard, Zap, CheckCircle2 } from "lucide-react";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
+import { Link, useNavigate } from "react-router-dom";
 
 const mockProduct = {
   id: 3,
-  name: "ASUS ROG Strix NVIDIA GeForce RTX 4080 Super OC Edition",
+  name: "ASUS ROG Strix RTX 4080 Super OC Edition",
   brand: "ASUS",
+  sku: "ROG-RTX4080S-O16G",
   price: 32490000,
   originalPrice: 35990000,
-  rating: 5,
-  reviewsCount: 48,
-  badgeText: "MỚI VỀ",
+  rating: 4.8,
+  reviewsCount: 1240,
+  badgeText: "NEW ARRIVAL",
   images: [
-    "https://images.unsplash.com/photo-1591488320449-011701bb6704?q=80&w=600&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?q=80&w=600&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=600&auto=format&fit=crop"
-  ],
-  highlightSpecs: [
-    { label: "BỘ NHỚ", val: "16GB GDDR6X" },
-    { label: "XUNG NHỊP", val: "2640 MHz (OC)" },
-    { label: "NHÂN CUDA", val: "10240" },
-    { label: "CÔNG SUẤT NGUỒN", val: "750W trở lên" }
+    "https://images.unsplash.com/photo-1591488320449-011701bb6704?q=80&w=600&auto=format&fit=crop", // ASUS GPU main
+    "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?q=80&w=600&auto=format&fit=crop", // back ports
+    "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=600&auto=format&fit=crop", // board chip
+    "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?q=80&w=600&auto=format&fit=crop"  // installed in case
   ],
   specs: {
     "Thương hiệu": "ASUS",
-    "Model": "ROG Strix GeForce RTX™ 4080 SUPER 16GB GDDR6X OC Edition",
-    "Graphic Engine": "NVIDIA® GeForce RTX™ 4080 SUPER",
-    "Bus Standard": "PCI Express 4.0",
-    "Video Memory": "16GB GDDR6X",
-    "Engine Clock": "OC mode: 2670 MHz | Default mode: 2640 MHz (Boost Clock)",
-    "CUDA Core": "10240",
-    "Memory Speed": "23 Gbps",
-    "Interface": "HDMI 2.1a x 2, DisplayPort 1.4a x 3",
-    "Dimensions": "357.6 x 149.3 x 70.1 mm"
+    "Model": "ROG Strix GeForce RTX™ 4080 SUPER OC",
+    "Engine": "NVIDIA® GeForce RTX™ 4080 SUPER",
+    "Chuẩn Bus": "PCI Express 4.0",
+    "Bộ nhớ": "16GB GDDR6X",
+    "Xung nhịp": "OC: 2670 MHz | Default: 2640 MHz",
+    "Cổng xuất hình": "HDMI 2.1a x 2, DisplayPort 1.4a x 3",
+    "Kích thước": "357.6 x 149.3 x 70.1 mm (3.5 Slot)"
   }
 };
 
 const mockRelated = [
   {
     id: 101,
-    name: "MSI GeForce RTX 4070 Ti SUPER 16G GAMING X SLIM",
-    brand: "NVIDIA",
+    name: "MSI GeForce RTX 4070 Ti SUPER GAMING X SLIM",
+    brand: "MSI",
     price: 24990000,
     originalPrice: 26500000,
     rating: 5,
@@ -57,7 +53,7 @@ const mockRelated = [
   {
     id: 102,
     name: "Corsair RM1000e 1000W 80 Plus Gold - Modular",
-    brand: "Power Supply",
+    brand: "Corsair",
     price: 4250000,
     originalPrice: 4890000,
     rating: 4.8,
@@ -67,7 +63,7 @@ const mockRelated = [
   {
     id: 103,
     name: "G.Skill Trident Z5 RGB 32GB (2x16GB) DDR5 6000MHz",
-    brand: "Memory",
+    brand: "G.Skill",
     price: 3490000,
     originalPrice: 3990000,
     rating: 5,
@@ -79,7 +75,7 @@ const mockRelated = [
   {
     id: 104,
     name: "Samsung 990 Pro 2TB M.2 NVMe PCIe Gen 4.0",
-    brand: "Storage",
+    brand: "Samsung",
     price: 5190000,
     originalPrice: 5990000,
     rating: 4.9,
@@ -89,6 +85,7 @@ const mockRelated = [
 ];
 
 function ProductDetail() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("specs");
 
   const savingAmount = mockProduct.originalPrice - mockProduct.price;
@@ -108,15 +105,14 @@ function ProductDetail() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1 space-y-8">
         
         {/* Breadcrumbs */}
-        <nav className="flex items-center gap-1.5 text-[11px] font-bold text-gray-500 uppercase tracking-wide">
-          <a href="/" className="hover:text-blue-600 transition-colors">Trang chủ</a>
-          <ChevronRight className="size-3 text-gray-400" />
-          <a href="/products" className="hover:text-blue-600 transition-colors">Linh kiện PC</a>
-          <ChevronRight className="size-3 text-gray-400" />
-          <a href="/products" className="hover:text-blue-600 transition-colors">Card đồ họa</a>
-          <ChevronRight className="size-3 text-gray-400" />
-          <span className="text-gray-400 truncate max-w-[200px] md:max-w-none">{mockProduct.name}</span>
-        </nav>
+        <Breadcrumb
+          items={[
+            { label: "Trang chủ", href: "/" },
+            { label: "Linh kiện PC", href: "/products" },
+            { label: "Card đồ họa (GPU)", href: "/products" },
+            { label: "NVIDIA GeForce RTX 4080 Super" }
+          ]}
+        />
 
         {/* Product Info Section */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -128,95 +124,82 @@ function ProductDetail() {
           {/* Right Column: Order Details */}
           <div className="lg:col-span-6 space-y-6">
             <div>
-              {mockProduct.badgeText && (
-                <span className="text-[10px] font-extrabold text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded uppercase tracking-wider mb-2 inline-block">
-                  {mockProduct.badgeText}
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                <span className="text-[10px] font-bold text-slate-400">
+                  SKU: {mockProduct.sku}
                 </span>
-              )}
-              <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight leading-snug">
+              </div>
+              
+              <h1 className="text-2xl md:text-3xl font-extrabold text-slate-950 tracking-tight leading-snug">
                 {mockProduct.name}
               </h1>
 
               {/* Stars & review counter */}
-              <div className="flex items-center gap-1.5 mt-3">
+              <div className="flex items-center gap-1.5 mt-3 text-xs font-semibold text-slate-500">
                 <div className="flex items-center text-amber-400">
                   {Array.from({ length: 5 }, (_, i) => (
                     <Star key={i} className="size-3.5 fill-amber-400 text-amber-400" />
                   ))}
                 </div>
-                <span className="text-xs text-gray-400 font-semibold">
-                  ({mockProduct.reviewsCount} đánh giá)
-                </span>
+                <span className="text-amber-500 font-bold">{mockProduct.rating}</span>
+                <span className="text-slate-300">|</span>
+                <button
+                  onClick={() => setActiveTab("reviews")}
+                  className="text-blue-600 hover:underline transition font-bold"
+                >
+                  1.240 Đánh giá
+                </button>
+                <span className="text-slate-300">|</span>
+                <span>Đã bán 1.5k</span>
               </div>
             </div>
 
             {/* Pricing Section */}
-            <div className="bg-slate-50 border border-slate-100 rounded-xl p-5 shadow-sm space-y-2">
-              <div className="flex items-baseline gap-3 flex-wrap">
-                <span className="text-3xl font-black text-blue-600">
+            <div className="bg-red-50/10 border border-red-100 rounded-3xl p-5 shadow-sm space-y-2 relative overflow-hidden">
+              <div className="flex items-baseline gap-3 flex-wrap relative z-10">
+                <span className="text-3xl font-black text-red-600">
                   {mockProduct.price.toLocaleString("vi-VN")}đ
                 </span>
                 {mockProduct.originalPrice && (
-                  <span className="text-gray-400 line-through text-sm font-semibold">
+                  <span className="text-slate-400 line-through text-sm font-semibold">
                     {mockProduct.originalPrice.toLocaleString("vi-VN")}đ
                   </span>
                 )}
               </div>
-              <p className="text-xs font-bold text-red-600">
-                Tiết kiệm: {savingAmount.toLocaleString("vi-VN")}đ ({savingPct}%)
+              <p className="text-xs font-bold text-red-500 relative z-10">
+                <span className="bg-red-50 text-red-500 border border-red-200 rounded px-1.5 py-0.5 text-[9px] mr-2">-{savingPct}%</span>
+                Tiết kiệm {savingAmount.toLocaleString("vi-VN")}đ
               </p>
             </div>
 
-            {/* Policy Checklists */}
-            <div className="space-y-3 pl-1">
-              <div className="flex items-center gap-3 text-xs font-bold text-gray-600">
-                <Shield className="size-4.5 text-blue-600 shrink-0" />
-                <span>Bảo hành chính hãng 36 tháng</span>
-              </div>
-              <div className="flex items-center gap-3 text-xs font-bold text-gray-600">
-                <Truck className="size-4.5 text-blue-600 shrink-0" />
-                <span>Miễn phí vận chuyển toàn quốc</span>
-              </div>
-              <div className="flex items-center gap-3 text-xs font-bold text-gray-600">
-                <Database className="size-4.5 text-blue-600 shrink-0" />
-                <span>Tình trạng: <span className="text-emerald-600 font-extrabold">Còn hàng</span></span>
-              </div>
-            </div>
+
 
             {/* Actions Buttons */}
             <div className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <button className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 px-4 rounded-xl text-sm flex items-center justify-center gap-2 shadow-sm transition-colors uppercase">
-                  <ShoppingBag className="size-4" />
+                <button
+                  onClick={() => navigate("/checkout")}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition-colors uppercase cursor-pointer"
+                >
                   MUA NGAY
                 </button>
-                <button className="bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-extrabold py-3.5 px-4 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors uppercase">
-                  Thêm giỏ hàng
+                <button
+                  onClick={() => alert(`Đã thêm ${mockProduct.name} vào giỏ hàng thành công!`)}
+                  className="bg-[#e21a36] hover:bg-red-700 text-white font-extrabold py-3.5 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 transition-colors uppercase cursor-pointer"
+                >
+                  <ShoppingBag className="size-4" />
+                  THÊM GIỎ HÀNG
                 </button>
               </div>
-              <button className="w-full bg-[#1e293b] hover:bg-[#0f172a] text-white font-bold py-3.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition-colors uppercase">
-                <CreditCard className="size-4" />
-                TRẢ GÓP 0% QUA THẺ TÍN DỤNG
+              <button className="w-full border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold py-3.5 px-4 rounded-2xl text-[10px] flex items-center justify-center transition-colors uppercase">
+                TRẢ GÓP 0% QUA THẺ TÍN DỤNG (XÉT DUYỆT TỨC THÌ)
               </button>
-            </div>
-
-            {/* highlight specs */}
-            <div className="border-t border-slate-100 pt-6">
-              <h3 className="font-bold text-xs text-gray-400 uppercase tracking-wider mb-4">Thông số nổi bật</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {mockProduct.highlightSpecs.map((spec, i) => (
-                  <div key={i} className="bg-white border border-slate-100 rounded-xl p-3 text-center shadow-sm">
-                    <span className="block text-[9px] font-bold text-gray-400 uppercase tracking-wide mb-1">{spec.label}</span>
-                    <span className="block text-xs font-extrabold text-slate-800 leading-tight">{spec.val}</span>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         </div>
 
         {/* Tab Sections */}
-        <div className="space-y-6 pt-6">
+        <div className="space-y-6 pt-2">
           {/* Tab Header Row */}
           <div className="border-b border-slate-200 flex overflow-x-auto no-scrollbar gap-6 md:gap-8">
             {tabs.map((tab) => {
@@ -226,10 +209,10 @@ function ProductDetail() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`pb-3 text-xs md:text-sm font-bold tracking-wider whitespace-nowrap border-b-2 transition-all ${
+                  className={`pb-3 text-xs md:text-sm font-bold tracking-wider whitespace-nowrap border-b-2 transition-all cursor-pointer ${
                     isActive
                       ? "border-blue-600 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-900"
+                      : "border-transparent text-slate-500 hover:text-slate-900"
                   }`}
                 >
                   {tab.label}
@@ -245,8 +228,8 @@ function ProductDetail() {
             )}
 
             {activeTab === "desc" && (
-              <div className="bg-white border border-slate-100 rounded-xl p-6 shadow-sm space-y-4 text-sm text-gray-600 font-medium leading-relaxed">
-                <h3 className="font-bold text-gray-900 text-base">Đặc điểm nổi bật ROG Strix GeForce RTX 4080 SUPER</h3>
+              <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-4 text-[14px] text-slate-600 font-medium leading-relaxed">
+                <h3 className="font-bold text-slate-900 text-base">Đặc điểm nổi bật ROG Strix GeForce RTX 4080 SUPER</h3>
                 <p>
                   ROG Strix GeForce RTX 4080 SUPER mang lại một ý nghĩa hoàn toàn mới cho việc cuốn theo dòng chảy. 
                   Bên trong và bên ngoài, mọi thành phần của card đồ họa đều mang đến cho GPU khổng lồ khoảng trống 
@@ -270,10 +253,10 @@ function ProductDetail() {
         <div className="border-t border-slate-200 pt-8 space-y-6">
           <div className="flex items-end justify-between">
             <div>
-              <h2 className="font-black text-gray-900 text-xl tracking-tight">Sản phẩm liên quan</h2>
-              <p className="text-xs text-gray-500 font-semibold mt-1">Có thể bạn sẽ quan tâm đến những linh kiện này</p>
+              <h2 className="font-extrabold text-slate-950 text-xl tracking-tight">Sản phẩm liên quan</h2>
+              <p className="text-xs text-slate-400 font-semibold mt-1">Linh kiện cao cấp cùng hệ sinh thái RTX 40-series</p>
             </div>
-            <a href="/products" className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors">
+            <a href="/products" className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1">
               Xem tất cả →
             </a>
           </div>

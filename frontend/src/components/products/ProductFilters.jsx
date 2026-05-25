@@ -1,55 +1,68 @@
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Plus } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 export function ProductFilters({
+  selectedCategories,
+  onCategoryToggle,
   selectedBrands,
   onBrandToggle,
-  selectedVram,
-  onVramToggle,
   priceRange,
   onPriceChange,
 }) {
   const [openSections, setOpenSections] = useState({
-    brands: true,
+    categories: true,
     price: true,
-    vram: true,
-    architecture: false,
-    tdp: false,
-    rgb: false,
-    stock: false,
+    brands: true,
   });
 
   const toggleSection = (section) => {
     setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const brands = ["ASUS", "MSI", "NVIDIA", "Gigabyte"];
-  const vrams = ["8GB", "12GB", "16GB", "24GB"];
+  const categoriesList = [
+    { id: "cpu", label: "Vi xử lý (CPU)" },
+    { id: "gpu", label: "Card đồ họa (GPU)" },
+    { id: "ram", label: "Bộ nhớ (RAM)" },
+    { id: "ssd", label: "Lưu trữ (SSD)" },
+    { id: "motherboard", label: "Bo mạch chủ" },
+    { id: "psu", label: "Nguồn (PSU)" },
+    { id: "case", label: "Vỏ máy" },
+    { id: "cooler", label: "Tản nhiệt" },
+  ];
+
+  const brandsList = [
+    { id: "ASUS", label: "ASUS" },
+    { id: "MSI", label: "MSI" },
+    { id: "NVIDIA", label: "NVIDIA" },
+    { id: "Gigabyte", label: "Gigabyte" },
+    { id: "Intel", label: "Intel" },
+    { id: "AMD", label: "AMD" },
+  ];
 
   return (
     <div className="w-full space-y-6">
-      {/* Brand Section */}
-      <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+      {/* Category Section */}
+      <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
         <button
           type="button"
-          onClick={() => toggleSection("brands")}
-          className="flex w-full items-center justify-between font-bold text-gray-900 text-sm"
+          onClick={() => toggleSection("categories")}
+          className="flex w-full items-center justify-between font-bold text-slate-800 text-sm tracking-wide"
         >
-          <span>THƯƠNG HIỆU</span>
-          {openSections.brands ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+          <span>DANH MỤC</span>
+          {openSections.categories ? <ChevronUp className="size-4 text-slate-400" /> : <ChevronDown className="size-4 text-slate-400" />}
         </button>
 
-        {openSections.brands && (
+        {openSections.categories && (
           <div className="mt-4 space-y-3">
-            {brands.map((brand) => (
-              <label key={brand} className="flex items-center gap-3 cursor-pointer select-none text-sm text-gray-600 hover:text-gray-900 transition-colors">
+            {categoriesList.map((cat) => (
+              <label key={cat.id} className="flex items-center gap-3 cursor-pointer select-none text-[14px] text-slate-600 hover:text-slate-900 transition-colors font-medium">
                 <input
                   type="checkbox"
-                  checked={selectedBrands.includes(brand)}
-                  onChange={() => onBrandToggle(brand)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 size-4 cursor-pointer"
+                  checked={selectedCategories.includes(cat.id)}
+                  onChange={() => onCategoryToggle(cat.id)}
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 size-4.5 cursor-pointer accent-blue-600"
                 />
-                <span>{brand}</span>
+                <span>{cat.label}</span>
               </label>
             ))}
           </div>
@@ -57,14 +70,14 @@ export function ProductFilters({
       </div>
 
       {/* Price Section */}
-      <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+      <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
         <button
           type="button"
           onClick={() => toggleSection("price")}
-          className="flex w-full items-center justify-between font-bold text-gray-900 text-sm"
+          className="flex w-full items-center justify-between font-bold text-slate-800 text-sm tracking-wide"
         >
           <span>KHOẢNG GIÁ</span>
-          {openSections.price ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+          {openSections.price ? <ChevronUp className="size-4 text-slate-400" /> : <ChevronDown className="size-4 text-slate-400" />}
         </button>
 
         {openSections.price && (
@@ -142,11 +155,11 @@ export function ProductFilters({
             </div>
             
             <div className="flex items-center justify-between gap-2">
-              <div className="flex-1 bg-slate-50 border border-slate-200 rounded-lg py-2 px-2 text-center text-[10px] font-bold text-gray-700 shadow-sm">
+              <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl py-2 px-2 text-center text-[12px] font-bold text-slate-700 shadow-sm">
                 {(priceRange[0] * 1000000).toLocaleString("vi-VN")}đ
               </div>
               <span className="text-gray-400 font-bold text-xs">—</span>
-              <div className="flex-1 bg-slate-50 border border-slate-200 rounded-lg py-2 px-2 text-center text-[10px] font-bold text-gray-700 shadow-sm">
+              <div className="flex-1 bg-slate-50 border border-slate-100 rounded-xl py-2 px-2 text-center text-[12px] font-bold text-slate-700 shadow-sm">
                 {(priceRange[1] * 1000000).toLocaleString("vi-VN")}đ
               </div>
             </div>
@@ -154,61 +167,33 @@ export function ProductFilters({
         )}
       </div>
 
-      {/* VRAM Section */}
-      <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
+      {/* Brand Section */}
+      <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
         <button
           type="button"
-          onClick={() => toggleSection("vram")}
-          className="flex w-full items-center justify-between font-bold text-gray-900 text-sm"
+          onClick={() => toggleSection("brands")}
+          className="flex w-full items-center justify-between font-bold text-slate-800 text-sm tracking-wide"
         >
-          <span>DUNG LƯỢNG VRAM</span>
-          {openSections.vram ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+          <span>THƯƠNG HIỆU</span>
+          {openSections.brands ? <ChevronUp className="size-4 text-slate-400" /> : <ChevronDown className="size-4 text-slate-400" />}
         </button>
 
-        {openSections.vram && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {vrams.map((vram) => {
-              const isSelected = selectedVram === vram;
-              return (
-                <button
-                  key={vram}
-                  type="button"
-                  onClick={() => onVramToggle(vram)}
-                  className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all border ${
-                    isSelected
-                      ? "bg-blue-50 border-blue-600 text-blue-600"
-                      : "bg-white border-slate-200 text-gray-500 hover:border-gray-300"
-                  }`}
-                >
-                  {vram}
-                </button>
-              );
-            })}
+        {openSections.brands && (
+          <div className="mt-4 space-y-3">
+            {brandsList.map((brand) => (
+              <label key={brand.id} className="flex items-center gap-3 cursor-pointer select-none text-[14px] text-slate-600 hover:text-slate-900 transition-colors font-medium">
+                <input
+                  type="checkbox"
+                  checked={selectedBrands.includes(brand.id)}
+                  onChange={() => onBrandToggle(brand.id)}
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 size-4.5 cursor-pointer accent-blue-600"
+                />
+                <span>{brand.label}</span>
+              </label>
+            ))}
           </div>
         )}
       </div>
-
-      {/* Collapsed Placeholder Sections */}
-      {["architecture", "tdp", "rgb", "stock"].map((section) => {
-        const titleMap = {
-          architecture: "KIÊN TRÚC",
-          tdp: "CHỈ SỐ TDP",
-          rgb: "HỖ TRỢ RGB",
-          stock: "TÌNH TRẠNG KHO",
-        };
-        return (
-          <div key={section} className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-            <button
-              type="button"
-              onClick={() => toggleSection(section)}
-              className="flex w-full items-center justify-between font-bold text-gray-900 text-sm"
-            >
-              <span>{titleMap[section]}</span>
-              <Plus className="size-4 text-gray-400" />
-            </button>
-          </div>
-        );
-      })}
     </div>
   );
 }

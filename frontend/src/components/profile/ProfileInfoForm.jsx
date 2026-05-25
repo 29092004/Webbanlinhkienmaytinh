@@ -14,16 +14,21 @@ export default function ProfileInfoForm({ profile, onProfileChange }) {
             Thông tin cá nhân
           </h2>
           <p className="mt-2 text-sm font-medium text-slate-500">
-            Cập nhật tên, email, số điện thoại và thông tin cơ bản.
+            Cập nhật tên, số điện thoại và thông tin cơ bản.
           </p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="mt-7 grid grid-cols-1 gap-5 md:grid-cols-2">
         <ProfileInput
-          label="Họ và tên"
-          value={profile.fullName}
-          onChange={(value) => onProfileChange("fullName", value)}
+          label="Họ"
+          value={profile.lastName}
+          onChange={(value) => onProfileChange("lastName", value)}
+        />
+        <ProfileInput
+          label="Tên"
+          value={profile.firstName}
+          onChange={(value) => onProfileChange("firstName", value)}
         />
         <ProfileInput
           label="Tên tài khoản"
@@ -34,6 +39,7 @@ export default function ProfileInfoForm({ profile, onProfileChange }) {
           label="Email"
           type="email"
           value={profile.email}
+          disabled={true}
           onChange={(value) => onProfileChange("email", value)}
         />
         <ProfileInput
@@ -74,16 +80,18 @@ export default function ProfileInfoForm({ profile, onProfileChange }) {
   );
 }
 
-function ProfileInput({ label, value, onChange, type = "text" }) {
+function ProfileInput({ label, value, onChange, type = "text", disabled = false }) {
   return (
     <label className="block">
       <span className="text-sm font-black text-slate-700">{label}</span>
       <input
         type={type}
         value={value}
+        disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-950 outline-none transition focus:border-blue-700 focus:ring-2 focus:ring-blue-100"
+        className="mt-2 h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-950 outline-none transition focus:border-blue-700 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200"
       />
     </label>
   );
 }
+

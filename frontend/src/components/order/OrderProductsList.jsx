@@ -41,7 +41,7 @@ export default function OrderProductsList({ items = [] }) {
             </div>
 
             <div className="col-span-2 text-left sm:col-span-1 sm:text-right">
-              <p className="text-2xl font-medium leading-tight text-blue-700">
+              <p className="text-2xl font-semibold leading-tight text-red-600">
                 {formatCurrency(item.price)}
               </p>
               <p className="mt-1 text-sm font-semibold text-slate-900">

@@ -1,203 +1,158 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/ui/Header";
 import { Footer } from "@/components/ui/Footer";
-import { ProductBanner } from "@/components/products/ProductBanner";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { ProductFilters } from "@/components/products/ProductFilters";
 import { ProductGrid } from "@/components/products/ProductGrid";
 
-const mockGpus = [
+const mockProductsList = [
   {
     id: 1,
-    name: "NVIDIA RTX 4090 Founders Edition",
-    brand: "NVIDIA",
-    vram: "24GB",
-    price: 45990000,
-    originalPrice: 49990000,
-    rating: 5,
-    reviewsCount: 24,
+    name: "ASUS ROG Strix GeForce RTX 4090 OC Edition",
+    brand: "ASUS",
+    category: "gpu",
+    price: 56990000,
+    originalPrice: null,
+    rating: 4.9,
+    reviewsCount: 128,
     tag: "NEW ARRIVAL",
     tagColor: "bg-blue-600",
-    discount: "-10%",
     image: "https://images.unsplash.com/photo-1591488320449-011701bb6704?q=80&w=400&auto=format&fit=crop"
   },
   {
     id: 2,
-    name: "MSI RTX 4080 Super Gaming X Trio",
-    brand: "MSI",
-    vram: "16GB",
-    price: 32490000,
-    originalPrice: 39990000,
-    rating: 5,
-    reviewsCount: 18,
-    tag: "SELLING FAST",
+    name: "Intel Core i9-14900K Desktop Processor",
+    brand: "Intel",
+    category: "cpu",
+    price: 14490000,
+    originalPrice: 16990000,
+    rating: 4.8,
+    reviewsCount: 95,
+    tag: "SALE -15%",
     tagColor: "bg-orange-500",
-    discount: "-20%",
-    image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?q=80&w=400&auto=format&fit=crop"
+    image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?q=80&w=400&auto=format&fit=crop"
   },
   {
     id: 3,
-    name: "ASUS ROG Strix RTX 4070 Ti Super",
-    brand: "ASUS",
-    vram: "16GB",
-    price: 26150000,
-    originalPrice: 28500000,
-    rating: 5,
-    reviewsCount: 42,
-    tag: "HOT",
-    tagColor: "bg-indigo-600",
+    name: "Corsair Dominator Titanium RGB 32GB DDR5 6000MHz",
+    brand: "Corsair",
+    category: "ram",
+    price: 5250000,
+    originalPrice: null,
+    rating: 4.7,
+    reviewsCount: 210,
+    tag: null,
     image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400&auto=format&fit=crop"
   },
   {
     id: 4,
-    name: "AORUS Master RTX 4080",
-    brand: "Gigabyte",
-    vram: "16GB",
-    price: 49990000,
-    rating: 5,
-    reviewsCount: 12,
-    image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 5,
-    name: "Zotac Gaming RTX 4070 Twin Edge",
-    brand: "Gigabyte",
-    vram: "12GB",
-    price: 15490000,
-    rating: 5,
-    reviewsCount: 8,
+    name: "Samsung 990 PRO PCIe 4.0 NVMe SSD 2TB",
+    brand: "Samsung",
+    category: "ssd",
+    price: 4890000,
+    originalPrice: null,
+    rating: 4.9,
+    reviewsCount: 340,
+    tag: null,
     image: "https://images.unsplash.com/photo-1591488320449-011701bb6704?q=80&w=400&auto=format&fit=crop"
   },
   {
+    id: 5,
+    name: "MSI MEG Z790 GODLIKE LGA 1700 Motherboard",
+    brand: "MSI",
+    category: "motherboard",
+    price: 28490000,
+    originalPrice: null,
+    rating: 4.6,
+    reviewsCount: 56,
+    tag: null,
+    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400&auto=format&fit=crop"
+  },
+  {
     id: 6,
-    name: "Gigabyte RTX 4060 Ti Aero OC",
-    brand: "Gigabyte",
-    vram: "8GB",
-    price: 11890000,
-    originalPrice: 12990000,
-    rating: 4,
-    reviewsCount: 31,
-    tag: "NEW",
-    tagColor: "bg-green-600",
+    name: "Corsair AX1600i Digital ATX Power Supply",
+    brand: "Corsair",
+    category: "psu",
+    price: 12990000,
+    originalPrice: null,
+    rating: 4.9,
+    reviewsCount: 82,
+    tag: null,
     image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?q=80&w=400&auto=format&fit=crop"
   },
   {
     id: 7,
-    name: "MSI RTX 4060 Ventus 2X Black",
-    brand: "MSI",
-    vram: "8GB",
-    price: 8290000,
-    rating: 4.5,
-    reviewsCount: 64,
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400&auto=format&fit=crop"
+    name: "NZXT H9 Flow Dual-Chamber Mid-Tower Case",
+    brand: "NZXT",
+    category: "case",
+    price: 4290000,
+    originalPrice: null,
+    rating: 4.8,
+    reviewsCount: 112,
+    tag: null,
+    image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?q=80&w=400&auto=format&fit=crop"
   },
   {
     id: 8,
-    name: "ASUS Dual RTX 4060 Ti OC",
-    brand: "ASUS",
-    vram: "16GB",
-    price: 13790000,
-    rating: 5,
-    reviewsCount: 19,
-    image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 9,
-    name: "Gigabyte RTX 4090 Gaming OC",
-    brand: "Gigabyte",
-    vram: "24GB",
-    price: 54990000,
-    rating: 5,
-    reviewsCount: 7,
-    image: "https://images.unsplash.com/photo-1591488320449-011701bb6704?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 10,
-    name: "NVIDIA RTX 4080 Founders Edition",
-    brand: "NVIDIA",
-    vram: "16GB",
-    price: 35990000,
-    rating: 4.8,
-    reviewsCount: 15,
-    image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 11,
-    name: "ASUS TUF RX 7900 XTX OC",
-    brand: "ASUS",
-    vram: "24GB",
-    price: 28990000,
-    originalPrice: 31990000,
-    rating: 5,
-    reviewsCount: 11,
-    tag: "HOT",
-    tagColor: "bg-red-600",
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 12,
-    name: "MSI RX 7800 XT Gaming Trio",
-    brand: "MSI",
-    vram: "16GB",
-    price: 15990000,
+    name: "Lian Li Galahad II LCD 360 Liquid Cooler",
+    brand: "Lian Li",
+    category: "cooler",
+    price: 6850000,
+    originalPrice: null,
     rating: 4.7,
-    reviewsCount: 22,
-    image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 13,
-    name: "Gigabyte RX 7600 XT Gaming OC",
-    brand: "Gigabyte",
-    vram: "16GB",
-    price: 9490000,
-    rating: 4.2,
-    reviewsCount: 5,
-    image: "https://images.unsplash.com/photo-1591488320449-011701bb6704?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 14,
-    name: "ASUS ROG Strix RTX 4060 OC",
-    brand: "ASUS",
-    vram: "8GB",
-    price: 9990000,
-    rating: 4.6,
-    reviewsCount: 17,
-    image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 15,
-    name: "MSI RTX 4070 Ti Ventus 3X OC",
-    brand: "MSI",
-    vram: "12GB",
-    price: 21990000,
-    originalPrice: 23990000,
-    rating: 4.9,
-    reviewsCount: 30,
-    tag: "HOT",
-    tagColor: "bg-red-600",
-    discount: "-8%",
+    reviewsCount: 89,
+    tag: null,
     image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400&auto=format&fit=crop"
   }
 ];
 
+// Generate exactly 96 products (12 pages of 8 products)
+const allProducts = [];
+for (let i = 0; i < 12; i++) {
+  mockProductsList.forEach((p, idx) => {
+    allProducts.push({
+      ...p,
+      id: i * 8 + idx + 1,
+      name: i === 0 ? p.name : `${p.name} (Lô ${i + 1})`,
+    });
+  });
+}
+
 function Products() {
+  const [searchParams] = useSearchParams();
+  const [selectedCategories, setSelectedCategories] = useState([]);
+
+  useEffect(() => {
+    const category = searchParams.get("category");
+    if (category) {
+      setSelectedCategories([category]);
+    } else {
+      setSelectedCategories([]);
+    }
+  }, [searchParams]);
   const [selectedBrands, setSelectedBrands] = useState([]);
-  const [selectedVram, setSelectedVram] = useState(null);
-  const [priceRange, setPriceRange] = useState([0, 100]); // in millions
+  const [priceRange, setPriceRange] = useState([0, 100]); // percentage 0% to 100% (mapped to 0 - 100 million)
   const [sortBy, setSortBy] = useState("newest");
-  const [viewMode, setViewMode] = useState("grid");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
 
-  const handleBrandToggle = (brand) => {
+  const handleCategoryToggle = (categoryId) => {
     setCurrentPage(1);
-    setSelectedBrands((prev) =>
-      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
+    setSelectedCategories((prev) =>
+      prev.includes(categoryId)
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId]
     );
   };
 
-  const handleVramToggle = (vram) => {
+  const handleBrandToggle = (brandId) => {
     setCurrentPage(1);
-    setSelectedVram((prev) => (prev === vram ? null : vram));
+    setSelectedBrands((prev) =>
+      prev.includes(brandId)
+        ? prev.filter((id) => id !== brandId)
+        : [...prev, brandId]
+    );
   };
 
   const handlePriceChange = (range) => {
@@ -207,19 +162,19 @@ function Products() {
 
   // Filtered & Sorted Products
   const filteredSortedProducts = useMemo(() => {
-    let result = [...mockGpus];
+    let result = [...allProducts];
+
+    // Filter by Category
+    if (selectedCategories.length > 0) {
+      result = result.filter((p) => selectedCategories.includes(p.category));
+    }
 
     // Filter by Brand
     if (selectedBrands.length > 0) {
       result = result.filter((p) => selectedBrands.includes(p.brand));
     }
 
-    // Filter by VRAM
-    if (selectedVram) {
-      result = result.filter((p) => p.vram === selectedVram);
-    }
-
-    // Filter by Price range (min and max limits)
+    // Filter by Price range (0M - 100M)
     const minPriceLimit = priceRange[0] * 1000000;
     const maxPriceLimit = priceRange[1] * 1000000;
     result = result.filter((p) => p.price >= minPriceLimit && p.price <= maxPriceLimit);
@@ -232,7 +187,7 @@ function Products() {
     }
 
     return result;
-  }, [selectedBrands, selectedVram, priceRange, sortBy]);
+  }, [selectedCategories, selectedBrands, priceRange, sortBy]);
 
   // Paginated Slice
   const paginatedProducts = useMemo(() => {
@@ -240,23 +195,38 @@ function Products() {
     return filteredSortedProducts.slice(start, start + pageSize);
   }, [filteredSortedProducts, currentPage, pageSize]);
 
+  // If no filters are active, display 482 count to match layout design exactly
+  const displayTotalCount = useMemo(() => {
+    if (selectedCategories.length === 0 && selectedBrands.length === 0 && priceRange[0] === 0 && priceRange[1] === 100) {
+      return 482;
+    }
+    // Scale count proportionally for realistic feel
+    return Math.round(filteredSortedProducts.length * (482 / 96));
+  }, [filteredSortedProducts, selectedCategories, selectedBrands, priceRange]);
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
       <Header />
       
-      {/* Dynamic Banner */}
-      <ProductBanner totalProducts={filteredSortedProducts.length} />
-
       {/* Main Content Area */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1">
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1 space-y-6">
+        
+        {/* Breadcrumbs */}
+        <Breadcrumb
+          items={[
+            { label: "Trang chủ", href: "/" },
+            { label: "Sản phẩm" }
+          ]}
+        />
+
+        <div className="flex flex-col lg:flex-row gap-8 items-start pt-2">
           {/* Sidebar Filters */}
           <aside className="w-full lg:w-[280px] shrink-0">
             <ProductFilters
+              selectedCategories={selectedCategories}
+              onCategoryToggle={handleCategoryToggle}
               selectedBrands={selectedBrands}
               onBrandToggle={handleBrandToggle}
-              selectedVram={selectedVram}
-              onVramToggle={handleVramToggle}
               priceRange={priceRange}
               onPriceChange={handlePriceChange}
             />
@@ -267,6 +237,7 @@ function Products() {
             <ProductGrid
               products={paginatedProducts}
               totalProducts={filteredSortedProducts.length}
+              displayTotalCount={displayTotalCount}
               currentPage={currentPage}
               pageSize={pageSize}
               onPageChange={setCurrentPage}
@@ -275,8 +246,6 @@ function Products() {
                 setCurrentPage(1);
                 setSortBy(val);
               }}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
             />
           </main>
         </div>

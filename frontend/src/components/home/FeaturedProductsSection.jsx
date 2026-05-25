@@ -10,6 +10,7 @@ export function FeaturedProductsSection({ products = [] }) {
           <p className="text-xs text-gray-500 font-medium">Những linh kiện được các chuyên gia TECHSPEC khuyên dùng</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
           {products.length > 0 ? (
             products.map((p) => (
               <div key={p.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex flex-col relative group hover:shadow-md transition-shadow">
@@ -27,6 +28,7 @@ export function FeaturedProductsSection({ products = [] }) {
                     Xem sản phẩm
                   </Link>
                 </div>
+
               </div>
             ))
           ) : (

@@ -31,7 +31,7 @@ export default function OrderSummaryCard({
               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wide">
                 Số lượng: {String(item.quantity).padStart(2, "0")}
               </p>
-              <p className="text-xs md:text-sm font-extrabold text-blue-600">
+              <p className="text-xs md:text-sm font-extrabold text-red-600">
                 {item.price.toLocaleString("vi-VN")}đ
               </p>
             </div>
@@ -58,7 +58,7 @@ export default function OrderSummaryCard({
       {/* Total row */}
       <div className="border-t border-slate-100 pt-4 flex justify-between items-center">
         <span className="text-sm font-extrabold text-gray-800">Tổng cộng</span>
-        <span className="text-lg md:text-xl font-black text-blue-600 tracking-tight">
+        <span className="text-lg md:text-xl font-black text-red-600 tracking-tight">
           {total.toLocaleString("vi-VN")}đ
         </span>
       </div>

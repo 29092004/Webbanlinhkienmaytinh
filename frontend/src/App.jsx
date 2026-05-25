@@ -10,6 +10,9 @@ import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import SearchResults from "./pages/SearchResults";
 import PCBuilder from "./pages/PCBuilder";
+import Promotions from "./pages/Promotions";
+import News from "./pages/News";
+import Contact from "./pages/Contact";
 import UserProfile from "./pages/UserProfile";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
@@ -61,10 +64,11 @@ function App() {
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/search" element={<SearchResults />} />
         <Route path="/pc-builder" element={<PCBuilder />} />
+        <Route path="/promotions" element={<Promotions />} />
+        <Route path="/news" element={<News />} />
+        <Route path="/contact" element={<Contact />} />
         <Route path="/profile" element={<UserProfile section="profile" />} />
         <Route path="/profile/orders" element={<UserProfile section="orders" />} />
-        <Route path="/profile/addresses" element={<UserProfile section="addresses" />} />
-        <Route path="/profile/security" element={<UserProfile section="security" />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/order-confirmation" element={<OrderConfirmation />} />
