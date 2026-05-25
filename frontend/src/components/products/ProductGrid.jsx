@@ -11,6 +11,8 @@ export function ProductGrid({
   onPageChange,
   sortBy,
   onSortChange,
+  isLoading = false,
+  title = "Tất cả sản phẩm",
 }) {
   const totalPages = Math.ceil(totalProducts / pageSize);
   const [isSortOpen, setIsSortOpen] = useState(false);
@@ -43,7 +45,7 @@ export function ProductGrid({
       {/* Title & Sort Header */}
       <div className="flex items-center justify-between pb-2">
         <h1 className="text-[22px] font-extrabold text-slate-900 tracking-tight flex items-baseline gap-2">
-          Tất cả sản phẩm
+          {title}
           <span className="text-[14px] font-medium text-slate-400">({displayTotalCount || totalProducts} kết quả)</span>
         </h1>
 
@@ -83,7 +85,11 @@ export function ProductGrid({
       </div>
 
       {/* Grid List */}
-      {products.length === 0 ? (
+      {isLoading ? (
+        <div className="bg-white rounded-2xl border border-slate-100 p-16 text-center shadow-sm">
+          <p className="text-slate-400 text-sm font-semibold">Dang tai san pham...</p>
+        </div>
+      ) : products.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-100 p-16 text-center shadow-sm">
           <p className="text-slate-400 text-sm font-semibold">Không tìm thấy sản phẩm nào phù hợp với bộ lọc.</p>
         </div>
@@ -96,7 +102,7 @@ export function ProductGrid({
       )}
 
       {/* Pagination Footer */}
-      {totalPages > 1 && (
+      {!isLoading && totalPages > 1 && (
         <div className="flex justify-center items-center gap-2 pt-8">
           {/* Prev Arrow */}
           <button

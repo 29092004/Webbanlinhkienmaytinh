@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { AdminSidebar } from "@/components/admin/layout/AdminSidebar";
 import { Button } from "@/components/ui/button";
+import { getStoredUser } from "@/lib/auth";
 import { api } from "@/lib/api";
 
 function getCustomerFullName(customer) {
@@ -165,6 +166,8 @@ function CustomerModal({
 }
 
 function AdminCustomers() {
+  const currentUser = getStoredUser();
+  const canManageCustomers = currentUser?.role === "admin";
   const [customers, setCustomers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -290,6 +293,11 @@ function AdminCustomers() {
             <div className="flex flex-col gap-4">
               <h2 className="m-0 text-2xl font-bold tracking-tight text-[#071328]">Trang người dùng</h2>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
+                {!canManageCustomers ? (
+                  <div className="rounded-xl border border-[#d7e0ec] bg-[#f8fbff] px-4 py-2 text-[0.88rem] font-medium text-slate-600">
+                    Tài khoản nhân viên chỉ có quyền xem thông tin khách hàng.
+                  </div>
+                ) : null}
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                   <input
@@ -397,6 +405,7 @@ function AdminCustomers() {
                               <button
                                 type="button"
                                 onClick={() => openEditModal(customer)}
+                                disabled={!canManageCustomers}
                                 className="inline-flex items-center gap-1.5 rounded-lg bg-[#ffc107] px-3 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#e9b000]"
                               >
                                 <Pencil className="size-3.5" /> Sửa
@@ -404,6 +413,7 @@ function AdminCustomers() {
                               <button
                                 type="button"
                                 onClick={() => openDeleteModal(customer)}
+                                disabled={!canManageCustomers}
                                 className="inline-flex items-center gap-1.5 rounded-lg bg-[#ff0a0a] px-3 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#e00000]"
                               >
                                 <Trash2 className="size-3.5" /> Xóa
@@ -421,30 +431,34 @@ function AdminCustomers() {
         </main>
       </div>
 
-      <CustomerModal
-        open={modalMode === "edit"}
-        title="Sửa người dùng"
-        submitLabel="Lưu thay đổi"
-        formData={formData}
-        onChange={handleFormChange}
-        onClose={closeModal}
-        onSubmit={handleSubmit}
-        isSubmitting={isSubmitting}
-        error={modalError}
-      />
+      {canManageCustomers ? (
+        <>
+          <CustomerModal
+            open={modalMode === "edit"}
+            title="Sửa người dùng"
+            submitLabel="Lưu thay đổi"
+            formData={formData}
+            onChange={handleFormChange}
+            onClose={closeModal}
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+            error={modalError}
+          />
 
-      <CustomerModal
-        open={modalMode === "delete"}
-        title="Xóa người dùng"
-        submitLabel="Xóa"
-        formData={formData}
-        onChange={handleFormChange}
-        onClose={closeModal}
-        onSubmit={handleSubmit}
-        isSubmitting={isSubmitting}
-        error={modalError}
-        isDelete
-      />
+          <CustomerModal
+            open={modalMode === "delete"}
+            title="Xóa người dùng"
+            submitLabel="Xóa"
+            formData={formData}
+            onChange={handleFormChange}
+            onClose={closeModal}
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+            error={modalError}
+            isDelete
+          />
+        </>
+      ) : null}
     </div>
   );
 }

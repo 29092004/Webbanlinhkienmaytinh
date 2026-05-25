@@ -49,6 +49,21 @@ export function saveAuthSession({ accessToken, user }) {
   notifyAuthStateChanged();
 }
 
+export function updateStoredUser(updater) {
+  const currentUser = getStoredUser();
+
+  if (!currentUser) {
+    return null;
+  }
+
+  const nextUser =
+    typeof updater === "function" ? updater(currentUser) : { ...currentUser, ...updater };
+
+  localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+  notifyAuthStateChanged();
+  return nextUser;
+}
+
 export function clearAuthSession() {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
@@ -103,6 +118,11 @@ export function getStoredUser() {
 
 export function isAuthenticated() {
   return Boolean(getAccessToken());
+}
+
+export function hasRole(...roles) {
+  const user = getStoredUser();
+  return Boolean(user?.role && roles.includes(user.role));
 }
 
 export function savePendingRegistration(data) {
@@ -160,5 +180,5 @@ export function clearOtpAutoSentState() {
 }
 
 export function getPostLoginRoute(role) {
-  return role === "admin" ? "/admin" : "/";
+  return role === "admin" || role === "staff" ? "/admin" : "/";
 }

@@ -1,82 +1,132 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Header } from "@/components/ui/Header";
 import { Footer } from "@/components/ui/Footer";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
-// Sub-components
 import OrderSuccessHeader from "@/components/order/OrderSuccessHeader";
 import OrderDetailsCard from "@/components/order/OrderDetailsCard";
 import OrderSummaryCard from "@/components/order/OrderSummaryCard";
+import { api } from "@/lib/api";
+import { mapOrderConfirmationForView } from "@/lib/orderMappers";
+import { showToast } from "@/lib/toast";
 
-// Mock ordered products from screenshot
-const mockOrderedItems = [
-  {
-    id: 1,
-    name: "NVIDIA RTX 4090 Founders Edition",
-    price: 45500000,
-    quantity: 1,
-    image: "https://images.unsplash.com/photo-1591488320449-011701bb6704?q=80&w=400&auto=format&fit=crop",
-  },
-  {
-    id: 2,
-    name: "Corsair Dominator Titanium 64GB DDR5",
-    price: 8200000,
-    quantity: 1,
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400&auto=format&fit=crop",
-  },
-];
+const LAST_ORDER_SNAPSHOT_KEY = "last_order_snapshot";
 
 export default function OrderConfirmation() {
-  const [items] = useState(mockOrderedItems);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [orderView, setOrderView] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const subtotal = 53700000;
-  const shippingCost = 0;
-  const total = 53700000;
+  useEffect(() => {
+    let isMounted = true;
 
-  // Handle tracking order button click
+    const loadConfirmationOrder = async () => {
+      try {
+        setIsLoading(true);
+        const orderId = searchParams.get("orderId");
+        const storedSnapshot = sessionStorage.getItem(LAST_ORDER_SNAPSHOT_KEY);
+        const parsedSnapshot = storedSnapshot ? JSON.parse(storedSnapshot) : null;
+
+        if (orderId) {
+          const [orderResponse, productResponse] = await Promise.all([
+            api.get(`/orders/${orderId}`),
+            api.get("/products"),
+          ]);
+
+          if (!isMounted) {
+            return;
+          }
+
+          const orderRow = orderResponse.data?.data || null;
+          const productRows = Array.isArray(productResponse.data?.data) ? productResponse.data.data : [];
+          setOrderView(mapOrderConfirmationForView(orderRow, productRows));
+          return;
+        }
+
+        if (parsedSnapshot) {
+          setOrderView(
+            mapOrderConfirmationForView(parsedSnapshot, [])
+          );
+          return;
+        }
+
+        setOrderView(null);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        console.error("Failed to load order confirmation", error);
+        setOrderView(null);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadConfirmationOrder();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [searchParams]);
+
   const handleTrackOrder = () => {
-    alert("📦 Tính năng theo dõi đơn hàng đang được cập nhật. Bạn sẽ nhận được thông báo chi tiết qua SMS/Email khi đơn hàng bắt đầu vận chuyển!");
+    if (!orderView?.orderId || String(orderView.orderId).startsWith("guest-")) {
+      showToast({
+        message: "Đơn hàng vừa đặt đã được lưu. Vui lòng đăng nhập để theo dõi chi tiết.",
+      });
+      return;
+    }
+
+    navigate(`/order/${orderView.orderId}`);
   };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
-      {/* Universal Header */}
       <Header />
 
-      {/* Main Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-1 flex flex-col items-center">
-        
-        {/* Checkmark and Main Header */}
         <OrderSuccessHeader />
 
-        {/* 2-Column Responsive Layout */}
-        <div className="w-full max-w-5xl flex flex-col lg:flex-row gap-8 items-start justify-between mt-4">
-          
-          {/* Left Column: Details Box & Action Buttons */}
-          <div className="order-left-col">
-            <OrderDetailsCard
-              orderCode="#EXO-99234"
-              paymentStatus="Đã thanh toán"
-              paymentMethodBadge="VNPay"
-              deliveryEstimate="24 Tháng 5, 2026"
-              shippingMethod="Giao hàng hỏa tốc"
-              onTrackOrder={handleTrackOrder}
-            />
+        {isLoading ? (
+          <div className="mt-6 w-full max-w-5xl rounded-2xl border border-slate-100 bg-white p-10 text-center text-sm font-semibold text-slate-500 shadow-sm">
+            Đang tải thông tin đơn hàng...
           </div>
-
-          {/* Right Column: Order Products Summary */}
-          <div className="order-right-col">
-            <OrderSummaryCard
-              items={items}
-              subtotal={subtotal}
-              shippingCost={shippingCost}
-              total={total}
-            />
+        ) : !orderView ? (
+          <div className="mt-6 w-full max-w-5xl rounded-2xl border border-slate-100 bg-white p-10 text-center shadow-sm">
+            <h2 className="text-2xl font-black text-slate-950">Chưa có dữ liệu đơn hàng</h2>
+            <p className="mt-3 text-sm font-medium text-slate-500">
+              Không tìm thấy thông tin xác nhận đơn hàng để hiển thị.
+            </p>
           </div>
+        ) : (
+          <div className="w-full max-w-5xl flex flex-col lg:flex-row gap-8 items-start justify-between mt-4">
+            <div className="order-left-col">
+              <OrderDetailsCard
+                orderCode={orderView.orderCode}
+                paymentStatus={orderView.paymentStatus}
+                paymentMethodBadge={orderView.paymentMethodBadge}
+                deliveryEstimate={orderView.deliveryEstimate}
+                shippingMethod={orderView.shippingMethod}
+                onTrackOrder={handleTrackOrder}
+              />
+            </div>
 
-        </div>
+            <div className="order-right-col">
+              <OrderSummaryCard
+                items={orderView.items}
+                subtotal={orderView.subtotal}
+                shippingCost={orderView.shippingCost}
+                total={orderView.total}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Universal Footer */}
       <Footer />
     </div>
   );

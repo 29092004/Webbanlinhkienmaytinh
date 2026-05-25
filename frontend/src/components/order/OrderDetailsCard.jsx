@@ -18,7 +18,7 @@ export default function OrderDetailsCard({
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
             Mã đơn hàng
           </p>
-          <p className="text-sm md:text-base font-extrabold text-blue-600">
+          <p className="text-sm md:text-base font-bold tracking-[-0.01em] text-blue-600">
             {orderCode}
           </p>
         </div>
@@ -29,7 +29,7 @@ export default function OrderDetailsCard({
             Thanh toán
           </p>
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-sm md:text-base font-extrabold text-gray-800">
+            <span className="text-sm md:text-base font-bold tracking-[-0.01em] text-gray-800">
               {paymentStatus}
             </span>
             {paymentMethodBadge && (
@@ -45,7 +45,7 @@ export default function OrderDetailsCard({
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
             Dự kiến giao hàng
           </p>
-          <p className="text-sm md:text-base font-extrabold text-gray-800">
+          <p className="text-sm md:text-base font-bold tracking-[-0.01em] text-gray-800">
             {deliveryEstimate}
           </p>
         </div>
@@ -55,7 +55,7 @@ export default function OrderDetailsCard({
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
             Phương thức
           </p>
-          <p className="text-sm md:text-base font-extrabold text-gray-800">
+          <p className="text-sm md:text-base font-bold tracking-[-0.01em] text-gray-800">
             {shippingMethod}
           </p>
         </div>

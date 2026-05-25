@@ -1,4 +1,4 @@
-import { ImageOff, ShoppingCart } from "lucide-react";
+import { ImageOff } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export function CategoryProductSection({ title, subtitle, products = [] }) {
@@ -29,11 +29,7 @@ export function CategoryProductSection({ title, subtitle, products = [] }) {
                 </Link>
                 <p className="mb-4 mt-1 min-h-[32px] text-[11px] text-gray-500">{product.desc}</p>
                 <div className="mt-auto">
-                  <div className="mb-3 text-base font-bold text-blue-600">{product.price}₫</div>
-                  <Link to={`/product/${product.id}`} className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-blue-600 py-2 text-xs font-bold text-white transition-colors hover:bg-blue-700">
-                    <ShoppingCart className="w-3.5 h-3.5" />
-                    Xem sản phẩm
-                  </Link>
+                  <div className="text-base font-bold text-blue-600">{product.price}₫</div>
                 </div>
               </div>
             ))

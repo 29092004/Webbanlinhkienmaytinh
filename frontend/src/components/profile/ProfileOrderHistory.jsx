@@ -34,7 +34,7 @@ export default function ProfileOrderHistory({ orders }) {
               <div>
                 <div className="flex flex-wrap items-center gap-3">
                   <h3 className="m-0 text-lg font-black text-blue-700">
-                    {order.id}
+                    {order.code || order.id}
                   </h3>
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-black ${
@@ -57,7 +57,7 @@ export default function ProfileOrderHistory({ orders }) {
                   {formatCurrency(order.total)}
                 </p>
                 <Link
-                  to="/order-details"
+                  to={`/order/${order.id}`}
                   className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-blue-700 transition hover:text-blue-900"
                 >
                   Xem chi tiết

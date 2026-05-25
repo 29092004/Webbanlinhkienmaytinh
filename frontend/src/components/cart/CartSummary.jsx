@@ -12,17 +12,17 @@ export function CartSummary({
       </h3>
 
       {/* Breakdown details */}
-      <div className="space-y-2.5 font-semibold text-xs text-slate-500">
+      <div className="space-y-2.5 font-semibold text-xs text-slate-900">
         <div className="flex items-center justify-between">
-          <span>Tạm tính</span>
+          <span className="text-slate-900">Tạm tính</span>
           <span className="text-slate-800">{subtotal.toLocaleString("vi-VN")}đ</span>
         </div>
         <div className="flex items-center justify-between">
-          <span>Phí vận chuyển</span>
-          <span className="text-blue-600 font-bold">Miễn phí</span>
+          <span className="text-slate-900">Phí vận chuyển</span>
+          <span className="text-slate-900 font-bold">Miễn phí</span>
         </div>
         <div className="flex items-center justify-between">
-          <span>Thuế VAT (10%)</span>
+          <span className="text-slate-900">Thuế VAT (10%)</span>
           <span className="text-slate-800">{vat.toLocaleString("vi-VN")}đ</span>
         </div>
       </div>
@@ -36,7 +36,7 @@ export function CartSummary({
       {/* Checkout CTA */}
       <Link
         to="/checkout"
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition-colors uppercase text-center cursor-pointer"
+        className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition-colors uppercase text-center cursor-pointer"
       >
         Thanh toán ngay →
       </Link>

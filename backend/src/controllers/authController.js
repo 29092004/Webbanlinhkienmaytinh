@@ -8,7 +8,7 @@ import customerModel from '../models/customerModel.js';
 import db from '../config/mysql.js';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-const ALLOWED_ROLES = ['admin', 'user'];
+const ALLOWED_ROLES = ['admin', 'staff', 'user'];
 const ACCESS_TOKEN_EXPIRES_IN = process.env.ACCESS_TOKEN_EXPIRES_IN || '15m';
 const REFRESH_TOKEN_EXPIRES_IN = process.env.REFRESH_TOKEN_EXPIRES_IN || '7d';
 const OTP_EXPIRES_MINUTES = Number(process.env.OTP_EXPIRES_MINUTES || 5);
@@ -165,7 +165,7 @@ const authController = {
             }
 
             if (!ALLOWED_ROLES.includes(role)) {
-                return res.status(400).json({ message: 'Role must be admin or user' });
+                return res.status(400).json({ message: 'Role must be admin, staff or user' });
             }
 
             if (role !== 'user') {

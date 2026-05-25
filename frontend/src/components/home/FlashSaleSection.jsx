@@ -1,4 +1,3 @@
-import { Zap } from "lucide-react";
 import { ChevronLeft, ChevronRight, ImageOff, Zap } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -121,13 +120,10 @@ export function FlashSaleSection({ products = [] }) {
                   <div className="w-full bg-gray-100 h-1.5 rounded-full mb-1.5 overflow-hidden">
                     <div className="bg-[#d32f2f] h-full rounded-full" style={{ width: p.progressWidth }}></div>
                   </div>
-                  <div className="flex justify-between text-[10px] text-gray-500 mb-3 gap-3">
+                  <div className="flex justify-between text-[10px] text-gray-500 gap-3">
                     <span>{p.saleMeta}</span>
                     <span className="text-[#d32f2f] font-medium">Kho {p.quantity}</span>
                   </div>
-                  <Link to={`/product/${p.id}`} className="block w-full bg-[#d32f2f] hover:bg-red-800 text-white rounded-lg py-2 text-center text-xs font-bold transition-colors">
-                    MUA NGAY
-                  </Link>
                 </div>
               </div>
             ))

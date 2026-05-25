@@ -27,7 +27,7 @@ export default function CheckoutPayment({
     <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-6">
       {/* Title */}
       <div className="flex items-center gap-3">
-        <span className="flex items-center justify-center size-6 rounded-full bg-blue-600 text-white text-xs font-bold">2</span>
+        <span className="flex items-center justify-center size-6 rounded-full bg-red-600 text-white text-xs font-bold">2</span>
         <h2 className="text-[17px] font-bold text-slate-800">Phương thức thanh toán</h2>
       </div>
 
@@ -42,12 +42,12 @@ export default function CheckoutPayment({
               onClick={() => onMethodChange(m.id)}
               className={`relative text-left p-4 rounded-2xl border-2 transition-all flex flex-col justify-center min-h-[82px] cursor-pointer ${
                 isSelected
-                  ? "border-blue-600 bg-blue-50/10 shadow-sm"
+                  ? "border-red-600 bg-red-50/20 shadow-sm"
                   : "border-slate-100 bg-white hover:bg-slate-50"
               }`}
             >
               <div className="flex items-center">
-                <span className={`text-[13px] font-bold ${isSelected ? "text-blue-600" : "text-slate-800"}`}>
+                <span className={`text-[13px] font-bold ${isSelected ? "text-red-600" : "text-slate-800"}`}>
                   {m.title}
                 </span>
                 {m.badge}
@@ -58,7 +58,7 @@ export default function CheckoutPayment({
 
               {/* Selected Check Indicator */}
               {isSelected && (
-                <div className="absolute -top-1.5 -right-1.5 bg-blue-600 text-white rounded-full size-4.5 flex items-center justify-center border border-white">
+                <div className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full size-4.5 flex items-center justify-center border border-white">
                   <Check className="size-3 text-white font-black" />
                 </div>
               )}

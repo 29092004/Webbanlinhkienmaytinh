@@ -1,101 +1,129 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/ui/Header";
 import { Footer } from "@/components/ui/Footer";
 import { ProductGallery } from "@/components/products/ProductGallery";
 import { ProductSpecsTable } from "@/components/products/ProductSpecsTable";
 import { ProductReviewsTab } from "@/components/products/ProductReviewsTab";
 import { ProductCard } from "@/components/products/ProductCard";
-import { Shield, Truck, Database, Star, ShoppingBag, CreditCard, Zap, CheckCircle2 } from "lucide-react";
+import { Star, ShoppingBag } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
-import { Link, useNavigate } from "react-router-dom";
-
-const mockProduct = {
-  id: 3,
-  name: "ASUS ROG Strix RTX 4080 Super OC Edition",
-  brand: "ASUS",
-  sku: "ROG-RTX4080S-O16G",
-  price: 32490000,
-  originalPrice: 35990000,
-  rating: 4.8,
-  reviewsCount: 1240,
-  badgeText: "NEW ARRIVAL",
-  images: [
-    "https://images.unsplash.com/photo-1591488320449-011701bb6704?q=80&w=600&auto=format&fit=crop", // ASUS GPU main
-    "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?q=80&w=600&auto=format&fit=crop", // back ports
-    "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=600&auto=format&fit=crop", // board chip
-    "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?q=80&w=600&auto=format&fit=crop"  // installed in case
-  ],
-  specs: {
-    "Thương hiệu": "ASUS",
-    "Model": "ROG Strix GeForce RTX™ 4080 SUPER OC",
-    "Engine": "NVIDIA® GeForce RTX™ 4080 SUPER",
-    "Chuẩn Bus": "PCI Express 4.0",
-    "Bộ nhớ": "16GB GDDR6X",
-    "Xung nhịp": "OC: 2670 MHz | Default: 2640 MHz",
-    "Cổng xuất hình": "HDMI 2.1a x 2, DisplayPort 1.4a x 3",
-    "Kích thước": "357.6 x 149.3 x 70.1 mm (3.5 Slot)"
-  }
-};
-
-const mockRelated = [
-  {
-    id: 101,
-    name: "MSI GeForce RTX 4070 Ti SUPER GAMING X SLIM",
-    brand: "MSI",
-    price: 24990000,
-    originalPrice: 26500000,
-    rating: 5,
-    reviewsCount: 34,
-    image: "https://images.unsplash.com/photo-1591488320449-011701bb6704?q=80&w=400&auto=format&fit=crop",
-    tag: "SELLING FAST",
-    tagColor: "bg-red-600"
-  },
-  {
-    id: 102,
-    name: "Corsair RM1000e 1000W 80 Plus Gold - Modular",
-    brand: "Corsair",
-    price: 4250000,
-    originalPrice: 4890000,
-    rating: 4.8,
-    reviewsCount: 19,
-    image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 103,
-    name: "G.Skill Trident Z5 RGB 32GB (2x16GB) DDR5 6000MHz",
-    brand: "G.Skill",
-    price: 3490000,
-    originalPrice: 3990000,
-    rating: 5,
-    reviewsCount: 52,
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400&auto=format&fit=crop",
-    tag: "HOT",
-    tagColor: "bg-indigo-600"
-  },
-  {
-    id: 104,
-    name: "Samsung 990 Pro 2TB M.2 NVMe PCIe Gen 4.0",
-    brand: "Samsung",
-    price: 5190000,
-    originalPrice: 5990000,
-    rating: 4.9,
-    reviewsCount: 88,
-    image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?q=80&w=400&auto=format&fit=crop"
-  }
-];
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  mapProductDetailForView,
+  mapRelatedProduct,
+} from "@/lib/productMappers";
+import { api } from "@/lib/api";
+import { addProductToCart } from "@/lib/cartStore";
+import { showToast } from "@/lib/toast";
 
 function ProductDetail() {
+  const { id } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("specs");
+  const [product, setProduct] = useState(null);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const savingAmount = mockProduct.originalPrice - mockProduct.price;
-  const savingPct = Math.round((savingAmount / mockProduct.originalPrice) * 100);
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchProductDetail = async () => {
+      try {
+        setIsLoading(true);
+        setError("");
+        setActiveTab("specs");
+
+        const [productResponse, productsResponse] = await Promise.all([
+          api.get(`/products/${id}`),
+          api.get("/products"),
+        ]);
+
+        const fetchedProduct = productResponse.data?.data ?? null;
+        const allProducts = Array.isArray(productsResponse.data?.data) ? productsResponse.data.data : [];
+
+        if (!isMounted) {
+          return;
+        }
+
+        setProduct(fetchedProduct);
+        setRelatedProducts(
+          allProducts
+            .filter((item) => item.id !== fetchedProduct?.id)
+            .sort((left, right) => {
+              const leftScore = left.category_id === fetchedProduct?.category_id ? 0 : 1;
+              const rightScore = right.category_id === fetchedProduct?.category_id ? 0 : 1;
+
+              if (leftScore !== rightScore) {
+                return leftScore - rightScore;
+              }
+
+              return Number(right.id || 0) - Number(left.id || 0);
+            })
+            .slice(0, 4)
+            .map(mapRelatedProduct)
+        );
+      } catch (nextError) {
+        if (!isMounted) {
+          return;
+        }
+
+        console.error("Failed to fetch product detail", nextError);
+        setError("Khong the tai chi tiet san pham.");
+        setProduct(null);
+        setRelatedProducts([]);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchProductDetail();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  const displayProduct = useMemo(() => mapProductDetailForView(product), [product]);
+
+  const savingAmount = (displayProduct?.originalPrice || 0) - (displayProduct?.price || 0);
+  const savingPct = displayProduct?.originalPrice
+    ? Math.round((savingAmount / displayProduct.originalPrice) * 100)
+    : 0;
 
   const tabs = [
     { id: "specs", label: "THÔNG SỐ KỸ THUẬT" },
     { id: "desc", label: "MÔ TẢ CHI TIẾT" },
-    { id: "reviews", label: `ĐÁNH GIÁ (${mockProduct.reviewsCount})` }
+    { id: "reviews", label: `ĐÁNH GIÁ (${displayProduct?.reviewsCount || 0})` }
   ];
+
+  const handleAddCurrentProductToCart = async ({ redirectToCheckout = false } = {}) => {
+    if (!displayProduct?.id) {
+      return;
+    }
+
+    try {
+      await addProductToCart({ productId: displayProduct.id, quantity: 1 });
+
+      if (redirectToCheckout) {
+        navigate("/checkout");
+        return;
+      }
+
+      showToast({
+        message: `Đã thêm ${displayProduct.name} vào giỏ hàng.`,
+        type: "success",
+      });
+    } catch (error) {
+      console.error("Failed to add current product to cart", error);
+      showToast({
+        message: "Không thêm được sản phẩm vào giỏ hàng.",
+        type: "error",
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
@@ -109,16 +137,30 @@ function ProductDetail() {
           items={[
             { label: "Trang chủ", href: "/" },
             { label: "Linh kiện PC", href: "/products" },
-            { label: "Card đồ họa (GPU)", href: "/products" },
-            { label: "NVIDIA GeForce RTX 4080 Super" }
+            { label: displayProduct?.categoryName || "Sản phẩm", href: "/products" },
+            { label: displayProduct?.name || "Chi tiết sản phẩm" }
           ]}
         />
 
+        {isLoading ? (
+          <div className="rounded-3xl border border-slate-100 bg-white p-12 text-center text-sm font-semibold text-slate-400 shadow-sm">
+            Dang tai chi tiet san pham...
+          </div>
+        ) : null}
+
+        {!isLoading && error ? (
+          <div className="rounded-3xl border border-rose-100 bg-white p-12 text-center shadow-sm">
+            <p className="text-sm font-semibold text-rose-500">{error}</p>
+          </div>
+        ) : null}
+
+        {!isLoading && displayProduct ? (
+          <>
         {/* Product Info Section */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column: Gallery */}
           <div className="lg:col-span-6 w-full">
-            <ProductGallery images={mockProduct.images} />
+            <ProductGallery images={displayProduct.images} />
           </div>
 
           {/* Right Column: Order Details */}
@@ -126,12 +168,12 @@ function ProductDetail() {
             <div>
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <span className="text-[10px] font-bold text-slate-400">
-                  SKU: {mockProduct.sku}
+                  SKU: {displayProduct.sku}
                 </span>
               </div>
               
               <h1 className="text-2xl md:text-3xl font-extrabold text-slate-950 tracking-tight leading-snug">
-                {mockProduct.name}
+                {displayProduct.name}
               </h1>
 
               {/* Stars & review counter */}
@@ -141,16 +183,16 @@ function ProductDetail() {
                     <Star key={i} className="size-3.5 fill-amber-400 text-amber-400" />
                   ))}
                 </div>
-                <span className="text-amber-500 font-bold">{mockProduct.rating}</span>
+                <span className="text-amber-500 font-bold">{displayProduct.rating}</span>
                 <span className="text-slate-300">|</span>
                 <button
                   onClick={() => setActiveTab("reviews")}
                   className="text-blue-600 hover:underline transition font-bold"
                 >
-                  1.240 Đánh giá
+                  {displayProduct.reviewsCount} Đánh giá
                 </button>
                 <span className="text-slate-300">|</span>
-                <span>Đã bán 1.5k</span>
+                <span>{displayProduct.soldText}</span>
               </div>
             </div>
 
@@ -158,18 +200,24 @@ function ProductDetail() {
             <div className="bg-red-50/10 border border-red-100 rounded-3xl p-5 shadow-sm space-y-2 relative overflow-hidden">
               <div className="flex items-baseline gap-3 flex-wrap relative z-10">
                 <span className="text-3xl font-black text-red-600">
-                  {mockProduct.price.toLocaleString("vi-VN")}đ
+                  {displayProduct.price.toLocaleString("vi-VN")}đ
                 </span>
-                {mockProduct.originalPrice && (
+                {displayProduct.originalPrice && (
                   <span className="text-slate-400 line-through text-sm font-semibold">
-                    {mockProduct.originalPrice.toLocaleString("vi-VN")}đ
+                    {displayProduct.originalPrice.toLocaleString("vi-VN")}đ
                   </span>
                 )}
               </div>
-              <p className="text-xs font-bold text-red-500 relative z-10">
-                <span className="bg-red-50 text-red-500 border border-red-200 rounded px-1.5 py-0.5 text-[9px] mr-2">-{savingPct}%</span>
-                Tiết kiệm {savingAmount.toLocaleString("vi-VN")}đ
-              </p>
+              {displayProduct.originalPrice ? (
+                <p className="text-xs font-bold text-red-500 relative z-10">
+                  <span className="bg-red-50 text-red-500 border border-red-200 rounded px-1.5 py-0.5 text-[9px] mr-2">-{savingPct}%</span>
+                  Tiết kiệm {savingAmount.toLocaleString("vi-VN")}đ
+                </p>
+              ) : (
+                <p className="text-xs font-bold text-slate-500 relative z-10">
+                  Giá đang được áp dụng trực tiếp cho sản phẩm này.
+                </p>
+              )}
             </div>
 
 
@@ -178,13 +226,13 @@ function ProductDetail() {
             <div className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
-                  onClick={() => navigate("/checkout")}
+                  onClick={() => handleAddCurrentProductToCart({ redirectToCheckout: true })}
                   className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition-colors uppercase cursor-pointer"
                 >
                   MUA NGAY
                 </button>
                 <button
-                  onClick={() => alert(`Đã thêm ${mockProduct.name} vào giỏ hàng thành công!`)}
+                  onClick={() => handleAddCurrentProductToCart()}
                   className="bg-[#e21a36] hover:bg-red-700 text-white font-extrabold py-3.5 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 transition-colors uppercase cursor-pointer"
                 >
                   <ShoppingBag className="size-4" />
@@ -224,22 +272,19 @@ function ProductDetail() {
           {/* Tab Content Panels */}
           <div>
             {activeTab === "specs" && (
-              <ProductSpecsTable specs={mockProduct.specs} />
+              <ProductSpecsTable specs={displayProduct.specs} />
             )}
 
             {activeTab === "desc" && (
               <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm space-y-4 text-[14px] text-slate-600 font-medium leading-relaxed">
-                <h3 className="font-bold text-slate-900 text-base">Đặc điểm nổi bật ROG Strix GeForce RTX 4080 SUPER</h3>
-                <p>
-                  ROG Strix GeForce RTX 4080 SUPER mang lại một ý nghĩa hoàn toàn mới cho việc cuốn theo dòng chảy. 
-                  Bên trong và bên ngoài, mọi thành phần của card đồ họa đều mang đến cho GPU khổng lồ khoảng trống 
-                  để thở tự do và đạt được hiệu suất tối đa. 
-                </p>
-                <p>
-                  Kiến trúc NVIDIA Ada Lovelace được nâng tầm nhờ khả năng làm mát và phân phối điện năng được nâng cấp, 
-                  và được bảo vệ bởi kho vũ khí gồm các thanh gia cố chắc chắn để nâng đỡ khung card. Hãy cắm điện, 
-                  trải nghiệm chơi game đỉnh cao cùng ROG Strix GeForce RTX 4080 SUPER.
-                </p>
+                <h3 className="font-bold text-slate-900 text-base">Mô tả chi tiết sản phẩm</h3>
+                {displayProduct.descriptionBlocks.length > 0 ? (
+                  displayProduct.descriptionBlocks.map((paragraph, index) => (
+                    <p key={index}>{paragraph}</p>
+                  ))
+                ) : (
+                  <p>Thông tin mô tả đang được cập nhật.</p>
+                )}
               </div>
             )}
 
@@ -254,7 +299,7 @@ function ProductDetail() {
           <div className="flex items-end justify-between">
             <div>
               <h2 className="font-extrabold text-slate-950 text-xl tracking-tight">Sản phẩm liên quan</h2>
-              <p className="text-xs text-slate-400 font-semibold mt-1">Linh kiện cao cấp cùng hệ sinh thái RTX 40-series</p>
+              <p className="text-xs text-slate-400 font-semibold mt-1">Các sản phẩm khác cùng danh mục hoặc gần nhất trong cửa hàng</p>
             </div>
             <a href="/products" className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1">
               Xem tất cả →
@@ -262,11 +307,19 @@ function ProductDetail() {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {mockRelated.map((product) => (
+            {relatedProducts.length > 0 ? (
+              relatedProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
-            ))}
+              ))
+            ) : (
+              <div className="col-span-full rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm font-semibold text-slate-400">
+                Chưa có sản phẩm liên quan để hiển thị.
+              </div>
+            )}
           </div>
         </div>
+          </>
+        ) : null}
 
       </div>
 

@@ -8,6 +8,8 @@ export function ProductFilters({
   onBrandToggle,
   priceRange,
   onPriceChange,
+  categoriesList = [],
+  brandsList = [],
 }) {
   const [openSections, setOpenSections] = useState({
     categories: true,
@@ -18,26 +20,6 @@ export function ProductFilters({
   const toggleSection = (section) => {
     setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
-
-  const categoriesList = [
-    { id: "cpu", label: "Vi xử lý (CPU)" },
-    { id: "gpu", label: "Card đồ họa (GPU)" },
-    { id: "ram", label: "Bộ nhớ (RAM)" },
-    { id: "ssd", label: "Lưu trữ (SSD)" },
-    { id: "motherboard", label: "Bo mạch chủ" },
-    { id: "psu", label: "Nguồn (PSU)" },
-    { id: "case", label: "Vỏ máy" },
-    { id: "cooler", label: "Tản nhiệt" },
-  ];
-
-  const brandsList = [
-    { id: "ASUS", label: "ASUS" },
-    { id: "MSI", label: "MSI" },
-    { id: "NVIDIA", label: "NVIDIA" },
-    { id: "Gigabyte", label: "Gigabyte" },
-    { id: "Intel", label: "Intel" },
-    { id: "AMD", label: "AMD" },
-  ];
 
   return (
     <div className="w-full space-y-6">

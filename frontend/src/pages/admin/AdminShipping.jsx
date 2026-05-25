@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { AdminSidebar } from "@/components/admin/layout/AdminSidebar";
 import { Button } from "@/components/ui/button";
+import { getStoredUser } from "@/lib/auth";
 import { api } from "@/lib/api";
 
 function formatCurrency(value) {
@@ -328,6 +329,8 @@ function ShippingModal({
 }
 
 function AdminShipping() {
+  const currentUser = getStoredUser();
+  const canDeleteShipping = currentUser?.role === "admin";
   const [shippings, setShippings] = useState([]);
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
@@ -656,13 +659,15 @@ function AdminShipping() {
                                 >
                                   <Pencil className="size-3.5" /> Sửa
                                 </button>
-                                <button
-                                  type="button"
-                                  onClick={() => openDeleteModal(shipping)}
-                                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#ff0a0a] px-3 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#e00000]"
-                                >
-                                  <Trash2 className="size-3.5" /> Xóa
-                                </button>
+                                {canDeleteShipping ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => openDeleteModal(shipping)}
+                                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#ff0a0a] px-3 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#e00000]"
+                                  >
+                                    <Trash2 className="size-3.5" /> Xóa
+                                  </button>
+                                ) : null}
                               </div>
                             </td>
                           </tr>
@@ -708,17 +713,19 @@ function AdminShipping() {
         onPreviewOrder={openOrderPreview}
       />
 
-      <ShippingModal
-        open={modalMode === "delete"}
-        title="Xóa vận đơn"
-        submitLabel="Xóa"
-        formData={formData}
-        onChange={handleFormChange}
-        onClose={closeModal}
-        onSubmit={handleSubmit}
-        isSubmitting={isSubmitting}
-        error={modalError}
-      />
+      {canDeleteShipping ? (
+        <ShippingModal
+          open={modalMode === "delete"}
+          title="Xóa vận đơn"
+          submitLabel="Xóa"
+          formData={formData}
+          onChange={handleFormChange}
+          onClose={closeModal}
+          onSubmit={handleSubmit}
+          isSubmitting={isSubmitting}
+          error={modalError}
+        />
+      ) : null}
 
       <OrderDetailsModal
         open={Boolean(previewOrder)}

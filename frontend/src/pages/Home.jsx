@@ -7,7 +7,7 @@ import { FlashSaleSection } from "@/components/home/FlashSaleSection";
 import {
   mapCategoryProductsForHome,
   mapSaleProductsForHome,
-} from "@/components/home/homeProductUtils";
+} from "@/lib/productMappers";
 import { Header } from "@/components/ui/Header";
 import { Footer } from "@/components/ui/Footer";
 import { api } from "@/lib/api";

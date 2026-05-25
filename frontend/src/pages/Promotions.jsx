@@ -56,7 +56,6 @@ export default function Promotions() {
       <Header />
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-10 sm:px-6 lg:px-8">
-        {/* Banner Section */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-700 to-indigo-900 px-8 py-16 text-white shadow-xl md:px-16">
           <div className="absolute -right-16 -top-16 size-64 rounded-full bg-blue-600/30 blur-3xl"></div>
           <div className="absolute -left-16 -bottom-16 size-64 rounded-full bg-indigo-500/20 blur-3xl"></div>
@@ -74,8 +73,7 @@ export default function Promotions() {
           </div>
         </div>
 
-        {/* Promotions Grid */}
-        <h2 className="mt-16 text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+        <h2 className="mt-16 flex items-center gap-2 text-2xl font-bold tracking-tight text-slate-900">
           <Gift className="size-6 text-blue-600" /> Chương trình đang diễn ra
         </h2>
         
@@ -94,22 +92,22 @@ export default function Promotions() {
               </div>
               
               <div className="flex flex-1 flex-col p-6">
-                <div className="flex items-center gap-2 text-xs font-bold text-blue-600 uppercase">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase text-blue-600">
                   <Tag className="size-3.5" /> {promo.discount}
                 </div>
                 <h3 className="mt-3 text-lg font-bold leading-snug text-slate-900">
                   {promo.title}
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-500 flex-1">
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-500">
                   {promo.description}
                 </p>
                 
-                <div className="mt-6 border-t border-slate-100 pt-4 flex flex-col gap-3">
+                <div className="mt-6 flex flex-col gap-3 border-t border-slate-100 pt-4">
                   <div className="flex items-center gap-2 text-xs text-slate-500">
                     <Calendar className="size-4 text-slate-400" /> Hạn dùng: {promo.expiry}
                   </div>
                   
-                  <div className="flex items-center justify-between rounded-xl bg-slate-50 p-2 border border-dashed border-slate-200">
+                  <div className="flex items-center justify-between rounded-xl border border-dashed border-slate-200 bg-slate-50 p-2">
                     <span className="px-2 font-mono text-sm font-bold tracking-wider text-slate-700">Mã: {promo.code}</span>
                     <button
                       onClick={() => handleCopyCode(promo.code)}
@@ -124,31 +122,29 @@ export default function Promotions() {
           ))}
         </div>
 
-        {/* Vouchers Section */}
-        <h2 className="mt-16 text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+        <h2 className="mt-16 flex items-center gap-2 text-2xl font-bold tracking-tight text-slate-900">
           <Ticket className="size-6 text-blue-600" /> Mã giảm giá nhanh
         </h2>
         
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {vouchers.map((voucher) => (
-            <div key={voucher.code} className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col justify-between">
-              {/* Ticket edge effect styling */}
-              <div className="absolute -left-3 top-1/2 size-6 -translate-y-1/2 rounded-full bg-slate-50 border-r border-slate-200"></div>
-              <div className="absolute -right-3 top-1/2 size-6 -translate-y-1/2 rounded-full bg-slate-50 border-l border-slate-200"></div>
+            <div key={voucher.code} className="relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="absolute -left-3 top-1/2 size-6 -translate-y-1/2 rounded-full border-r border-slate-200 bg-slate-50"></div>
+              <div className="absolute -right-3 top-1/2 size-6 -translate-y-1/2 rounded-full border-l border-slate-200 bg-slate-50"></div>
               
               <div>
                 <span className="text-xs font-bold text-slate-400">VOUCHER CHỈ CÓ TẠI EXO</span>
                 <h3 className="mt-2 text-xl font-extrabold text-blue-600">{voucher.value}</h3>
-                <p className="mt-2 text-xs text-slate-500 leading-relaxed">{voucher.desc}</p>
+                <p className="mt-2 text-xs leading-relaxed text-slate-500">{voucher.desc}</p>
               </div>
 
-              <div className="mt-6 border-t border-slate-100 pt-4 flex items-center justify-between">
-                <span className="text-[10px] text-slate-400 flex items-center gap-1">
+              <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
+                <span className="flex items-center gap-1 text-[10px] text-slate-400">
                   <Calendar className="size-3" /> Hạn: {voucher.expiry}
                 </span>
                 <button
                   onClick={() => handleCopyCode(voucher.code)}
-                  className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition"
+                  className="flex items-center gap-1 text-xs font-bold text-blue-600 transition hover:text-blue-700"
                 >
                   Sao chép <ArrowRight className="size-3" />
                 </button>
