@@ -15,8 +15,6 @@ const navItems = [
   { label: "Sản phẩm", href: "/products" },
   { label: "Xây dựng cấu hình", href: "/pc-builder" },
   { label: "Khuyến mãi", href: "/promotions" },
-  { label: "Tin tức", href: "/news" },
-  { label: "Liên hệ", href: "/contact" },
 ];
 
 export function Header() {
@@ -164,24 +162,18 @@ export function Header() {
               <button
                 type="button"
                 onClick={() => setIsMenuOpen((current) => !current)}
-                className="flex size-9 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white transition hover:border-blue-700"
+                className="flex size-9 items-center justify-center rounded-full bg-slate-950 text-white transition hover:bg-blue-600"
                 aria-label="Tài khoản"
               >
-                <img
-                  src={avatarUrl}
-                  alt={displayName}
-                  className="h-full w-full object-cover"
-                />
+                <UserRound className="size-5" />
               </button>
 
               {isMenuOpen ? (
                 <div className="absolute right-0 top-12 w-80 rounded-2xl border border-slate-200 bg-white p-3 text-left text-slate-700 shadow-[0_18px_45px_rgba(15,23,42,0.14)]">
                   <div className="flex items-center gap-3 border-b border-slate-100 px-3 pb-4 pt-2">
-                    <img
-                      src={avatarUrl}
-                      alt={displayName}
-                      className="size-12 rounded-full object-cover"
-                    />
+                    <div className="size-11 rounded-full bg-slate-950 text-white flex items-center justify-center shrink-0">
+                      <UserRound className="size-5" />
+                    </div>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-black text-slate-950">
                         {displayName}

@@ -18,15 +18,6 @@ export default function SearchProductCard({ product }) {
             alt={product.name}
             className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
           />
-          {product.tag ? (
-            <span
-              className={`absolute left-6 top-6 rounded-full px-4 py-1 text-sm font-bold uppercase ${
-                tagToneClassName[product.tagTone] || tagToneClassName.blue
-              }`}
-            >
-              {product.tag}
-            </span>
-          ) : null}
         </div>
       </Link>
 
@@ -51,7 +42,7 @@ export default function SearchProductCard({ product }) {
         </div>
 
         <div className="mt-8 flex items-center justify-between gap-4">
-          <p className="text-xl font-medium text-blue-700">
+          <p className="text-xl font-semibold text-red-600">
             {formatCurrency(product.price)}
           </p>
           <button

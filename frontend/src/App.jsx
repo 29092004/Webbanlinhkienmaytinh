@@ -69,8 +69,6 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/profile" element={<UserProfile section="profile" />} />
         <Route path="/profile/orders" element={<UserProfile section="orders" />} />
-        <Route path="/profile/addresses" element={<UserProfile section="addresses" />} />
-        <Route path="/profile/security" element={<UserProfile section="security" />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/order-confirmation" element={<OrderConfirmation />} />

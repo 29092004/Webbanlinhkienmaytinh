@@ -7,7 +7,7 @@ import { ProductReviewsTab } from "@/components/products/ProductReviewsTab";
 import { ProductCard } from "@/components/products/ProductCard";
 import { Shield, Truck, Database, Star, ShoppingBag, CreditCard, Zap, CheckCircle2 } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const mockProduct = {
   id: 3,
@@ -85,6 +85,7 @@ const mockRelated = [
 ];
 
 function ProductDetail() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("specs");
 
   const savingAmount = mockProduct.originalPrice - mockProduct.price;
@@ -124,11 +125,6 @@ function ProductDetail() {
           <div className="lg:col-span-6 space-y-6">
             <div>
               <div className="flex items-center gap-2 mb-2 flex-wrap">
-                {mockProduct.badgeText && (
-                  <span className="text-[10px] font-extrabold text-white bg-blue-600 px-2 py-0.5 rounded uppercase tracking-wider">
-                    {mockProduct.badgeText}
-                  </span>
-                )}
                 <span className="text-[10px] font-bold text-slate-400">
                   SKU: {mockProduct.sku}
                 </span>
@@ -159,9 +155,9 @@ function ProductDetail() {
             </div>
 
             {/* Pricing Section */}
-            <div className="bg-blue-50/20 border border-blue-100 rounded-3xl p-5 shadow-sm space-y-2 relative overflow-hidden">
+            <div className="bg-red-50/10 border border-red-100 rounded-3xl p-5 shadow-sm space-y-2 relative overflow-hidden">
               <div className="flex items-baseline gap-3 flex-wrap relative z-10">
-                <span className="text-3xl font-black text-blue-600">
+                <span className="text-3xl font-black text-red-600">
                   {mockProduct.price.toLocaleString("vi-VN")}đ
                 </span>
                 {mockProduct.originalPrice && (
@@ -176,48 +172,21 @@ function ProductDetail() {
               </p>
             </div>
 
-            {/* Promo grid cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex items-start gap-3">
-                <div className="bg-blue-50 p-2.5 rounded-xl text-blue-600 shrink-0">
-                  <Truck className="size-5" />
-                </div>
-                <div>
-                  <h4 className="text-[12px] font-extrabold text-blue-600 uppercase tracking-wide">FREESHIP</h4>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Toàn quốc cho đơn lẻ</p>
-                </div>
-              </div>
 
-              <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm flex items-start gap-3">
-                <div className="bg-orange-50 p-2.5 rounded-xl text-orange-500 shrink-0">
-                  <Zap className="size-5" />
-                </div>
-                <div>
-                  <h4 className="text-[12px] font-extrabold text-orange-500 uppercase tracking-wide">FLASH SALE</h4>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Giảm thêm 500k qua ví</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Warranty Status */}
-            <div className="space-y-2.5 pl-1">
-              <div className="flex items-center gap-2.5 text-xs font-bold text-slate-600">
-                <CheckCircle2 className="size-4.5 text-emerald-600 shrink-0" />
-                <span>Bảo hành <span className="text-slate-800">36 tháng</span> chính hãng</span>
-              </div>
-              <div className="flex items-center gap-2.5 text-xs font-bold text-slate-600">
-                <CheckCircle2 className="size-4.5 text-emerald-600 shrink-0" />
-                <span>Tình trạng: <span className="text-emerald-600">Còn hàng</span></span>
-              </div>
-            </div>
 
             {/* Actions Buttons */}
             <div className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <button className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition-colors uppercase">
+                <button
+                  onClick={() => navigate("/checkout")}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition-colors uppercase cursor-pointer"
+                >
                   MUA NGAY
                 </button>
-                <button className="bg-[#e21a36] hover:bg-red-700 text-white font-extrabold py-3.5 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 transition-colors uppercase">
+                <button
+                  onClick={() => alert(`Đã thêm ${mockProduct.name} vào giỏ hàng thành công!`)}
+                  className="bg-[#e21a36] hover:bg-red-700 text-white font-extrabold py-3.5 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 transition-colors uppercase cursor-pointer"
+                >
                   <ShoppingBag className="size-4" />
                   THÊM GIỎ HÀNG
                 </button>

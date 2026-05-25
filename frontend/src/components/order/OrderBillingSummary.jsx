@@ -92,7 +92,7 @@ function TotalCard({ billing, onEditOrderInfo }) {
             Tổng cộng
           </span>
           <div className="text-right">
-            <p className="text-3xl font-medium leading-none text-blue-700">
+            <p className="text-3xl font-black leading-none text-red-600">
               {formatCurrency(billing.total)}
             </p>
             <p className="mt-2 text-[12px] font-medium text-slate-500">

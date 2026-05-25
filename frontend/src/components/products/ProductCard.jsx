@@ -6,15 +6,6 @@ export function ProductCard({ product }) {
 
   return (
     <div className="bg-white rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-slate-100 flex flex-col relative group hover:shadow-[0_10px_30px_rgba(0,0,0,0.05)] transition-all duration-300">
-      {/* Badges container */}
-      <div className="absolute top-6 left-6 z-10 flex flex-col gap-1.5 items-start">
-        {product.tag && (
-          <span className={`text-[9px] font-extrabold text-white px-2 py-0.5 rounded tracking-wide uppercase ${product.tagColor || "bg-blue-600"}`}>
-            {product.tag}
-          </span>
-        )}
-      </div>
-
       {/* Image container */}
       <Link to={productDetailPath} className="aspect-square bg-slate-50 rounded-xl overflow-hidden p-2 flex items-center justify-center mb-4">
         <img
@@ -44,7 +35,7 @@ export function ProductCard({ product }) {
 
       {/* Pricing */}
       <div className="flex flex-col gap-0.5 mb-4 pl-0.5">
-        <span className="text-blue-600 font-extrabold text-[17px]">
+        <span className="text-red-600 font-extrabold text-[17px]">
           {product.price.toLocaleString("vi-VN")}đ
         </span>
         {product.originalPrice ? (

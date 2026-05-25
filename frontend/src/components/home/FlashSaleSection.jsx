@@ -1,4 +1,5 @@
 import { Zap } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const flashSaleProducts = [
   {
@@ -56,9 +57,9 @@ export function FlashSaleSection() {
               <span className="bg-gray-900 text-white px-2 py-1 rounded">12</span>
             </div>
           </div>
-          <a href="/sale" className="text-[#d32f2f] hover:underline text-sm font-medium">
+          <Link to="/products" className="text-[#d32f2f] hover:underline text-sm font-medium">
             Xem tất cả deal sốc &rarr;
-          </a>
+          </Link>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -67,10 +68,12 @@ export function FlashSaleSection() {
               <div className="absolute top-3 left-3 bg-[#d32f2f] text-white text-[10px] font-bold px-1.5 py-0.5 rounded z-10">
                 {p.discount}
               </div>
-              <div className="aspect-square bg-gray-50 rounded-lg mb-4 overflow-hidden p-2 flex items-center justify-center">
+              <Link to="/product/3" className="aspect-square bg-gray-50 rounded-lg mb-4 overflow-hidden p-2 flex items-center justify-center">
                 <img src={p.image} alt={p.name} className="object-cover w-full h-full rounded group-hover:scale-105 transition-transform duration-300" />
-              </div>
-              <h3 className="font-bold text-gray-900 text-sm mb-1 truncate">{p.name}</h3>
+              </Link>
+              <Link to="/product/3">
+                <h3 className="font-bold text-gray-900 text-sm mb-1 truncate hover:text-[#d32f2f] transition-colors">{p.name}</h3>
+              </Link>
               <div className="flex items-end gap-2 mb-3">
                 <span className="text-[#d32f2f] font-bold text-base">{p.price}</span>
                 <span className="text-gray-400 text-xs line-through mb-0.5">{p.originalPrice}</span>

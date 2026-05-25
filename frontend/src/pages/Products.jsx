@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/ui/Header";
 import { Footer } from "@/components/ui/Footer";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
@@ -119,7 +120,17 @@ for (let i = 0; i < 12; i++) {
 }
 
 function Products() {
+  const [searchParams] = useSearchParams();
   const [selectedCategories, setSelectedCategories] = useState([]);
+
+  useEffect(() => {
+    const category = searchParams.get("category");
+    if (category) {
+      setSelectedCategories([category]);
+    } else {
+      setSelectedCategories([]);
+    }
+  }, [searchParams]);
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [priceRange, setPriceRange] = useState([0, 100]); // percentage 0% to 100% (mapped to 0 - 100 million)
   const [sortBy, setSortBy] = useState("newest");

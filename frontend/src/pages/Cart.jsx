@@ -4,8 +4,8 @@ import { Footer } from "@/components/ui/Footer";
 import { CartItemRow } from "@/components/cart/CartItemRow";
 import { CartSummary } from "@/components/cart/CartSummary";
 import { ShoppingBag, ArrowLeft, ShoppingCart } from "lucide-react";
-import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Link } from "react-router-dom";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 
 const initialCartItems = [
   {
@@ -64,8 +64,7 @@ const mockSuggestions = [
 
 function Cart() {
   const [cartItems, setCartItems] = useState(initialCartItems);
-  const [couponCode, setCouponCode] = useState("");
-  const [couponApplied, setCouponApplied] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(initialCartItems.map(item => item.id));
 
   const handleQuantityChange = (id, newQty) => {
     if (newQty < 1) return;
@@ -76,17 +75,28 @@ function Cart() {
 
   const handleRemove = (id) => {
     setCartItems((prev) => prev.filter((item) => item.id !== id));
+    setSelectedIds((prev) => prev.filter(itemId => itemId !== id));
   };
 
-  const handleApplyCoupon = () => {
-    if (couponCode.trim().toUpperCase() === "EXOCORE2024") {
-      setCouponApplied(true);
+  const handleToggleSelect = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
+    );
+  };
+
+  const isAllSelected = cartItems.length > 0 && selectedIds.length === cartItems.length;
+
+  const handleToggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds([]);
     } else {
-      alert("Mã giảm giá không hợp lệ. Vui lòng thử lại với EXOCORE2024!");
+      setSelectedIds(cartItems.map((item) => item.id));
     }
   };
 
+
   const handleAddSuggestionToCart = (product) => {
+    const newId = Date.now();
     setCartItems((prev) => {
       const existing = prev.find((item) => item.name === product.name);
       if (existing) {
@@ -99,7 +109,7 @@ function Cart() {
       return [
         ...prev,
         {
-          id: Date.now(),
+          id: newId,
           name: product.name,
           details: "Premium Accessory | High Performance",
           price: product.price,
@@ -108,18 +118,17 @@ function Cart() {
         }
       ];
     });
+    setSelectedIds((prev) => [...prev, newId]);
   };
 
-  // Math Calculations
+  // Math Calculations (Based on selected products only)
   const rawSubtotal = useMemo(() => {
-    return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  }, [cartItems]);
+    return cartItems
+      .filter((item) => selectedIds.includes(item.id))
+      .reduce((sum, item) => sum + item.price * item.quantity, 0);
+  }, [cartItems, selectedIds]);
 
-  const discountAmount = useMemo(() => {
-    return couponApplied ? Math.round(rawSubtotal * 0.1) : 0;
-  }, [rawSubtotal, couponApplied]);
-
-  const subtotal = rawSubtotal - discountAmount;
+  const subtotal = rawSubtotal;
   const vat = Math.round(subtotal * 0.1);
   const total = subtotal + vat;
 
@@ -171,11 +180,49 @@ function Cart() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Left Column: Cart items */}
             <div className="lg:col-span-8 space-y-4">
+              
+              {/* Select All Checkbar */}
+              <div className="bg-white rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.01)] border border-slate-100 flex items-center justify-between flex-wrap gap-2">
+                <label className="flex items-center gap-3 cursor-pointer select-none text-xs font-bold text-slate-700">
+                  <button
+                    type="button"
+                    onClick={handleToggleSelectAll}
+                    className={`size-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all cursor-pointer ${
+                      isAllSelected
+                        ? "bg-blue-600 border-blue-600 text-white"
+                        : "border-slate-200 hover:border-blue-500 bg-white"
+                    }`}
+                  >
+                    {isAllSelected && (
+                      <svg className="size-2.5 fill-current" viewBox="0 0 20 20">
+                        <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
+                      </svg>
+                    )}
+                  </button>
+                  <span>CHỌN TẤT CẢ ({cartItems.length} SẢN PHẨM)</span>
+                </label>
+
+                {selectedIds.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCartItems(prev => prev.filter(item => !selectedIds.includes(item.id)));
+                      setSelectedIds([]);
+                    }}
+                    className="text-xs font-bold text-red-500 hover:text-red-700 transition cursor-pointer"
+                  >
+                    Xóa mục đã chọn ({selectedIds.length})
+                  </button>
+                )}
+              </div>
+
               <div className="space-y-3">
                 {cartItems.map((item) => (
                   <CartItemRow
                     key={item.id}
                     item={item}
+                    selected={selectedIds.includes(item.id)}
+                    onToggleSelect={handleToggleSelect}
                     onQuantityChange={handleQuantityChange}
                     onRemove={handleRemove}
                   />
@@ -198,11 +245,6 @@ function Cart() {
                 subtotal={subtotal}
                 vat={vat}
                 total={total}
-                discountAmount={discountAmount}
-                couponCode={couponCode}
-                onCouponCodeChange={setCouponCode}
-                onApplyCoupon={handleApplyCoupon}
-                couponApplied={couponApplied}
               />
             </div>
           </div>
@@ -237,14 +279,14 @@ function Cart() {
                   {product.name}
                 </h3>
 
-                <span className="text-blue-600 font-extrabold text-sm mb-4">
+                <span className="text-red-600 font-extrabold text-sm mb-4">
                   {product.price.toLocaleString("vi-VN")}đ
                 </span>
 
                 <button
                   type="button"
                   onClick={() => handleAddSuggestionToCart(product)}
-                  className="mt-auto w-full border-2 border-blue-600 hover:bg-blue-50 text-blue-600 rounded-lg py-2 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+                  className="mt-auto w-full border-2 border-blue-600 hover:bg-blue-50 text-blue-600 rounded-lg py-2 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <ShoppingCart className="size-3.5" />
                   Thêm vào giỏ

@@ -1,4 +1,5 @@
 import { ShoppingCart } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const products = [
   {
@@ -44,18 +45,15 @@ export function FeaturedProductsSection() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {products.map((p, i) => (
             <div key={i} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex flex-col relative group hover:shadow-md transition-shadow">
-              {p.badge && (
-                <div className={`absolute top-3 left-3 text-white text-[10px] font-bold px-1.5 py-0.5 rounded z-10 ${p.badgeColor}`}>
-                  {p.badge}
-                </div>
-              )}
-              <div className="aspect-square bg-gray-50 rounded-lg mb-4 overflow-hidden p-2 flex items-center justify-center">
+              <Link to="/product/3" className="aspect-square bg-gray-50 rounded-lg mb-4 overflow-hidden p-2 flex items-center justify-center">
                 <img src={p.image} alt={p.name} className="object-cover w-full h-full rounded group-hover:scale-105 transition-transform duration-300" />
-              </div>
-              <h3 className="font-bold text-gray-900 text-sm mb-1">{p.name}</h3>
+              </Link>
+              <Link to="/product/3">
+                <h3 className="font-bold text-gray-900 text-sm mb-1 hover:text-red-600 transition-colors">{p.name}</h3>
+              </Link>
               <p className="text-[11px] text-gray-500 mb-4">{p.desc}</p>
               <div className="mt-auto">
-                <div className="text-blue-600 font-bold text-base mb-3">{p.price}</div>
+                <div className="text-red-600 font-bold text-base mb-3">{p.price}</div>
                 <button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors">
                   <ShoppingCart className="w-3.5 h-3.5" />
                   Thêm vào giỏ
