@@ -53,11 +53,15 @@ const requireRole = (...roles) => (req, res, next) => {
 };
 
 const requireAdmin = requireRole('admin');
+const requireAdminOrStaff = requireRole('admin', 'staff');
 const requireUser = requireRole('admin', 'user');
+const requireAuthenticatedUser = requireRole('admin', 'staff', 'user');
 
 export {
     authenticateToken,
     requireRole,
     requireAdmin,
+    requireAdminOrStaff,
     requireUser,
+    requireAuthenticatedUser,
 };

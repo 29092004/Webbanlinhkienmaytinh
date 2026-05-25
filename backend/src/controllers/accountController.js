@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import accountModel from '../models/accountModel.js';
 
-const ALLOWED_ROLES = ['admin', 'user'];
+const ALLOWED_ROLES = ['admin', 'staff', 'user'];
 const sanitizeAccount = ({ password, refresh_token, ...account }) => account;
 
 const accountController = {
@@ -35,7 +35,7 @@ const accountController = {
             }
 
             if (!ALLOWED_ROLES.includes(role)) {
-                return res.status(400).json({ message: 'Role must be admin or user' });
+                return res.status(400).json({ message: 'Role must be admin, staff or user' });
             }
 
             const existingAccount = await accountModel.findByUsername(username);
@@ -60,7 +60,7 @@ const accountController = {
             }
 
             if (!ALLOWED_ROLES.includes(role)) {
-                return res.status(400).json({ message: 'Role must be admin or user' });
+                return res.status(400).json({ message: 'Role must be admin, staff or user' });
             }
 
             const existingAccount = await accountModel.findByUsername(username);

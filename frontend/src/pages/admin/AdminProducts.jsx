@@ -14,9 +14,12 @@ import {
 } from "@/components/admin/product/productUtils";
 import { AdminSidebar } from "@/components/admin/layout/AdminSidebar";
 import { Button } from "@/components/ui/button";
+import { getStoredUser } from "@/lib/auth";
 import { api } from "@/lib/api";
 
 function AdminProducts() {
+  const currentUser = getStoredUser();
+  const canManageProducts = currentUser?.role === "admin";
   const [products, setProducts] = useState([]);
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -719,13 +722,19 @@ function AdminProducts() {
             <div className="flex flex-col gap-4">
               <h2 className="m-0 text-2xl font-bold tracking-tight text-[#071328]">Trang sản phẩm</h2>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <Button
-                  type="button"
-                  onClick={openCreateModal}
-                  className="h-10 rounded-xl bg-[#2563eb] px-4 text-[0.88rem] font-semibold text-white hover:bg-[#1d4ed8]"
-                >
-                  <Plus className="mr-1.5 size-4" /> Thêm sản phẩm
-                </Button>
+                {canManageProducts ? (
+                  <Button
+                    type="button"
+                    onClick={openCreateModal}
+                    className="h-10 rounded-xl bg-[#2563eb] px-4 text-[0.88rem] font-semibold text-white hover:bg-[#1d4ed8]"
+                  >
+                    <Plus className="mr-1.5 size-4" /> Thêm sản phẩm
+                  </Button>
+                ) : (
+                  <div className="rounded-xl border border-[#d7e0ec] bg-[#f8fbff] px-4 py-2 text-[0.88rem] font-medium text-slate-600">
+                    Tài khoản nhân viên chỉ có quyền xem sản phẩm.
+                  </div>
+                )}
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                   <input
@@ -808,6 +817,7 @@ function AdminProducts() {
                           onView={openDetailModal}
                           onEdit={openEditModal}
                           onDelete={openDeleteModal}
+                          canManage={canManageProducts}
                         />
                       ))
                     )}
@@ -837,6 +847,7 @@ function AdminProducts() {
                           onView={openDetailModal}
                           onEdit={openEditModal}
                           onDelete={openDeleteModal}
+                          canManage={canManageProducts}
                         />
                       ))
                     )}
@@ -848,60 +859,64 @@ function AdminProducts() {
         </main>
       </div>
 
-      <ProductModal
-        open={modalMode === "create"}
-        title="Thêm sản phẩm"
-        submitLabel="Tạo sản phẩm"
-        formData={formData}
-        imagePreviews={imagePreviews}
-        specPreview={specPreview}
-        isSpecPreviewOpen={isSpecPreviewOpen}
-        isSpecPreviewLoading={isSpecPreviewLoading}
-        onToggleSpecPreview={() => setIsSpecPreviewOpen((prev) => !prev)}
-        onSpecFileChange={handleSpecFileChange}
-        onChange={handleFormChange}
-        onClose={closeModal}
-        onSubmit={handleSubmit}
-        isSubmitting={isSubmitting}
-        error={modalError}
-        validationErrors={validationErrors}
-        brands={brands}
-        categories={categories}
-      />
+      {canManageProducts ? (
+        <>
+          <ProductModal
+            open={modalMode === "create"}
+            title="Thêm sản phẩm"
+            submitLabel="Tạo sản phẩm"
+            formData={formData}
+            imagePreviews={imagePreviews}
+            specPreview={specPreview}
+            isSpecPreviewOpen={isSpecPreviewOpen}
+            isSpecPreviewLoading={isSpecPreviewLoading}
+            onToggleSpecPreview={() => setIsSpecPreviewOpen((prev) => !prev)}
+            onSpecFileChange={handleSpecFileChange}
+            onChange={handleFormChange}
+            onClose={closeModal}
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+            error={modalError}
+            validationErrors={validationErrors}
+            brands={brands}
+            categories={categories}
+          />
 
-      <ProductModal
-        open={modalMode === "edit"}
-        title="Sửa sản phẩm"
-        submitLabel="Lưu thay đổi"
-        formData={formData}
-        imagePreviews={imagePreviews}
-        specPreview={specPreview}
-        isSpecPreviewOpen={isSpecPreviewOpen}
-        isSpecPreviewLoading={isSpecPreviewLoading}
-        onToggleSpecPreview={() => setIsSpecPreviewOpen((prev) => !prev)}
-        onSpecFileChange={handleSpecFileChange}
-        onChange={handleFormChange}
-        onClose={closeModal}
-        onSubmit={handleSubmit}
-        isSubmitting={isSubmitting || isProductModalLoading}
-        error={modalError}
-        validationErrors={validationErrors}
-        brands={brands}
-        categories={categories}
-      />
+          <ProductModal
+            open={modalMode === "edit"}
+            title="Sửa sản phẩm"
+            submitLabel="Lưu thay đổi"
+            formData={formData}
+            imagePreviews={imagePreviews}
+            specPreview={specPreview}
+            isSpecPreviewOpen={isSpecPreviewOpen}
+            isSpecPreviewLoading={isSpecPreviewLoading}
+            onToggleSpecPreview={() => setIsSpecPreviewOpen((prev) => !prev)}
+            onSpecFileChange={handleSpecFileChange}
+            onChange={handleFormChange}
+            onClose={closeModal}
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting || isProductModalLoading}
+            error={modalError}
+            validationErrors={validationErrors}
+            brands={brands}
+            categories={categories}
+          />
 
-      <ProductModal
-        open={modalMode === "delete"}
-        title="Xóa sản phẩm"
-        submitLabel="Xóa"
-        formData={formData}
-        onChange={handleFormChange}
-        onClose={closeModal}
-        onSubmit={handleSubmit}
-        isSubmitting={isSubmitting}
-        error={modalError}
-        validationErrors={validationErrors}
-      />
+          <ProductModal
+            open={modalMode === "delete"}
+            title="Xóa sản phẩm"
+            submitLabel="Xóa"
+            formData={formData}
+            onChange={handleFormChange}
+            onClose={closeModal}
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+            error={modalError}
+            validationErrors={validationErrors}
+          />
+        </>
+      ) : null}
 
       <ProductDetailModal
         open={Boolean(detailProduct)}

@@ -1,96 +1,69 @@
 import { Eye } from "lucide-react";
+import { Link } from "react-router-dom";
 
-export function RecentOrders() {
-  const orders = [
-    {
-      id: "#ORD-2024-001",
-      customer: "Nguyễn Hoàng",
-      initials: "NH",
-      product: "NVIDIA RTX 4090...",
-      amount: "54.500.000đ",
-      status: "Hoàn thành",
-      statusColor: "bg-emerald-100 text-emerald-600 border-emerald-200"
-    },
-    {
-      id: "#ORD-2024-002",
-      customer: "Trần Anh",
-      initials: "TA",
-      product: "Intel Core i9-14900K...",
-      amount: "15.900.000đ",
-      status: "Đang xử lý",
-      statusColor: "bg-blue-100 text-blue-600 border-blue-200"
-    },
-    {
-      id: "#ORD-2024-003",
-      customer: "Lê Minh",
-      initials: "LM",
-      product: "Asus ROG Maximus Z790...",
-      amount: "18.200.000đ",
-      status: "Đang giao",
-      statusColor: "bg-amber-100 text-amber-600 border-amber-200"
-    },
-    {
-      id: "#ORD-2024-004",
-      customer: "Phạm Thanh",
-      initials: "PT",
-      product: "G.Skill Trident Z5 RGB...",
-      amount: "4.500.000đ",
-      status: "Đã hủy",
-      statusColor: "bg-rose-100 text-rose-600 border-rose-200"
-    }
-  ];
-
+export function RecentOrders({ orders = [] }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-      <div className="flex justify-between items-end mb-8">
+    <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="mb-8 flex justify-between items-end">
         <div>
-          <h2 className="text-lg font-bold text-gray-900 mb-1">Đơn hàng gần đây</h2>
-          <p className="text-[12px] text-gray-500 font-medium">Dữ liệu cập nhật theo thời gian thực</p>
+          <h2 className="mb-1 text-lg font-bold text-gray-900">Đơn hàng gần đây</h2>
+          <p className="text-[12px] font-medium text-gray-500">Dữ liệu cập nhật theo thời gian thực</p>
         </div>
-        <button className="text-[13px] font-bold text-gray-600 hover:text-blue-600 transition-colors">
+        <Link to="/admin/orders" className="text-[13px] font-bold text-gray-600 transition-colors hover:text-blue-600">
           Xem tất cả đơn hàng
-        </button>
+        </Link>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-[700px]">
+        <table className="min-w-[700px] w-full border-collapse text-left">
           <thead>
-            <tr className="text-gray-400 text-[11px] uppercase tracking-wider">
+            <tr className="text-[11px] uppercase tracking-wider text-gray-400">
               <th className="pb-4 font-bold">Mã đơn hàng</th>
               <th className="pb-4 font-bold">Khách hàng</th>
               <th className="pb-4 font-bold">Sản phẩm</th>
-              <th className="pb-4 font-bold text-center">Tổng tiền</th>
-              <th className="pb-4 font-bold text-center">Trạng thái</th>
-              <th className="pb-4 font-bold text-right">Hành động</th>
+              <th className="pb-4 text-center font-bold">Tổng tiền</th>
+              <th className="pb-4 text-center font-bold">Trạng thái</th>
+              <th className="pb-4 text-right font-bold">Hành động</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {orders.map((order, idx) => (
-              <tr key={idx} className="group hover:bg-gray-50/50 transition-colors">
-                <td className="py-4 text-[13px] font-bold text-gray-900">{order.id}</td>
-                <td className="py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600 border border-white shadow-sm group-hover:border-blue-200 transition-colors">
-                      {order.initials}
+            {orders.length > 0 ? (
+              orders.map((order) => (
+                <tr key={order.id} className="group transition-colors hover:bg-gray-50/50">
+                  <td className="py-4 text-[13px] font-bold text-gray-900">{order.orderCode}</td>
+                  <td className="py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white bg-gray-200 text-[10px] font-bold text-gray-600 shadow-sm transition-colors group-hover:border-blue-200">
+                        {order.initials}
+                      </div>
+                      <span className="text-[13px] font-semibold text-gray-700">{order.customer}</span>
                     </div>
-                    <span className="text-[13px] text-gray-700 font-semibold">{order.customer}</span>
-                  </div>
-                </td>
-                <td className="py-4 text-[13px] text-gray-500 max-w-[200px] truncate">{order.product}</td>
-                <td className="py-4 text-[13px] font-bold text-gray-900 text-center">{order.amount}</td>
-                <td className="py-4 text-center">
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all ${order.statusColor}`}>
-                    <div className="w-1 h-1 rounded-full bg-current"></div>
-                    {order.status}
-                  </span>
-                </td>
-                <td className="py-4 text-right">
-                  <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
-                    <Eye className="w-4 h-4" />
-                  </button>
+                  </td>
+                  <td className="max-w-[200px] truncate py-4 text-[13px] text-gray-500">{order.product}</td>
+                  <td className="py-4 text-center text-[13px] font-bold text-gray-900">{order.amount}</td>
+                  <td className="py-4 text-center">
+                    <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold transition-all ${order.statusColor}`}>
+                      <div className="h-1 w-1 rounded-full bg-current" />
+                      {order.statusLabel}
+                    </span>
+                  </td>
+                  <td className="py-4 text-right">
+                    <Link
+                      to={`/order/${order.id}`}
+                      className="inline-flex rounded-lg p-2 text-gray-400 transition-all hover:bg-blue-50 hover:text-blue-600"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Link>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} className="py-8 text-center text-sm font-medium text-slate-500">
+                  Chưa có đơn hàng nào trong hệ thống.
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>

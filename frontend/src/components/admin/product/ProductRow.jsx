@@ -9,6 +9,7 @@ export function ProductRow({
   onView,
   onEdit,
   onDelete,
+  canManage = true,
 }) {
   const brand = brands.find((item) => item.brand_id === product.brand_id);
   const category = categories.find((item) => item.id === product.category_id);
@@ -96,22 +97,26 @@ export function ProductRow({
         >
           <Eye className="size-4" />
         </button>
-        <button
-          type="button"
-          onClick={() => onEdit(product)}
-          title="Sửa"
-          className="inline-flex size-10 items-center justify-center rounded-xl bg-[#ffc107] text-white transition hover:bg-[#e9b000]"
-        >
-          <Pencil className="size-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => onDelete(product)}
-          title="Xóa"
-          className="inline-flex size-10 items-center justify-center rounded-xl bg-[#ff0a0a] text-white transition hover:bg-[#e00000]"
-        >
-          <Trash2 className="size-4" />
-        </button>
+        {canManage ? (
+          <>
+            <button
+              type="button"
+              onClick={() => onEdit(product)}
+              title="Sửa"
+              className="inline-flex size-10 items-center justify-center rounded-xl bg-[#ffc107] text-white transition hover:bg-[#e9b000]"
+            >
+              <Pencil className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onDelete(product)}
+              title="Xóa"
+              className="inline-flex size-10 items-center justify-center rounded-xl bg-[#ff0a0a] text-white transition hover:bg-[#e00000]"
+            >
+              <Trash2 className="size-4" />
+            </button>
+          </>
+        ) : null}
       </div>
     </div>
   );

@@ -1,47 +1,45 @@
 import { Save } from "lucide-react";
 
-export default function ProfileInfoForm({ profile, onProfileChange }) {
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    alert("Thông tin cá nhân đã được cập nhật ở giao diện.");
-  };
-
+export default function ProfileInfoForm({
+  profile,
+  onProfileChange,
+  onSubmit,
+  isSaving = false,
+}) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-2">
         <div>
           <h2 className="m-0 text-2xl font-black text-slate-950">
             Thông tin cá nhân
           </h2>
           <p className="mt-2 text-sm font-medium text-slate-500">
-            Cập nhật tên, số điện thoại và thông tin cơ bản.
+            Cập nhật thông tin cơ bản của tài khoản. Email được giữ theo tài khoản đăng nhập.
           </p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-7 grid grid-cols-1 gap-5 md:grid-cols-2">
+      <form onSubmit={onSubmit} className="mt-7 grid grid-cols-1 gap-5 md:grid-cols-2">
         <ProfileInput
           label="Họ"
           value={profile.lastName}
           onChange={(value) => onProfileChange("lastName", value)}
+          placeholder="Nhập họ"
         />
         <ProfileInput
           label="Tên"
           value={profile.firstName}
           onChange={(value) => onProfileChange("firstName", value)}
+          placeholder="Nhập tên"
         />
-        <ProfileInput
-          label="Tên tài khoản"
-          value={profile.username}
-          onChange={(value) => onProfileChange("username", value)}
-        />
-        <ProfileInput
-          label="Email"
-          type="email"
-          value={profile.email}
-          disabled={true}
-          onChange={(value) => onProfileChange("email", value)}
-        />
+        <div className="md:col-span-2">
+          <ProfileInput
+            label="Email"
+            type="email"
+            value={profile.email}
+            disabled={true}
+          />
+        </div>
         <ProfileInput
           label="Số điện thoại"
           value={profile.phone}
@@ -53,26 +51,15 @@ export default function ProfileInfoForm({ profile, onProfileChange }) {
           value={profile.birthday}
           onChange={(value) => onProfileChange("birthday", value)}
         />
-        <label className="block">
-          <span className="text-sm font-black text-slate-700">Giới tính</span>
-          <select
-            value={profile.gender}
-            onChange={(event) => onProfileChange("gender", event.target.value)}
-            className="mt-2 h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-950 outline-none transition focus:border-blue-700 focus:ring-2 focus:ring-blue-100"
-          >
-            <option>Nam</option>
-            <option>Nữ</option>
-            <option>Khác</option>
-          </select>
-        </label>
 
         <div className="md:col-span-2">
           <button
             type="submit"
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-blue-700 px-6 text-sm font-black text-white transition hover:bg-blue-800"
+            disabled={isSaving}
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-blue-700 px-6 text-sm font-black text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Save className="size-4" />
-            Lưu thay đổi
+            {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
           </button>
         </div>
       </form>
@@ -80,7 +67,14 @@ export default function ProfileInfoForm({ profile, onProfileChange }) {
   );
 }
 
-function ProfileInput({ label, value, onChange, type = "text", disabled = false }) {
+function ProfileInput({
+  label,
+  value,
+  onChange,
+  type = "text",
+  disabled = false,
+  placeholder = "",
+}) {
   return (
     <label className="block">
       <span className="text-sm font-black text-slate-700">{label}</span>
@@ -88,10 +82,10 @@ function ProfileInput({ label, value, onChange, type = "text", disabled = false 
         type={type}
         value={value}
         disabled={disabled}
-        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        onChange={(event) => onChange?.(event.target.value)}
         className="mt-2 h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-950 outline-none transition focus:border-blue-700 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200"
       />
     </label>
   );
 }
-

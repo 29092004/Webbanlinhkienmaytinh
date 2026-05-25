@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { AdminSidebar } from "@/components/admin/layout/AdminSidebar";
 import { Button } from "@/components/ui/button";
+import { getStoredUser } from "@/lib/auth";
 import { api } from "@/lib/api";
 
 function toMysqlDatetime(value) {
@@ -176,6 +177,8 @@ function OrderModal({
 }
 
 function AdminOrders() {
+  const currentUser = getStoredUser();
+  const canDeleteOrders = currentUser?.role === "admin";
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
@@ -454,14 +457,16 @@ function AdminOrders() {
                                     <CheckCheck className="size-3.5" /> Duyệt đơn
                                   </button>
                                 )}
-                                <button
-                                  type="button"
-                                  onClick={() => openDeleteModal(order)}
-                                  disabled={isSubmitting}
-                                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#ff0a0a] px-3 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#e00000] disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                  <Trash2 className="size-3.5" /> Xóa
-                                </button>
+                                {canDeleteOrders ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => openDeleteModal(order)}
+                                    disabled={isSubmitting}
+                                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#ff0a0a] px-3 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#e00000] disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    <Trash2 className="size-3.5" /> Xóa
+                                  </button>
+                                ) : null}
                               </div>
                             </td>
                           </tr>
@@ -490,17 +495,19 @@ function AdminOrders() {
         customers={customers}
       />
 
-      <OrderModal
-        open={modalMode === "delete"}
-        title="Xóa đơn hàng"
-        submitLabel="Xóa"
-        formData={formData}
-        onChange={handleFormChange}
-        onClose={closeModal}
-        onSubmit={handleSubmit}
-        isSubmitting={isSubmitting}
-        error={modalError}
-      />
+      {canDeleteOrders ? (
+        <OrderModal
+          open={modalMode === "delete"}
+          title="Xóa đơn hàng"
+          submitLabel="Xóa"
+          formData={formData}
+          onChange={handleFormChange}
+          onClose={closeModal}
+          onSubmit={handleSubmit}
+          isSubmitting={isSubmitting}
+          error={modalError}
+        />
+      ) : null}
     </div>
   );
 }

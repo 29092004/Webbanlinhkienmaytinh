@@ -1,6 +1,6 @@
-import { Trash2, Minus, Plus } from "lucide-react";
+import { Trash2, Minus, Plus, ImageOff } from "lucide-react";
 
-export function CartItemRow({ item, selected, onToggleSelect, onQuantityChange, onRemove }) {
+export function CartItemRow({ item, selected, onToggleSelect, onQuantityChange, onRemove, disabled = false }) {
   const itemTotal = item.price * item.quantity;
   const itemOriginalTotal = item.originalPrice ? item.originalPrice * item.quantity : null;
 
@@ -10,15 +10,16 @@ export function CartItemRow({ item, selected, onToggleSelect, onQuantityChange, 
       <button
         type="button"
         onClick={() => onToggleSelect(item.id)}
+        disabled={disabled}
         className={`size-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all cursor-pointer ${
           selected
-            ? "bg-blue-600 border-blue-600 text-white"
-            : "border-slate-200 hover:border-blue-500 bg-white"
-        }`}
+            ? "bg-red-600 border-red-600 text-white"
+            : "border-slate-300 hover:border-slate-500 bg-white text-white"
+        } ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
         aria-label={selected ? "Bỏ chọn sản phẩm" : "Chọn sản phẩm"}
       >
         {selected && (
-          <svg className="size-2.5 fill-current stroke-[3px]" viewBox="0 0 20 20">
+          <svg className="size-2.5 fill-current text-white" viewBox="0 0 20 20">
             <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
           </svg>
         )}
@@ -26,11 +27,17 @@ export function CartItemRow({ item, selected, onToggleSelect, onQuantityChange, 
 
       {/* Product Image */}
       <div className="size-20 bg-slate-50 rounded-xl overflow-hidden p-1.5 flex items-center justify-center shrink-0">
-        <img
-          src={item.image}
-          alt={item.name}
-          className="object-cover w-full h-full rounded-lg"
-        />
+        {item.image ? (
+          <img
+            src={item.image}
+            alt={item.name}
+            className="object-cover w-full h-full rounded-lg"
+          />
+        ) : (
+          <div className="flex h-full w-full flex-col items-center justify-center rounded-lg bg-slate-100 text-slate-400">
+            <ImageOff className="size-6" />
+          </div>
+        )}
       </div>
 
       {/* Details Area */}
@@ -39,7 +46,7 @@ export function CartItemRow({ item, selected, onToggleSelect, onQuantityChange, 
           <h3 className="font-bold text-slate-900 text-sm mb-1 truncate">
             {item.name}
           </h3>
-          <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wide truncate">
+          <span className="text-[10px] font-bold text-slate-900 block uppercase tracking-wide truncate">
             {item.details}
           </span>
         </div>
@@ -49,8 +56,8 @@ export function CartItemRow({ item, selected, onToggleSelect, onQuantityChange, 
           <div className="flex items-center rounded-xl border border-slate-150 bg-slate-50 p-0.5">
             <button
               type="button"
-              disabled={item.quantity <= 1}
-              onClick={() => onQuantityChange(item.id, item.quantity - 1)}
+              disabled={disabled || item.quantity <= 1}
+              onClick={() => onQuantityChange(item, item.quantity - 1)}
               className="size-7 flex items-center justify-center text-slate-500 hover:text-slate-950 disabled:opacity-40 transition-colors cursor-pointer"
             >
               <Minus className="size-3" />
@@ -60,8 +67,9 @@ export function CartItemRow({ item, selected, onToggleSelect, onQuantityChange, 
             </span>
             <button
               type="button"
-              onClick={() => onQuantityChange(item.id, item.quantity + 1)}
-              className="size-7 flex items-center justify-center text-slate-500 hover:text-slate-950 transition-colors cursor-pointer"
+              disabled={disabled}
+              onClick={() => onQuantityChange(item, item.quantity + 1)}
+              className="size-7 flex items-center justify-center text-slate-500 hover:text-slate-950 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Plus className="size-3" />
             </button>
@@ -84,8 +92,9 @@ export function CartItemRow({ item, selected, onToggleSelect, onQuantityChange, 
       {/* Remove Button */}
       <button
         type="button"
-        onClick={() => onRemove(item.id)}
-        className="absolute top-4 right-4 text-slate-400 hover:text-red-500 transition-colors p-1 cursor-pointer"
+        onClick={() => onRemove(item)}
+        disabled={disabled}
+        className="absolute top-4 right-4 text-slate-400 hover:text-red-500 transition-colors p-1 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         aria-label="Xóa sản phẩm"
       >
         <Trash2 className="size-4" />

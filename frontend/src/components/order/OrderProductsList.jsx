@@ -7,7 +7,7 @@ export default function OrderProductsList({ items = [] }) {
     <section className="w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center gap-3 border-b border-slate-200 bg-[#f1f3f5] px-6 py-4">
         <Box className="size-4 text-slate-900" />
-        <h3 className="m-0 text-sm font-black uppercase tracking-[0.08em] text-slate-950">
+        <h3 className="m-0 text-[15px] font-bold uppercase tracking-normal leading-none text-slate-950">
           Danh sách sản phẩm ({items.length})
         </h3>
       </div>
@@ -27,7 +27,7 @@ export default function OrderProductsList({ items = [] }) {
             </div>
 
             <div className="min-w-0">
-              <h4 className="m-0 text-xl font-black leading-snug text-slate-950 sm:text-2xl">
+              <h4 className="m-0 text-[18px] font-bold leading-snug tracking-[-0.01em] text-slate-950 sm:text-[20px]">
                 {item.name}
               </h4>
               <p className="mt-1 text-[12px] font-medium uppercase tracking-[0.05em] text-slate-500">
@@ -41,10 +41,10 @@ export default function OrderProductsList({ items = [] }) {
             </div>
 
             <div className="col-span-2 text-left sm:col-span-1 sm:text-right">
-              <p className="text-2xl font-semibold leading-tight text-red-600">
+              <p className="text-[18px] font-bold leading-tight text-red-600 sm:text-[20px]">
                 {formatCurrency(item.price)}
               </p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">
+              <p className="mt-1 text-sm font-bold text-slate-900">
                 x{item.quantity}
               </p>
             </div>

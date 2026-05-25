@@ -97,6 +97,7 @@ function AccountModal({
                   className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
                 >
                   <option value="user">User</option>
+                  <option value="staff">Staff</option>
                   <option value="admin">Admin</option>
                 </select>
               </div>
@@ -293,9 +294,9 @@ function AdminAccounts() {
                 </p>
               </div>
               <div className="rounded-2xl border border-[#d7e0ec] bg-white px-6 py-6 shadow-sm">
-                <p className="text-[0.85rem] text-slate-500">Tài khoản User</p>
+                <p className="text-[0.85rem] text-slate-500">Tài khoản User / Staff</p>
                 <p className="mt-2 text-2xl font-bold leading-none text-slate-950">
-                  {accounts.filter((account) => account.role === "user").length}
+                  {accounts.filter((account) => account.role === "user" || account.role === "staff").length}
                 </p>
               </div>
             </div>
@@ -347,7 +348,9 @@ function AdminAccounts() {
                               className={`inline-flex rounded-full px-3 py-1 text-[0.75rem] font-semibold ${
                                 account.role === "admin"
                                   ? "bg-[#e7edff] text-[#3157d5]"
-                                  : "bg-[#dffbe8] text-[#13a34b]"
+                                  : account.role === "staff"
+                                    ? "bg-[#fff4db] text-[#b7791f]"
+                                    : "bg-[#dffbe8] text-[#13a34b]"
                               }`}
                             >
                               <span className="mr-1.5 inline-flex items-center">

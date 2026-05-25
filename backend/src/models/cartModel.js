@@ -155,11 +155,25 @@ const CartModel = {
     },
 
     delete: async (id) => {
-        const [result] = await db.query(
-            `DELETE FROM ${table_name} WHERE id = ?`,
-            [id]
-        );
-        return result.affectedRows;
+        const connection = await db.getConnection();
+
+        try {
+            await connection.beginTransaction();
+            await connection.query('DELETE FROM cart_item WHERE cart_id = ?', [id]);
+
+            const [result] = await connection.query(
+                `DELETE FROM ${table_name} WHERE id = ?`,
+                [id]
+            );
+
+            await connection.commit();
+            return result.affectedRows;
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
     },
 };
 

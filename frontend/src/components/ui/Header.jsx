@@ -7,8 +7,14 @@ import {
   getStoredUser,
   isAuthenticated,
   subscribeToAuthState,
+  updateStoredUser,
 } from "@/lib/auth";
 import { api } from "@/lib/api";
+import {
+  getGuestCartCount,
+  getServerCartCount,
+  subscribeToCartState,
+} from "@/lib/cartStore";
 
 const navItems = [
   { label: "Trang chủ", href: "/" },
@@ -16,6 +22,22 @@ const navItems = [
   { label: "Xây dựng cấu hình", href: "/pc-builder" },
   { label: "Khuyến mãi", href: "/promotions" },
 ];
+
+function getUserDisplayName(user) {
+  const fullName = String(user?.fullName || "").trim();
+
+  if (fullName) {
+    return fullName;
+  }
+
+  const joinedName = [user?.lastName, user?.firstName].filter(Boolean).join(" ").trim();
+
+  if (joinedName) {
+    return joinedName;
+  }
+
+  return "User";
+}
 
 export function Header() {
   const navigate = useNavigate();
@@ -25,13 +47,14 @@ export function Header() {
   const menuRef = useRef(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(queryFromUrl);
+  const [cartCount, setCartCount] = useState(0);
   const [authState, setAuthState] = useState({
     isLoggedIn: isAuthenticated(),
     user: getStoredUser(),
   });
   const displayUser = authState.user || {};
-  const displayName = displayUser.fullName || displayUser.username || "Nguyễn Văn A";
-  const displayEmail = displayUser.email || "nguyenvana@example.com";
+  const displayName = getUserDisplayName(displayUser);
+  const displayEmail = displayUser.email || displayUser.username || "";
   const avatarUrl =
     displayUser.avatar ||
     "https://images.unsplash.com/photo-1607746882042-944635dfe10e?q=80&w=160&auto=format&fit=crop";
@@ -46,6 +69,88 @@ export function Header() {
 
     return subscribeToAuthState(syncAuthState);
   }, []);
+
+  useEffect(() => {
+    if (!authState.isLoggedIn || !authState.user?.id) {
+      return;
+    }
+
+    const hasDisplayName = Boolean(
+      String(authState.user?.fullName || "").trim() ||
+      [authState.user?.lastName, authState.user?.firstName].filter(Boolean).join(" ").trim()
+    );
+
+    if (hasDisplayName) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const syncCustomerProfile = async () => {
+      try {
+        const response = await api.get(`/customers/${authState.user.id}`);
+        const customer = response.data?.data || null;
+
+        if (!isMounted || !customer) {
+          return;
+        }
+
+        const lastName = String(customer.firstName || "").trim();
+        const firstName = String(customer.lastName || "").trim();
+        const fullName = [lastName, firstName].filter(Boolean).join(" ").trim();
+
+        if (!fullName) {
+          return;
+        }
+
+        updateStoredUser((current) => ({
+          ...current,
+          fullName,
+          firstName,
+          lastName,
+          phone: current.phone || customer.phone || "",
+        }));
+      } catch (error) {
+        console.error("Failed to sync customer display name", error);
+      }
+    };
+
+    syncCustomerProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [authState.isLoggedIn, authState.user?.firstName, authState.user?.fullName, authState.user?.id, authState.user?.lastName]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const syncCartCount = async () => {
+      try {
+        const currentUser = getStoredUser();
+        const customerId = Number(currentUser?.id || 0);
+
+        const nextCount =
+          isAuthenticated() && customerId > 0
+            ? await getServerCartCount(customerId)
+            : getGuestCartCount();
+
+        if (isMounted) {
+          setCartCount(nextCount);
+        }
+      } catch (error) {
+        if (isMounted) {
+          setCartCount(0);
+        }
+      }
+    };
+
+    syncCartCount();
+
+    return subscribeToCartState(() => {
+      syncCartCount();
+    });
+  }, [authState.isLoggedIn]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -72,11 +177,14 @@ export function Header() {
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
-    const normalizedQuery = searchTerm.trim() || "RTX 4090";
+    const normalizedQuery = searchTerm.trim();
 
-    navigate(
-      `/search?q=${encodeURIComponent(normalizedQuery)}&category=graphics`,
-    );
+    if (!normalizedQuery) {
+      navigate("/products");
+      return;
+    }
+
+    navigate(`/products?q=${encodeURIComponent(normalizedQuery)}`);
   };
 
   const isNavActive = (item) => {
@@ -143,7 +251,7 @@ export function Header() {
 
             <button
               type="button"
-              onClick={() => navigate("/search?q=RTX%204090&category=graphics")}
+              onClick={() => navigate(searchTerm.trim() ? `/products?q=${encodeURIComponent(searchTerm.trim())}` : "/products")}
               className="transition hover:text-blue-700 lg:hidden"
               aria-label="Tìm kiếm"
             >
@@ -152,10 +260,15 @@ export function Header() {
 
             <Link
               to="/cart"
-              className="transition hover:text-blue-700"
+              className="relative flex size-9 items-center justify-center rounded-full bg-slate-950 text-white transition hover:bg-blue-600"
               aria-label="Giỏ hàng"
             >
-              <ShoppingCart className="size-5" />
+              <ShoppingCart className="size-4.5" strokeWidth={2.2} />
+              {cartCount > 0 ? (
+                <span className="absolute -right-1 -top-1 inline-flex min-w-[20px] items-center justify-center rounded-full border-2 border-white bg-red-600 px-1 py-[3px] text-[10px] font-black leading-none text-white shadow-sm">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              ) : null}
             </Link>
 
             <div className="relative" ref={menuRef}>
@@ -175,11 +288,8 @@ export function Header() {
                       <UserRound className="size-5" />
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-black text-slate-950">
+                      <p className="truncate text-[18px] font-bold tracking-[-0.01em] text-slate-950">
                         {displayName}
-                      </p>
-                      <p className="mt-1 truncate text-xs font-medium text-slate-500">
-                        {displayEmail}
                       </p>
                     </div>
                   </div>
@@ -223,7 +333,7 @@ function ProfileMenuLink({ to, icon: Icon, onClick, children }) {
     <Link
       to={to}
       onClick={onClick}
-      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 hover:text-blue-700"
+      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-bold tracking-[-0.01em] text-slate-700 transition hover:bg-slate-50 hover:text-blue-700"
     >
       <Icon className="size-4" />
       {children}

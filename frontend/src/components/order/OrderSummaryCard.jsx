@@ -6,7 +6,7 @@ export default function OrderSummaryCard({
 }) {
   return (
     <div className="bg-white border border-slate-100 rounded-xl p-6 shadow-sm space-y-6">
-      <h3 className="font-extrabold text-gray-900 text-base md:text-lg border-b border-slate-100 pb-3">
+      <h3 className="font-bold tracking-[-0.01em] text-gray-900 text-base md:text-lg border-b border-slate-100 pb-3">
         Tóm tắt đơn hàng
       </h3>
 
@@ -25,13 +25,13 @@ export default function OrderSummaryCard({
             
             {/* Text details */}
             <div className="flex-1 space-y-1">
-              <h4 className="font-extrabold text-gray-900 text-xs md:text-sm line-clamp-2 leading-snug">
+              <h4 className="font-bold tracking-[-0.01em] text-gray-900 text-xs md:text-sm line-clamp-2 leading-snug">
                 {item.name}
               </h4>
               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wide">
                 Số lượng: {String(item.quantity).padStart(2, "0")}
               </p>
-              <p className="text-xs md:text-sm font-extrabold text-red-600">
+              <p className="text-xs md:text-sm font-bold tracking-[-0.01em] text-red-600">
                 {item.price.toLocaleString("vi-VN")}đ
               </p>
             </div>
@@ -49,7 +49,7 @@ export default function OrderSummaryCard({
         </div>
         <div className="flex justify-between items-center">
           <span>Phí vận chuyển</span>
-          <span className="text-blue-600 font-extrabold">
+          <span className="text-blue-600 font-bold tracking-[-0.01em]">
             {shippingCost === 0 ? "Miễn phí" : `${shippingCost.toLocaleString("vi-VN")}đ`}
           </span>
         </div>
@@ -57,8 +57,8 @@ export default function OrderSummaryCard({
 
       {/* Total row */}
       <div className="border-t border-slate-100 pt-4 flex justify-between items-center">
-        <span className="text-sm font-extrabold text-gray-800">Tổng cộng</span>
-        <span className="text-lg md:text-xl font-black text-red-600 tracking-tight">
+        <span className="text-sm font-bold tracking-[-0.01em] text-gray-800">Tổng cộng</span>
+        <span className="text-lg md:text-xl font-bold text-red-600 tracking-[-0.01em]">
           {total.toLocaleString("vi-VN")}đ
         </span>
       </div>

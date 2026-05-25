@@ -19,9 +19,9 @@ export default function OrderPageHeader({
           />
         </div>
 
-        <h1 className="m-0 text-[30px] font-black leading-tight tracking-normal text-slate-950 sm:text-[36px]">
+        <h1 className="m-0 text-[28px] font-bold leading-tight tracking-[-0.01em] text-slate-950 sm:text-[32px]">
           Chi tiết đơn hàng{" "}
-          <span className="text-blue-700">{orderCode}</span>
+          <span className="font-bold text-blue-700">{orderCode}</span>
         </h1>
         <p className="mt-2 text-sm font-medium text-slate-500">
           Ngày đặt hàng: {orderedAt}

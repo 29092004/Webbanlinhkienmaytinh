@@ -5,137 +5,81 @@ import { Footer } from "@/components/ui/Footer";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { ProductFilters } from "@/components/products/ProductFilters";
 import { ProductGrid } from "@/components/products/ProductGrid";
-
-const mockProductsList = [
-  {
-    id: 1,
-    name: "ASUS ROG Strix GeForce RTX 4090 OC Edition",
-    brand: "ASUS",
-    category: "gpu",
-    price: 56990000,
-    originalPrice: null,
-    rating: 4.9,
-    reviewsCount: 128,
-    tag: "NEW ARRIVAL",
-    tagColor: "bg-blue-600",
-    image: "https://images.unsplash.com/photo-1591488320449-011701bb6704?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 2,
-    name: "Intel Core i9-14900K Desktop Processor",
-    brand: "Intel",
-    category: "cpu",
-    price: 14490000,
-    originalPrice: 16990000,
-    rating: 4.8,
-    reviewsCount: 95,
-    tag: "SALE -15%",
-    tagColor: "bg-orange-500",
-    image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 3,
-    name: "Corsair Dominator Titanium RGB 32GB DDR5 6000MHz",
-    brand: "Corsair",
-    category: "ram",
-    price: 5250000,
-    originalPrice: null,
-    rating: 4.7,
-    reviewsCount: 210,
-    tag: null,
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 4,
-    name: "Samsung 990 PRO PCIe 4.0 NVMe SSD 2TB",
-    brand: "Samsung",
-    category: "ssd",
-    price: 4890000,
-    originalPrice: null,
-    rating: 4.9,
-    reviewsCount: 340,
-    tag: null,
-    image: "https://images.unsplash.com/photo-1591488320449-011701bb6704?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 5,
-    name: "MSI MEG Z790 GODLIKE LGA 1700 Motherboard",
-    brand: "MSI",
-    category: "motherboard",
-    price: 28490000,
-    originalPrice: null,
-    rating: 4.6,
-    reviewsCount: 56,
-    tag: null,
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 6,
-    name: "Corsair AX1600i Digital ATX Power Supply",
-    brand: "Corsair",
-    category: "psu",
-    price: 12990000,
-    originalPrice: null,
-    rating: 4.9,
-    reviewsCount: 82,
-    tag: null,
-    image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 7,
-    name: "NZXT H9 Flow Dual-Chamber Mid-Tower Case",
-    brand: "NZXT",
-    category: "case",
-    price: 4290000,
-    originalPrice: null,
-    rating: 4.8,
-    reviewsCount: 112,
-    tag: null,
-    image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 8,
-    name: "Lian Li Galahad II LCD 360 Liquid Cooler",
-    brand: "Lian Li",
-    category: "cooler",
-    price: 6850000,
-    originalPrice: null,
-    rating: 4.7,
-    reviewsCount: 89,
-    tag: null,
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400&auto=format&fit=crop"
-  }
-];
-
-// Generate exactly 96 products (12 pages of 8 products)
-const allProducts = [];
-for (let i = 0; i < 12; i++) {
-  mockProductsList.forEach((p, idx) => {
-    allProducts.push({
-      ...p,
-      id: i * 8 + idx + 1,
-      name: i === 0 ? p.name : `${p.name} (Lô ${i + 1})`,
-    });
-  });
-}
+import { api } from "@/lib/api";
+import {
+  mapAvailableBrands,
+  mapAvailableCategories,
+  mapProductForListing,
+  normalizeCategoryIdsFromQuery,
+  searchProductsByName,
+} from "@/lib/productMappers";
 
 function Products() {
   const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get("q")?.trim() || "";
+  const [allProducts, setAllProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [availableCategories, setAvailableCategories] = useState([]);
+  const [availableBrands, setAvailableBrands] = useState([]);
 
   useEffect(() => {
     const category = searchParams.get("category");
     if (category) {
-      setSelectedCategories([category]);
+      setSelectedCategories(normalizeCategoryIdsFromQuery(category));
     } else {
       setSelectedCategories([]);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [priceRange, setPriceRange] = useState([0, 100]); // percentage 0% to 100% (mapped to 0 - 100 million)
   const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchProducts = async () => {
+      try {
+        setIsLoading(true);
+        const response = await api.get("/products");
+        const rows = Array.isArray(response.data?.data) ? response.data.data : [];
+        const mappedProducts = rows.map(mapProductForListing);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setAllProducts(mappedProducts);
+        setAvailableCategories(mapAvailableCategories(rows));
+        setAvailableBrands(mapAvailableBrands(rows));
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        console.error("Failed to fetch products", error);
+        setAllProducts([]);
+        setAvailableCategories([]);
+        setAvailableBrands([]);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchProducts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleCategoryToggle = (categoryId) => {
     setCurrentPage(1);
@@ -164,6 +108,10 @@ function Products() {
   const filteredSortedProducts = useMemo(() => {
     let result = [...allProducts];
 
+    if (searchQuery) {
+      result = searchProductsByName(result, searchQuery);
+    }
+
     // Filter by Category
     if (selectedCategories.length > 0) {
       result = result.filter((p) => selectedCategories.includes(p.category));
@@ -180,14 +128,16 @@ function Products() {
     result = result.filter((p) => p.price >= minPriceLimit && p.price <= maxPriceLimit);
 
     // Sort products
-    if (sortBy === "price-asc") {
+    if (sortBy === "newest") {
+      result.sort((a, b) => b.id - a.id);
+    } else if (sortBy === "price-asc") {
       result.sort((a, b) => a.price - b.price);
     } else if (sortBy === "price-desc") {
       result.sort((a, b) => b.price - a.price);
     }
 
     return result;
-  }, [selectedCategories, selectedBrands, priceRange, sortBy]);
+  }, [allProducts, selectedCategories, selectedBrands, priceRange, sortBy, searchQuery]);
 
   // Paginated Slice
   const paginatedProducts = useMemo(() => {
@@ -195,14 +145,13 @@ function Products() {
     return filteredSortedProducts.slice(start, start + pageSize);
   }, [filteredSortedProducts, currentPage, pageSize]);
 
-  // If no filters are active, display 482 count to match layout design exactly
-  const displayTotalCount = useMemo(() => {
-    if (selectedCategories.length === 0 && selectedBrands.length === 0 && priceRange[0] === 0 && priceRange[1] === 100) {
-      return 482;
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(filteredSortedProducts.length / pageSize));
+
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
     }
-    // Scale count proportionally for realistic feel
-    return Math.round(filteredSortedProducts.length * (482 / 96));
-  }, [filteredSortedProducts, selectedCategories, selectedBrands, priceRange]);
+  }, [currentPage, filteredSortedProducts.length, pageSize]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
@@ -215,7 +164,8 @@ function Products() {
         <Breadcrumb
           items={[
             { label: "Trang chủ", href: "/" },
-            { label: "Sản phẩm" }
+            { label: "Sản phẩm" },
+            ...(searchQuery ? [{ label: `Tìm: ${searchQuery}` }] : []),
           ]}
         />
 
@@ -229,6 +179,8 @@ function Products() {
               onBrandToggle={handleBrandToggle}
               priceRange={priceRange}
               onPriceChange={handlePriceChange}
+              categoriesList={availableCategories}
+              brandsList={availableBrands}
             />
           </aside>
 
@@ -237,7 +189,8 @@ function Products() {
             <ProductGrid
               products={paginatedProducts}
               totalProducts={filteredSortedProducts.length}
-              displayTotalCount={displayTotalCount}
+              displayTotalCount={filteredSortedProducts.length}
+              title={searchQuery ? `Kết quả cho "${searchQuery}"` : "Tất cả sản phẩm"}
               currentPage={currentPage}
               pageSize={pageSize}
               onPageChange={setCurrentPage}
@@ -246,6 +199,7 @@ function Products() {
                 setCurrentPage(1);
                 setSortBy(val);
               }}
+              isLoading={isLoading}
             />
           </main>
         </div>

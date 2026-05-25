@@ -1,70 +1,144 @@
-import { DollarSign, ShoppingCart, Package, Users } from "lucide-react";
+import { DollarSign, Package, ShoppingCart, Users } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+
 import { AdminSidebar } from "../../components/admin/layout/AdminSidebar";
-import { StatCard } from "../../components/admin/dashboard/StatCard";
-import { RevenueAnalysis } from "../../components/admin/dashboard/RevenueAnalysis";
 import { InventoryStatus } from "../../components/admin/dashboard/InventoryStatus";
-import { WorkReminder } from "../../components/admin/dashboard/WorkReminder";
 import { RecentOrders } from "../../components/admin/dashboard/RecentOrders";
-import { PromotionBanner } from "../../components/admin/dashboard/PromotionBanner";
+import { RevenueAnalysis } from "../../components/admin/dashboard/RevenueAnalysis";
+import { StatCard } from "../../components/admin/dashboard/StatCard";
+import { api } from "../../lib/api";
+import {
+  buildDashboardMetrics,
+  clampDashboardRange,
+  getDefaultDashboardRange,
+} from "../../lib/adminDashboard";
 
 function AdminDashboard() {
+  const defaultRange = useMemo(() => getDefaultDashboardRange(), []);
+  const [dateRange, setDateRange] = useState(defaultRange);
+  const [rangeNotice, setRangeNotice] = useState("");
+  const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      setIsLoading(true);
+      setError("");
+
+      try {
+        const [ordersResponse, productsResponse, customersResponse] = await Promise.all([
+          api.get("/orders"),
+          api.get("/products"),
+          api.get("/customers"),
+        ]);
+
+        setOrders(ordersResponse.data?.data ?? []);
+        setProducts(productsResponse.data?.data ?? []);
+        setCustomers(customersResponse.data?.data ?? []);
+      } catch (requestError) {
+        setError(requestError.response?.data?.message || "Không tải được dữ liệu dashboard.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, []);
+
+  const metrics = useMemo(
+    () =>
+      buildDashboardMetrics({
+        orders,
+        products,
+        customers,
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate,
+      }),
+    [customers, dateRange.endDate, dateRange.startDate, orders, products],
+  );
+
+  const handleDateChange = (field, value) => {
+    const nextRange = clampDashboardRange(
+      field === "startDate" ? value : dateRange.startDate,
+      field === "endDate" ? value : dateRange.endDate,
+    );
+
+    setDateRange(nextRange);
+
+    const wasAdjusted =
+      (field === "startDate" && value !== nextRange.startDate) ||
+      (field === "endDate" && value !== nextRange.endDate);
+
+    setRangeNotice(
+      wasAdjusted ? "Khoảng thời gian đã được giới hạn trong 1 tháng gần nhất." : "",
+    );
+  };
+
   return (
     <div className="min-h-screen bg-[#f8fafc] font-sans flex">
       <AdminSidebar />
 
-      <div className="flex-1 ml-80 flex flex-col min-h-screen relative">
-        <main className="flex-grow p-8 w-full max-w-[1600px]">
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="relative ml-[290px] flex min-h-screen flex-1 flex-col">
+        <main className="w-full max-w-[1600px] flex-grow p-8">
+          {error ? (
+            <div className="mb-8 rounded-2xl border border-rose-100 bg-rose-50 px-5 py-4 text-sm font-medium text-rose-700">
+              {error}
+            </div>
+          ) : null}
+
+          <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
             <StatCard
-              title="Tổng doanh thu"
-              value="1.280.000.000đ"
-              trend="12.5%"
-              trendType="up"
+              title={metrics.stats.revenue.title}
+              value={isLoading ? "..." : metrics.stats.revenue.value}
+              trend={metrics.stats.revenue.trend.value}
+              trendType={metrics.stats.revenue.trend.type}
               icon={<DollarSign className="w-5 h-5" />}
             />
             <StatCard
-              title="Tổng đơn hàng"
-              value="452"
-              trend="8.2%"
-              trendType="up"
+              title={metrics.stats.orders.title}
+              value={isLoading ? "..." : metrics.stats.orders.value}
+              trend={metrics.stats.orders.trend.value}
+              trendType={metrics.stats.orders.trend.type}
               icon={<ShoppingCart className="w-5 h-5" />}
             />
             <StatCard
-              title="Tổng sản phẩm"
-              value="1,840"
-              trend="0.0%"
-              trendType="up"
+              title={metrics.stats.products.title}
+              value={isLoading ? "..." : metrics.stats.products.value}
+              trend={metrics.stats.products.trend.value}
+              trendType={metrics.stats.products.trend.type}
               icon={<Package className="w-5 h-5" />}
             />
             <StatCard
-              title="Người dùng mới"
-              value="89"
-              trend="2.1%"
-              trendType="down"
+              title={metrics.stats.customers.title}
+              value={isLoading ? "..." : metrics.stats.customers.value}
+              trend={metrics.stats.customers.trend.value}
+              trendType={metrics.stats.customers.trend.type}
               icon={<Users className="w-5 h-5" />}
             />
           </div>
 
-          {/* Charts & Status Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+          <div className="mb-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <RevenueAnalysis />
+              <RevenueAnalysis
+                data={metrics.revenueSeries}
+                startDate={dateRange.startDate}
+                endDate={dateRange.endDate}
+                onDateChange={handleDateChange}
+                maxRangeNotice={rangeNotice}
+                minDate={defaultRange.startDate}
+                maxDate={defaultRange.endDate}
+              />
             </div>
-            <div className="lg:col-span-1 flex flex-col gap-8">
-              <InventoryStatus />
-              <WorkReminder />
+            <div className="flex flex-col gap-8 lg:col-span-1">
+              <InventoryStatus inventoryData={metrics.inventoryItems} />
             </div>
           </div>
 
-          {/* Recent Orders Row */}
           <div className="mb-8">
-            <RecentOrders />
-          </div>
-
-          {/* Promotion Banner */}
-          <div className="mb-12">
-            <PromotionBanner />
+            <RecentOrders orders={metrics.recentOrders} />
           </div>
         </main>
       </div>

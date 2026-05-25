@@ -1,6 +1,8 @@
 import { TrendingUp, TrendingDown } from "lucide-react";
 
 export function StatCard({ title, value, trend, trendType, icon }) {
+  const isNeutral = trendType === "neutral";
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden group">
       <div className="flex justify-between items-start">
@@ -8,9 +10,13 @@ export function StatCard({ title, value, trend, trendType, icon }) {
           {icon}
         </div>
         <div className={`flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-full ${
-          trendType === 'up' ? 'text-emerald-600 bg-emerald-50' : 'text-rose-600 bg-rose-50'
+          isNeutral
+            ? "bg-slate-100 text-slate-600"
+            : trendType === "up"
+              ? "text-emerald-600 bg-emerald-50"
+              : "text-rose-600 bg-rose-50"
         }`}>
-          {trendType === 'up' ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+          {isNeutral ? null : trendType === "up" ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
           {trend}
         </div>
       </div>

@@ -15,7 +15,7 @@ export default function OrderSuccessHeader() {
       </div>
 
       {/* Success Title */}
-      <h2 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight mt-4">
+      <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-[-0.01em] mt-4">
         Đặt hàng thành công
       </h2>
 

@@ -1,120 +1,85 @@
+import { useEffect, useState } from "react";
 import { Header } from "@/components/ui/Header";
 import { Footer } from "@/components/ui/Footer";
+import { useParams } from "react-router-dom";
 
 import OrderPageHeader from "@/components/order/OrderPageHeader";
 import OrderTracker from "@/components/order/OrderTracker";
 import OrderProductsList from "@/components/order/OrderProductsList";
 import OrderDeliveryTimeline from "@/components/order/OrderDeliveryTimeline";
 import OrderBillingSummary from "@/components/order/OrderBillingSummary";
-
-const order = {
-  code: "#EXO-99284",
-  orderedAt: "24 Tháng 10, 2023 | 14:32",
-  items: [
-    {
-      id: 1,
-      name: "NVIDIA GeForce RTX 4090 OC Edition",
-      sku: "EXO-GPU-4090-FE",
-      price: 48990000,
-      quantity: 1,
-      badge: "Bảo hành 36 tháng",
-      image:
-        "https://images.unsplash.com/photo-1591488320449-011701bb6704?q=80&w=400&auto=format&fit=crop",
-    },
-    {
-      id: 2,
-      name: "Intel Core i9-13900K Desktop Processor",
-      sku: "EXO-CPU-I9-13900K",
-      price: 15490000,
-      quantity: 1,
-      badge: "Hàng chính hãng Box",
-      image:
-        "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400&auto=format&fit=crop",
-    },
-  ],
-  trackingSteps: [
-    {
-      id: "ordered",
-      title: "Đặt hàng",
-      time: "24/10/2023 - 14:32",
-      status: "completed",
-    },
-    {
-      id: "paid",
-      title: "Thanh toán",
-      time: "24/10/2023 - 14:45",
-      status: "completed",
-    },
-    {
-      id: "shipping",
-      title: "Đang giao",
-      time: "Dự kiến: 26/10/2023",
-      status: "active",
-      actionLabel: "Theo dõi giao hàng",
-    },
-    {
-      id: "done",
-      title: "Hoàn thành",
-      time: "-",
-      status: "pending",
-    },
-  ],
-  timeline: [
-    {
-      id: 1,
-      status: "Đang trên đường giao đến bạn",
-      description: "Bưu cục TP. Hồ Chí Minh - Đang vận chuyển liên tỉnh",
-      time: "25/10/2023 - 08:30",
-    },
-    {
-      id: 2,
-      status: "Đã rời kho vận hành",
-      description: "Kho tổng EXO CORE - Hà Nội",
-      time: "24/10/2023 - 21:15",
-    },
-    {
-      id: 3,
-      status: "Đã xác nhận và đóng gói",
-      description: "Kiểm tra kỹ thuật hoàn tất. Sẵn sàng giao hàng.",
-      time: "24/10/2023 - 17:00",
-    },
-  ],
-  address: {
-    name: "Nguyễn Văn A",
-    phone: "0901 234 567",
-    fullAddress:
-      "123 Đường Song Hành, Thảo Điền, TP. Thủ Đức, TP. Hồ Chí Minh",
-  },
-  payment: {
-    methodName: "VNPay Gateway",
-    status: "Đã thanh toán thành công",
-    transactionCode: "VNP-88273319",
-    bank: "Vietcombank",
-  },
-  billing: {
-    itemCount: 2,
-    subtotal: 64480000,
-    shippingMethod: "Express",
-    insurance: 150000,
-    voucherCode: "EXO-GOLD",
-    discount: 1000000,
-    total: 63630000,
-  },
-};
+import { api } from "@/lib/api";
+import { mapOrderDetailForView } from "@/lib/orderMappers";
+import { showToast } from "@/lib/toast";
 
 export default function OrderDetail() {
+  const { id } = useParams();
+  const [order, setOrder] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadOrderDetail = async () => {
+      if (!id) {
+        setError("Không tìm thấy mã đơn hàng.");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        setError("");
+
+        const [orderResponse, productResponse] = await Promise.all([
+          api.get(`/orders/${id}`),
+          api.get("/products"),
+        ]);
+
+        if (!isMounted) {
+          return;
+        }
+
+        const orderRow = orderResponse.data?.data || null;
+        const productRows = Array.isArray(productResponse.data?.data) ? productResponse.data.data : [];
+
+        setOrder(mapOrderDetailForView(orderRow, productRows));
+      } catch (nextError) {
+        if (!isMounted) {
+          return;
+        }
+
+        console.error("Failed to fetch order detail", nextError);
+        setError("Không tải được chi tiết đơn hàng.");
+        setOrder(null);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadOrderDetail();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
   const handleDownloadInvoice = () => {
-    alert(`Đang khởi tạo hóa đơn PDF cho đơn hàng ${order.code}.`);
+    showToast({ message: `Đang chuẩn bị hóa đơn cho đơn hàng ${order?.code || ""}.` });
   };
 
   const handleTechSupport = () => {
-    alert("Đang kết nối bạn với bộ phận hỗ trợ kỹ thuật EXO CORE.");
+    showToast({ message: "Bộ phận kỹ thuật sẽ hỗ trợ bạn sớm nhất.", type: "success" });
   };
 
   const handleEditOrderInfo = () => {
-    alert(
-      "Để thay đổi thông tin người nhận, vui lòng liên hệ CSKH trước khi đơn hàng được giao.",
-    );
+    showToast({
+      message: "Vui lòng liên hệ CSKH nếu bạn cần thay đổi thông tin đơn hàng.",
+      type: "error",
+    });
   };
 
   return (
@@ -122,30 +87,45 @@ export default function OrderDetail() {
       <Header />
 
       <main className="mx-auto w-full max-w-7xl flex-1 space-y-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-        <OrderPageHeader
-          orderCode={order.code}
-          orderedAt={order.orderedAt}
-          onDownloadInvoice={handleDownloadInvoice}
-          onSupport={handleTechSupport}
-        />
-
-        <OrderTracker steps={order.trackingSteps} />
-
-        <div className="grid w-full grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
-          <div className="space-y-8">
-            <OrderProductsList items={order.items} />
-            <OrderDeliveryTimeline timeline={order.timeline} />
-          </div>
-
-          <aside className="w-full">
-            <OrderBillingSummary
-              address={order.address}
-              payment={order.payment}
-              billing={order.billing}
-              onEditOrderInfo={handleEditOrderInfo}
+        {isLoading ? (
+          <section className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-sm font-semibold text-slate-500 shadow-sm">
+            Đang tải chi tiết đơn hàng...
+          </section>
+        ) : error || !order ? (
+          <section className="rounded-2xl border border-rose-200 bg-white p-10 text-center shadow-sm">
+            <h1 className="text-2xl font-black text-slate-950">Không tìm thấy đơn hàng</h1>
+            <p className="mt-3 text-sm font-medium text-slate-500">
+              {error || "Đơn hàng bạn cần xem hiện không có dữ liệu."}
+            </p>
+          </section>
+        ) : (
+          <>
+            <OrderPageHeader
+              orderCode={order.code}
+              orderedAt={order.orderedAt}
+              onDownloadInvoice={handleDownloadInvoice}
+              onSupport={handleTechSupport}
             />
-          </aside>
-        </div>
+
+            <OrderTracker steps={order.trackingSteps} />
+
+            <div className="grid w-full grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
+              <div className="space-y-8">
+                <OrderProductsList items={order.items} />
+                <OrderDeliveryTimeline timeline={order.timeline} />
+              </div>
+
+              <aside className="w-full">
+                <OrderBillingSummary
+                  address={order.address}
+                  payment={order.payment}
+                  billing={order.billing}
+                  onEditOrderInfo={handleEditOrderInfo}
+                />
+              </aside>
+            </div>
+          </>
+        )}
       </main>
 
       <Footer />

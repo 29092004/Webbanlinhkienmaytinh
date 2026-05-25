@@ -22,7 +22,7 @@ function AddressCard({ address }) {
     <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
       <CardTitle icon={MapPin}>Địa chỉ nhận hàng</CardTitle>
       <div className="mt-5 space-y-3 text-sm font-medium leading-relaxed text-slate-600">
-        <p className="text-2xl font-black leading-tight text-slate-950">
+        <p className="text-[20px] font-bold leading-tight tracking-[-0.01em] text-slate-950">
           {address.name}
         </p>
         <p>{address.phone}</p>
@@ -43,7 +43,7 @@ function PaymentCard({ payment }) {
             <CreditCard className="size-5" />
           </div>
           <div>
-            <p className="text-sm font-black text-slate-950">
+            <p className="text-[15px] font-bold leading-snug tracking-[-0.01em] text-slate-950">
               {payment.methodName}
             </p>
             <p className="mt-1 text-[12px] font-semibold text-amber-700">
@@ -88,11 +88,11 @@ function TotalCard({ billing, onEditOrderInfo }) {
 
       <div className="mt-7 border-t border-slate-100 pt-6">
         <div className="flex items-end justify-between gap-4">
-          <span className="text-sm font-black uppercase tracking-[0.08em] text-slate-950">
+          <span className="text-[15px] font-bold uppercase tracking-normal text-slate-950">
             Tổng cộng
           </span>
           <div className="text-right">
-            <p className="text-3xl font-black leading-none text-red-600">
+            <p className="text-[20px] font-bold leading-none tracking-[-0.01em] text-red-600">
               {formatCurrency(billing.total)}
             </p>
             <p className="mt-2 text-[12px] font-medium text-slate-500">
@@ -102,13 +102,6 @@ function TotalCard({ billing, onEditOrderInfo }) {
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={onEditOrderInfo}
-        className="mt-7 h-12 w-full rounded-md bg-[#262b2c] px-4 text-sm font-black uppercase tracking-[0.04em] text-white shadow-sm transition hover:bg-slate-950"
-      >
-        Chỉnh sửa thông tin đơn hàng
-      </button>
     </section>
   );
 }
@@ -117,7 +110,7 @@ function CardTitle({ icon: Icon, children }) {
   return (
     <div className="flex items-center gap-3">
       <Icon className="size-4 text-slate-950" />
-      <h3 className="m-0 text-sm font-black uppercase tracking-[0.08em] text-slate-950">
+      <h3 className="m-0 text-[15px] font-bold uppercase tracking-normal leading-none text-slate-950">
         {children}
       </h3>
     </div>
@@ -130,7 +123,7 @@ function SummaryRow({ label, value, strong = false, valueClassName = "" }) {
       <span>{label}</span>
       <span
         className={`text-right ${
-          strong ? "font-black text-slate-950" : "font-medium text-slate-700"
+          strong ? "font-bold text-slate-950" : "font-medium text-slate-700"
         } ${valueClassName}`}
       >
         {value}

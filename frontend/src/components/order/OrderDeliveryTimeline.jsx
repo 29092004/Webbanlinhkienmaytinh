@@ -5,7 +5,7 @@ export default function OrderDeliveryTimeline({ timeline = [] }) {
     <section className="w-full rounded-lg border border-slate-200 bg-white px-6 py-8 shadow-sm">
       <div className="mb-7 flex items-center gap-3">
         <Clock className="size-6 text-slate-950" />
-        <h3 className="m-0 text-2xl font-black leading-none text-slate-950">
+        <h3 className="m-0 text-[24px] font-bold leading-none tracking-[-0.01em] text-slate-950">
           Lịch sử vận chuyển
         </h3>
       </div>
@@ -31,7 +31,7 @@ export default function OrderDeliveryTimeline({ timeline = [] }) {
 
               <div className="pb-6">
                 <h4
-                  className={`m-0 text-[15px] font-black leading-tight ${
+                  className={`m-0 text-[15px] font-bold leading-tight ${
                     isActive ? "text-blue-700" : "text-slate-950"
                   }`}
                 >

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/ui/Header";
 import { Footer } from "@/components/ui/Footer";
 import { CartItemRow } from "@/components/cart/CartItemRow";
@@ -6,76 +6,198 @@ import { CartSummary } from "@/components/cart/CartSummary";
 import { ShoppingBag, ArrowLeft, ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
-
-const initialCartItems = [
-  {
-    id: 1,
-    name: "ASUS ROG Strix RTX 4090 OC",
-    details: "24GB GDDR6X | Triple Fan | Aura Sync RGB",
-    price: 45500000,
-    originalPrice: 48900000,
-    quantity: 1,
-    image: "https://images.unsplash.com/photo-1591488320449-011701bb6704?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 2,
-    name: "AMD Ryzen 9 7950X3D",
-    details: "16 Cores | 32 Threads | 144MB Cache",
-    price: 16200000,
-    quantity: 24,
-    image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 3,
-    name: "Corsair Dominator Platinum 32GB",
-    details: "DDR5 6000MHz | CL30 | RGB Lighting",
-    price: 4850000,
-    quantity: 1,
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400&auto=format&fit=crop"
-  }
-];
-
-const mockSuggestions = [
-  {
-    id: 201,
-    name: "ASUS ProArt 32\" 4K HDR",
-    price: 18450000,
-    image: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 202,
-    name: "Keychron Q1 Max Custom",
-    price: 4200000,
-    image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 203,
-    name: "Logitech G Pro X Superlight",
-    price: 3150000,
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400&auto=format&fit=crop"
-  },
-  {
-    id: 204,
-    name: "SteelSeries Arctis Nova Pro",
-    price: 8600000,
-    image: "https://images.unsplash.com/photo-1591488320449-011701bb6704?q=80&w=400&auto=format&fit=crop"
-  }
-];
+import { api } from "@/lib/api";
+import { getStoredUser, isAuthenticated } from "@/lib/auth";
+import { mapCartEntriesToItems, mapCartSuggestions, mapGuestCartItems } from "@/lib/cartMappers";
+import {
+  addProductToCart,
+  clearGuestCart,
+  clearServerCart,
+  fetchServerCartEntries,
+  getGuestCartItems,
+  notifyCartStateChanged,
+  removeGuestCartItem,
+  saveGuestCartItems,
+  updateGuestCartItemQuantity,
+} from "@/lib/cartStore";
+import { showToast } from "@/lib/toast";
 
 function Cart() {
-  const [cartItems, setCartItems] = useState(initialCartItems);
-  const [selectedIds, setSelectedIds] = useState(initialCartItems.map(item => item.id));
+  const [cartEntries, setCartEntries] = useState([]);
+  const [guestCartEntries, setGuestCartEntries] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [error, setError] = useState("");
+  const user = getStoredUser();
+  const customerId = Number(user?.id || 0);
+  const isLoggedIn = isAuthenticated() && customerId > 0;
 
-  const handleQuantityChange = (id, newQty) => {
-    if (newQty < 1) return;
-    setCartItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity: newQty } : item))
-    );
+  const cartItems = useMemo(
+    () => (isLoggedIn ? mapCartEntriesToItems(cartEntries, products) : mapGuestCartItems(guestCartEntries, products)),
+    [cartEntries, guestCartEntries, isLoggedIn, products]
+  );
+
+  const suggestions = useMemo(
+    () => mapCartSuggestions(products, cartItems),
+    [products, cartItems]
+  );
+
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      const currentIds = cartItems.map((item) => item.id);
+
+      if (prev.length === 0) {
+        return currentIds;
+      }
+
+      const nextSelected = prev.filter((id) => currentIds.includes(id));
+      return nextSelected.length > 0 ? nextSelected : currentIds;
+    });
+  }, [cartItems]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchCartData = async () => {
+      if (!isLoggedIn) {
+        try {
+          setIsLoading(true);
+          setError("");
+          const productResponse = await api.get("/products");
+
+          if (!isMounted) {
+            return;
+          }
+
+          setCartEntries([]);
+          setGuestCartEntries(getGuestCartItems());
+          setProducts(Array.isArray(productResponse.data?.data) ? productResponse.data.data : []);
+        } catch (nextError) {
+          if (!isMounted) {
+            return;
+          }
+
+          console.error("Failed to fetch guest cart products", nextError);
+          setError("Khong the tai gio hang luc nay.");
+          setCartEntries([]);
+          setGuestCartEntries([]);
+          setProducts([]);
+        } finally {
+          if (isMounted) {
+            setIsLoading(false);
+          }
+        }
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        setError("");
+
+        const [cartRows, productResponse] = await Promise.all([
+          fetchServerCartEntries(customerId),
+          api.get("/products"),
+        ]);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setCartEntries(Array.isArray(cartRows) ? cartRows : []);
+        setGuestCartEntries([]);
+        setProducts(Array.isArray(productResponse.data?.data) ? productResponse.data.data : []);
+      } catch (nextError) {
+        if (!isMounted) {
+          return;
+        }
+
+        console.error("Failed to fetch cart", nextError);
+        setError("Khong the tai gio hang luc nay.");
+        setCartEntries([]);
+        setGuestCartEntries([]);
+        setProducts([]);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchCartData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [customerId, isLoggedIn]);
+
+  const handleQuantityChange = async (item, newQty) => {
+    if (newQty < 1 || isUpdating) return;
+
+    if (!isLoggedIn) {
+      const nextItems = updateGuestCartItemQuantity(item.productId, newQty);
+      setGuestCartEntries(nextItems);
+      return;
+    }
+
+    try {
+      setIsUpdating(true);
+      await api.put(`/carts/${item.cartId}`, {
+        customerId: item.customerId,
+        items: [
+          {
+            productId: item.productId,
+            quantity: newQty,
+          },
+        ],
+      });
+
+      setCartEntries((prev) =>
+        prev.map((entry) =>
+          entry.id === item.cartId
+            ? {
+                ...entry,
+                items: (entry.items || []).map((entryItem) =>
+                  Number(entryItem.product_id) === Number(item.productId)
+                    ? { ...entryItem, quantity: newQty }
+                    : entryItem
+                ),
+              }
+            : entry
+        )
+      );
+      notifyCartStateChanged();
+    } catch (nextError) {
+      console.error("Failed to update cart quantity", nextError);
+      showToast({ message: "Không cập nhật được số lượng sản phẩm.", type: "error" });
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
-  const handleRemove = (id) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id));
-    setSelectedIds((prev) => prev.filter(itemId => itemId !== id));
+  const handleRemove = async (item) => {
+    if (isUpdating) return;
+
+    if (!isLoggedIn) {
+      const nextItems = removeGuestCartItem(item.productId);
+      setGuestCartEntries(nextItems);
+      setSelectedIds((prev) => prev.filter((itemId) => itemId !== item.id));
+      return;
+    }
+
+    try {
+      setIsUpdating(true);
+      await api.delete(`/carts/${item.cartId}`);
+      setCartEntries((prev) => prev.filter((entry) => entry.id !== item.cartId));
+      setSelectedIds((prev) => prev.filter((itemId) => itemId !== item.id));
+      notifyCartStateChanged();
+    } catch (nextError) {
+      console.error("Failed to remove cart item", nextError);
+      showToast({ message: "Không xóa được sản phẩm khỏi giỏ hàng.", type: "error" });
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleToggleSelect = (id) => {
@@ -94,31 +216,76 @@ function Cart() {
     }
   };
 
+  const handleClearCart = async () => {
+    if (isUpdating || cartItems.length === 0) {
+      return;
+    }
 
-  const handleAddSuggestionToCart = (product) => {
-    const newId = Date.now();
-    setCartItems((prev) => {
-      const existing = prev.find((item) => item.name === product.name);
-      if (existing) {
-        return prev.map((item) =>
-          item.name === product.name
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
+    try {
+      setIsUpdating(true);
+
+      if (isLoggedIn) {
+        await clearServerCart(customerId);
+        setCartEntries([]);
+      } else {
+        clearGuestCart();
+        setGuestCartEntries([]);
       }
-      return [
-        ...prev,
-        {
-          id: newId,
-          name: product.name,
-          details: "Premium Accessory | High Performance",
-          price: product.price,
-          quantity: 1,
-          image: product.image
-        }
-      ];
-    });
-    setSelectedIds((prev) => [...prev, newId]);
+
+      setSelectedIds([]);
+      showToast({ message: "Đã xóa toàn bộ giỏ hàng." });
+    } catch (nextError) {
+      console.error("Failed to clear cart", nextError);
+      showToast({ message: "Không xóa được toàn bộ giỏ hàng.", type: "error" });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+
+  const handleAddSuggestionToCart = async (product) => {
+    if (isUpdating) {
+      return;
+    }
+
+    const existing = cartItems.find((item) => Number(item.productId) === Number(product.id));
+
+    if (existing) {
+      await handleQuantityChange(existing, existing.quantity + 1);
+      return;
+    }
+
+    try {
+      setIsUpdating(true);
+      await addProductToCart({ productId: product.id, quantity: 1 });
+
+      if (!isLoggedIn) {
+        setGuestCartEntries(getGuestCartItems());
+      } else if (existing) {
+        setCartEntries((prev) =>
+          prev.map((entry) =>
+            entry.id === existing.cartId
+              ? {
+                  ...entry,
+                  items: (entry.items || []).map((entryItem) =>
+                    Number(entryItem.product_id) === Number(product.id)
+                      ? { ...entryItem, quantity: Number(entryItem.quantity || 0) + 1 }
+                      : entryItem
+                  ),
+                }
+              : entry
+          )
+        );
+      } else {
+        const refreshedEntries = await fetchServerCartEntries(customerId);
+        setCartEntries(refreshedEntries);
+      }
+    } catch (nextError) {
+      console.error("Failed to add suggestion to cart", nextError);
+      showToast({ message: "Không thêm được sản phẩm vào giỏ hàng.", type: "error" });
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   // Math Calculations (Based on selected products only)
@@ -148,7 +315,7 @@ function Cart() {
 
         {/* Title */}
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-[-0.01em]">
             Giỏ hàng của bạn
           </h1>
           <p className="text-xs text-gray-500 font-semibold mt-1">
@@ -156,14 +323,24 @@ function Cart() {
           </p>
         </div>
 
-        {cartItems.length === 0 ? (
+        {isLoading ? (
+          <div className="bg-white border border-slate-100 rounded-xl p-12 text-center shadow-sm max-w-xl mx-auto space-y-3">
+            <h3 className="font-bold text-gray-900 text-lg tracking-[-0.01em]">Đang tải giỏ hàng...</h3>
+            <p className="text-gray-500 text-xs font-semibold">Chúng mình đang lấy dữ liệu thật từ hệ thống.</p>
+          </div>
+        ) : error ? (
+          <div className="bg-white border border-rose-100 rounded-xl p-12 text-center shadow-sm max-w-xl mx-auto space-y-3">
+            <h3 className="font-bold text-rose-500 text-lg tracking-[-0.01em]">{error}</h3>
+            <p className="text-gray-500 text-xs font-semibold">Vui lòng thử lại sau.</p>
+          </div>
+        ) : cartItems.length === 0 ? (
           /* Empty State */
           <div className="bg-white border border-slate-100 rounded-xl p-12 text-center shadow-sm max-w-xl mx-auto space-y-5">
             <div className="size-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto">
               <ShoppingBag className="size-8" />
             </div>
             <div className="space-y-1">
-              <h3 className="font-extrabold text-gray-900 text-lg">Giỏ hàng của bạn trống!</h3>
+              <h3 className="font-bold text-gray-900 text-lg tracking-[-0.01em]">Giỏ hàng của bạn trống!</h3>
               <p className="text-gray-500 text-xs font-semibold">
                 Hãy chọn thêm linh kiện chất lượng cao và quay lại sau nhé.
               </p>
@@ -187,32 +364,68 @@ function Cart() {
                   <button
                     type="button"
                     onClick={handleToggleSelectAll}
+                    disabled={isUpdating}
                     className={`size-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all cursor-pointer ${
                       isAllSelected
-                        ? "bg-blue-600 border-blue-600 text-white"
-                        : "border-slate-200 hover:border-blue-500 bg-white"
-                    }`}
+                        ? "bg-red-600 border-red-600 text-white"
+                        : "border-slate-300 hover:border-slate-500 bg-white text-white"
+                    } ${isUpdating ? "opacity-60 cursor-not-allowed" : ""}`}
                   >
                     {isAllSelected && (
-                      <svg className="size-2.5 fill-current" viewBox="0 0 20 20">
+                      <svg className="size-2.5 fill-current text-white" viewBox="0 0 20 20">
                         <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
                       </svg>
                     )}
                   </button>
-                  <span>CHỌN TẤT CẢ ({cartItems.length} SẢN PHẨM)</span>
+                  <span className="text-slate-900">CHỌN TẤT CẢ ({cartItems.length} SẢN PHẨM)</span>
                 </label>
 
                 {selectedIds.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCartItems(prev => prev.filter(item => !selectedIds.includes(item.id)));
-                      setSelectedIds([]);
-                    }}
-                    className="text-xs font-bold text-red-500 hover:text-red-700 transition cursor-pointer"
-                  >
-                    Xóa mục đã chọn ({selectedIds.length})
-                  </button>
+                  <div className="flex items-center gap-4">
+                    <button
+                      type="button"
+                      onClick={handleClearCart}
+                      disabled={isUpdating}
+                      className="text-xs font-bold text-slate-500 hover:text-slate-700 transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Xóa toàn bộ
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const selectedItems = cartItems.filter((item) => selectedIds.includes(item.id));
+                        try {
+                          setIsUpdating(true);
+                          if (isLoggedIn) {
+                            await Promise.all(selectedItems.map((item) => api.delete(`/carts/${item.cartId}`)));
+                            setCartEntries((prev) =>
+                              prev.filter(
+                                (entry) => !selectedItems.some((item) => Number(item.cartId) === Number(entry.id))
+                              )
+                            );
+                            notifyCartStateChanged();
+                          } else {
+                            const selectedProductIds = selectedItems.map((item) => Number(item.productId));
+                            const nextGuestItems = getGuestCartItems().filter(
+                              (item) => !selectedProductIds.includes(Number(item.productId))
+                            );
+                            saveGuestCartItems(nextGuestItems);
+                            setGuestCartEntries(nextGuestItems);
+                          }
+                          setSelectedIds([]);
+                        } catch (nextError) {
+                          console.error("Failed to remove selected cart items", nextError);
+                          showToast({ message: "Không xóa được các sản phẩm đã chọn.", type: "error" });
+                        } finally {
+                          setIsUpdating(false);
+                        }
+                      }}
+                      disabled={isUpdating}
+                      className="text-xs font-bold text-red-500 hover:text-red-700 transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Xóa mục đã chọn ({selectedIds.length})
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -225,6 +438,7 @@ function Cart() {
                     onToggleSelect={handleToggleSelect}
                     onQuantityChange={handleQuantityChange}
                     onRemove={handleRemove}
+                    disabled={isUpdating}
                   />
                 ))}
               </div>
@@ -232,7 +446,7 @@ function Cart() {
               {/* Continue Shopping Link */}
               <Link
                 to="/products"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors pt-2"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-900 hover:text-slate-700 transition-colors pt-2"
               >
                 <ArrowLeft className="size-3.5" />
                 Tiếp tục mua sắm
@@ -254,39 +468,46 @@ function Cart() {
         <div className="border-t border-slate-200 pt-8 space-y-6">
           <div className="flex items-end justify-between">
             <div>
-              <h2 className="font-black text-gray-900 text-xl tracking-tight">Có thể bạn cũng thích</h2>
+              <h2 className="font-bold text-gray-900 text-xl tracking-[-0.01em]">Có thể bạn cũng thích</h2>
             </div>
-            <Link to="/products" className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors">
+            <Link to="/products" className="text-xs font-bold text-slate-900 hover:text-slate-700 transition-colors">
               Xem tất cả
             </Link>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {mockSuggestions.map((product) => (
+            {suggestions.map((product) => (
               <div
                 key={product.id}
                 className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 flex flex-col relative group hover:shadow-md transition-shadow"
               >
                 <div className="aspect-square bg-slate-50 rounded-lg overflow-hidden p-2 flex items-center justify-center mb-4">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="object-cover w-full h-full rounded group-hover:scale-102 transition-transform duration-300"
-                  />
+                  {product.image ? (
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="object-cover w-full h-full rounded group-hover:scale-102 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center rounded bg-slate-100 text-slate-400 text-xs font-semibold">
+                      Chua co hinh anh
+                    </div>
+                  )}
                 </div>
 
                 <h3 className="font-bold text-gray-900 text-sm mb-2 line-clamp-1">
                   {product.name}
                 </h3>
 
-                <span className="text-red-600 font-extrabold text-sm mb-4">
+                <span className="text-red-600 font-bold text-sm mb-4">
                   {product.price.toLocaleString("vi-VN")}đ
                 </span>
 
                 <button
                   type="button"
                   onClick={() => handleAddSuggestionToCart(product)}
-                  className="mt-auto w-full border-2 border-blue-600 hover:bg-blue-50 text-blue-600 rounded-lg py-2 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  disabled={isUpdating}
+                  className="mt-auto w-full border-2 border-red-600 bg-red-600 hover:bg-red-700 text-white rounded-lg py-2 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <ShoppingCart className="size-3.5" />
                   Thêm vào giỏ
