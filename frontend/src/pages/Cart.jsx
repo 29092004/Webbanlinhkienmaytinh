@@ -22,7 +22,7 @@ const initialCartItems = [
     name: "AMD Ryzen 9 7950X3D",
     details: "16 Cores | 32 Threads | 144MB Cache",
     price: 16200000,
-    quantity: 1,
+    quantity: 24,
     image: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?q=80&w=400&auto=format&fit=crop"
   },
   {
