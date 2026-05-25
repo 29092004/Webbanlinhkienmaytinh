@@ -145,7 +145,7 @@ function AdminProducts() {
         return leftSaleRank - rightSaleRank;
       }
 
-      return String(leftProduct.name ?? "").localeCompare(String(rightProduct.name ?? ""), "vi");
+      return Number(rightProduct.id ?? 0) - Number(leftProduct.id ?? 0);
     });
   }, [products, searchTerm]);
 
