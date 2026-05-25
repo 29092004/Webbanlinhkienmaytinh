@@ -2,75 +2,64 @@ import { ShoppingCart, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export function ProductCard({ product }) {
-  // Generate stars array
-  const stars = Array.from({ length: 5 }, (_, idx) => idx < Math.floor(product.rating));
-
-  // For mockup navigation, route to the ASUS ROG Strix details page (/product/3)
   const productDetailPath = `/product/${product.id || 3}`;
 
   return (
-    <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 flex flex-col relative group hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-slate-100 flex flex-col relative group hover:shadow-[0_10px_30px_rgba(0,0,0,0.05)] transition-all duration-300">
       {/* Badges container */}
-      <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5 items-start">
+      <div className="absolute top-6 left-6 z-10 flex flex-col gap-1.5 items-start">
         {product.tag && (
-          <span className={`text-[9px] font-bold text-white uppercase px-2 py-0.5 rounded tracking-wide ${product.tagColor || "bg-blue-600"}`}>
+          <span className={`text-[9px] font-extrabold text-white px-2 py-0.5 rounded tracking-wide uppercase ${product.tagColor || "bg-blue-600"}`}>
             {product.tag}
-          </span>
-        )}
-        {product.discount && (
-          <span className="text-[10px] font-bold text-white bg-red-600 px-2 py-0.5 rounded">
-            {product.discount}
           </span>
         )}
       </div>
 
       {/* Image container */}
-      <Link to={productDetailPath} className="aspect-square bg-slate-50 rounded-lg overflow-hidden p-2 flex items-center justify-center mb-4">
+      <Link to={productDetailPath} className="aspect-square bg-slate-50 rounded-xl overflow-hidden p-2 flex items-center justify-center mb-4">
         <img
           src={product.image}
           alt={product.name}
-          className="object-cover w-full h-full rounded group-hover:scale-102 transition-transform duration-300"
+          className="object-cover w-full h-full rounded-lg group-hover:scale-105 transition-transform duration-500"
         />
       </Link>
 
       {/* Review Stars */}
-      <div className="flex items-center gap-1 mb-2">
-        <div className="flex items-center gap-0.5 text-amber-400">
-          {stars.map((filled, i) => (
-            <Star
-              key={i}
-              className={`size-3 ${filled ? "fill-amber-400" : "text-gray-300"}`}
-            />
-          ))}
-        </div>
-        <span className="text-[11px] text-gray-500 font-semibold">
+      <div className="flex items-center gap-1 mb-2 pl-0.5">
+        <Star className="size-3.5 fill-amber-400 text-amber-400" />
+        <span className="text-[12px] font-bold text-slate-800">
+          {product.rating}
+        </span>
+        <span className="text-[12px] text-slate-400 font-semibold">
           ({product.reviewsCount})
         </span>
       </div>
 
       {/* Product Title */}
-      <Link to={productDetailPath}>
-        <h3 className="font-bold text-gray-900 text-sm mb-2 hover:text-blue-600 transition-colors line-clamp-2 min-h-[40px]">
+      <Link to={productDetailPath} className="flex-1">
+        <h3 className="font-semibold text-slate-900 text-[14px] leading-snug mb-2 hover:text-blue-600 transition-colors line-clamp-2 min-h-[40px]">
           {product.name}
         </h3>
       </Link>
 
       {/* Pricing */}
-      <div className="flex flex-col gap-0.5 mb-4">
-        <span className="text-blue-600 font-extrabold text-base">
+      <div className="flex flex-col gap-0.5 mb-4 pl-0.5">
+        <span className="text-blue-600 font-extrabold text-[17px]">
           {product.price.toLocaleString("vi-VN")}đ
         </span>
-        {product.originalPrice && (
-          <span className="text-gray-400 text-xs line-through">
+        {product.originalPrice ? (
+          <span className="text-slate-400 text-xs line-through font-semibold">
             {product.originalPrice.toLocaleString("vi-VN")}đ
           </span>
+        ) : (
+          <span className="text-transparent text-xs select-none">0đ</span>
         )}
       </div>
 
       {/* Add to Cart button */}
-      <button className="mt-auto w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2.5 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors">
-        <ShoppingCart className="size-3.5" />
-        Thêm vào giỏ
+      <button className="w-full bg-[#e21a36] hover:bg-red-700 text-white rounded-xl py-3 text-xs font-bold flex items-center justify-center gap-2 transition-colors">
+        <ShoppingCart className="size-4 shrink-0" />
+        Thêm vào giỏ hàng
       </button>
     </div>
   );
