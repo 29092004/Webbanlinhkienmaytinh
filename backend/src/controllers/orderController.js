@@ -29,7 +29,9 @@ const normalizeOrderDetails = (value, fallbackProductId = null, fallbackQuantity
 const orderController = {
     getOrders: async (req, res) => {
         try {
-            const rows = await orderModel.getAll();
+            const rows = req.user?.role === 'user'
+                ? await orderModel.getByAccountId(req.user.id)
+                : await orderModel.getAll();
             res.json({ success: true, data: rows });
         } catch (error) {
             return res.status(500).json({ message: 'Internal Server Error' });
@@ -43,6 +45,11 @@ const orderController = {
             if (!row) {
                 return res.status(404).json({ message: 'Order not found' });
             }
+
+            if (req.user?.role === 'user' && Number(row.account_id) !== Number(req.user.id)) {
+                return res.status(403).json({ message: 'Forbidden' });
+            }
+
             res.json({ success: true, data: row });
         } catch (error) {
             return res.status(500).json({ message: 'Internal Server Error' });

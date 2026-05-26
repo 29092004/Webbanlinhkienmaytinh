@@ -4,12 +4,13 @@ import {
     authenticateToken,
     requireAdmin,
     requireAdminOrStaff,
+    requireAuthenticatedUser,
     requireRole,
 } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.get('/', authenticateToken, requireAdminOrStaff, orderController.getOrders);
+router.get('/', authenticateToken, requireAuthenticatedUser, orderController.getOrders);
 router.get('/:id', authenticateToken, requireRole('admin', 'staff', 'user'), orderController.getOrderById);
 router.post('/', authenticateToken, requireRole('admin', 'user'), orderController.createOrder);
 router.put('/:id', authenticateToken, requireAdminOrStaff, orderController.updateOrder);
