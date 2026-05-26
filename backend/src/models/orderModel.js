@@ -80,6 +80,30 @@ const OrderModel = {
         return attachOrderDetails(rows);
     },
 
+    getByAccountId: async (accountId) => {
+        const [rows] = await db.query(`
+            SELECT
+                o.*,
+                a.username AS account_username,
+                a.role AS account_role,
+                v.voucher_code,
+                v.voucher_value,
+                c.customer_id,
+                c.first_name AS customer_first_name,
+                c.last_name AS customer_last_name,
+                c.email AS customer_email,
+                c.phone AS customer_phone,
+                c.address AS customer_address
+            FROM ${table_name} o
+            LEFT JOIN account a ON a.id = o.account_id
+            LEFT JOIN voucher v ON v.id = o.voucher_id
+            LEFT JOIN customer c ON c.customer_id = o.account_id
+            WHERE o.account_id = ?
+        `, [accountId]);
+
+        return attachOrderDetails(rows);
+    },
+
     getById: async (id) => {
         const [rows] = await db.query(
             `SELECT
