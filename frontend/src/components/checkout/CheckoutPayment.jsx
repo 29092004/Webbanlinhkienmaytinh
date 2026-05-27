@@ -28,7 +28,7 @@ export default function CheckoutPayment({
       {/* Title */}
       <div className="flex items-center gap-3">
         <span className="flex items-center justify-center size-6 rounded-full bg-red-600 text-white text-xs font-bold">2</span>
-        <h2 className="text-[17px] font-bold text-slate-800">Phương thức thanh toán</h2>
+        <h2 className="text-[1.35rem] font-black uppercase tracking-[-0.02em] text-slate-950">Phương thức thanh toán</h2>
       </div>
 
       {/* Methods container */}
@@ -47,12 +47,12 @@ export default function CheckoutPayment({
               }`}
             >
               <div className="flex items-center">
-                <span className={`text-[13px] font-bold ${isSelected ? "text-red-600" : "text-slate-800"}`}>
+                <span className={`text-[14px] font-black tracking-[-0.01em] ${isSelected ? "text-red-600" : "text-slate-950"}`}>
                   {m.title}
                 </span>
                 {m.badge}
               </div>
-              <p className="text-[11px] font-medium text-slate-400 mt-1 leading-normal">
+              <p className="mt-1 text-[12px] font-semibold leading-normal text-slate-600">
                 {m.desc}
               </p>
 

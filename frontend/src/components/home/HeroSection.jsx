@@ -1,22 +1,19 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import heroBanner1 from "@/assets/home-banners/hero-banner-1.png";
+import heroBanner2 from "@/assets/home-banners/hero-banner-2.png";
+import heroBanner3 from "@/assets/home-banners/hero-banner-3.png";
 
 const slides = [
   {
-    image: "https://images.unsplash.com/photo-1593640495253-23196b27a87f?q=80&w=1600&auto=format&fit=crop",
-    badge: "New Arrival",
-    title: "Next-Gen Performance.\nExplore RTX 50 Series.",
+    image: heroBanner2,
   },
   {
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1600&auto=format&fit=crop",
-    badge: "Hot Deal",
-    title: "Build Your Dream PC.\nSave up to 30%.",
+    image: heroBanner1,
   },
   {
-    image: "https://images.unsplash.com/photo-1531492746076-161ca9bcad58?q=80&w=1600&auto=format&fit=crop",
-    badge: "Limited Stock",
-    title: "Ultra Fast Gen 5 SSDs.\nInstant Load Times.",
-  }
+    image: heroBanner3,
+  },
 ];
 
 export function HeroSection() {
@@ -51,18 +48,9 @@ export function HeroSection() {
               <div key={index} className="min-w-full relative h-full">
                 <img 
                   src={slide.image} 
-                  alt={slide.title} 
+                  alt={`Banner ${index + 1}`} 
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                <div className="absolute bottom-0 left-0 p-8 md:p-12">
-                  <div className="bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded mb-4 inline-block uppercase tracking-wider">
-                    {slide.badge}
-                  </div>
-                  <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white leading-tight whitespace-pre-line">
-                    {slide.title}
-                  </h2>
-                </div>
               </div>
             ))}
           </div>

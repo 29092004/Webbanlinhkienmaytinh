@@ -315,11 +315,11 @@ function Cart() {
 
         {/* Title */}
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-[-0.01em]">
+          <h1 className="text-[1.9rem] font-black uppercase tracking-[-0.02em] text-slate-950 md:text-[2.2rem]">
             Giỏ hàng của bạn
           </h1>
-          <p className="text-xs text-gray-500 font-semibold mt-1">
-            {cartItems.length} sản phẩm — Kiểm tra lại sản phẩm trước khi thanh toán
+          <p className="mt-2 text-sm font-semibold text-slate-600">
+            {cartItems.length} sản phẩm - Kiểm tra lại sản phẩm trước khi thanh toán
           </p>
         </div>
 
@@ -360,7 +360,7 @@ function Cart() {
               
               {/* Select All Checkbar */}
               <div className="bg-white rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.01)] border border-slate-100 flex items-center justify-between flex-wrap gap-2">
-                <label className="flex items-center gap-3 cursor-pointer select-none text-xs font-bold text-slate-700">
+                <label className="flex cursor-pointer select-none items-center gap-3 text-sm font-bold text-slate-900">
                   <button
                     type="button"
                     onClick={handleToggleSelectAll}
@@ -377,7 +377,7 @@ function Cart() {
                       </svg>
                     )}
                   </button>
-                  <span className="text-slate-900">CHỌN TẤT CẢ ({cartItems.length} SẢN PHẨM)</span>
+                  <span className="text-slate-900">Chọn tất cả ({cartItems.length} sản phẩm)</span>
                 </label>
 
                 {selectedIds.length > 0 && (
@@ -386,7 +386,7 @@ function Cart() {
                       type="button"
                       onClick={handleClearCart}
                       disabled={isUpdating}
-                      className="text-xs font-bold text-slate-500 hover:text-slate-700 transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                      className="text-sm font-bold text-slate-700 transition hover:text-slate-950 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Xóa toàn bộ
                     </button>
@@ -421,7 +421,7 @@ function Cart() {
                         }
                       }}
                       disabled={isUpdating}
-                      className="text-xs font-bold text-red-500 hover:text-red-700 transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                      className="text-sm font-bold text-red-600 transition hover:text-red-700 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Xóa mục đã chọn ({selectedIds.length})
                     </button>
@@ -446,7 +446,7 @@ function Cart() {
               {/* Continue Shopping Link */}
               <Link
                 to="/products"
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-900 hover:text-slate-700 transition-colors pt-2"
+                className="inline-flex items-center gap-1.5 pt-2 text-sm font-bold text-slate-900 transition-colors hover:text-slate-700"
               >
                 <ArrowLeft className="size-3.5" />
                 Tiếp tục mua sắm
@@ -470,7 +470,7 @@ function Cart() {
             <div>
               <h2 className="font-bold text-gray-900 text-xl tracking-[-0.01em]">Có thể bạn cũng thích</h2>
             </div>
-            <Link to="/products" className="text-xs font-bold text-slate-900 hover:text-slate-700 transition-colors">
+            <Link to="/products" className="text-sm font-bold text-slate-900 transition-colors hover:text-slate-700">
               Xem tất cả
             </Link>
           </div>

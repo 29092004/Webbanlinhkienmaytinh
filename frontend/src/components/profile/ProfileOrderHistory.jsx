@@ -4,6 +4,8 @@ import { ChevronRight, PackageCheck } from "lucide-react";
 const formatCurrency = (value) => `${value.toLocaleString("vi-VN")}đ`;
 
 const statusClassName = {
+  "Chờ xử lý": "bg-amber-50 text-amber-700",
+  "Đang xử lý": "bg-violet-50 text-violet-700",
   "Đang giao": "bg-blue-50 text-blue-700",
   "Hoàn thành": "bg-emerald-50 text-emerald-700",
   "Đã hủy": "bg-slate-100 text-slate-600",
@@ -37,8 +39,8 @@ export default function ProfileOrderHistory({ orders }) {
                     {order.code || order.id}
                   </h3>
                   <span
-                    className={`rounded-full px-3 py-1 text-xs font-black ${
-                      statusClassName[order.status]
+                    className={`rounded-full px-3 py-1 text-sm font-bold ${
+                      statusClassName[order.status] || "bg-slate-100 text-slate-700"
                     }`}
                   >
                     {order.status}

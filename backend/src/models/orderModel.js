@@ -39,9 +39,7 @@ const attachOrderDetails = async (orders) => {
     }));
 };
 
-const replaceOrderDetails = async (connection, orderId, details = []) => {
-    await connection.query('DELETE FROM order_detail WHERE order_id = ?', [orderId]);
-
+const insertOrderDetails = async (connection, orderId, details = []) => {
     for (const detail of details) {
         await connection.query(
             'INSERT INTO order_detail (order_id, product_id, quantity, subtotal_price, note) VALUES (?, ?, ?, ?, ?)',
@@ -54,6 +52,11 @@ const replaceOrderDetails = async (connection, orderId, details = []) => {
             ]
         );
     }
+};
+
+const replaceOrderDetails = async (connection, orderId, details = []) => {
+    await connection.query('DELETE FROM order_detail WHERE order_id = ?', [orderId]);
+    await insertOrderDetails(connection, orderId, details);
 };
 
 const OrderModel = {
@@ -145,7 +148,7 @@ const OrderModel = {
                 [createdAt, paymentMethod, status, accountId, voucherId ?? null, totalPrice]
             );
 
-            await replaceOrderDetails(connection, result.insertId, details);
+            await insertOrderDetails(connection, result.insertId, details);
             await connection.commit();
 
             return result.insertId;
@@ -190,6 +193,15 @@ const OrderModel = {
             `DELETE FROM ${table_name} WHERE id = ?`,
             [id]
         );
+        return result.affectedRows;
+    },
+
+    updateStatus: async (id, status) => {
+        const [result] = await db.query(
+            `UPDATE ${table_name} SET status = ? WHERE id = ?`,
+            [status, id]
+        );
+
         return result.affectedRows;
     },
 };
