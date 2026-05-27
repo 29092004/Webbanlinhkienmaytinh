@@ -37,6 +37,16 @@ import AdminShipping from "./pages/admin/AdminShipping";
 import AdminAccounts from "./pages/admin/AdminAccounts";
 import AdminSupport from "./pages/admin/AdminSupport";
 
+function ScrollToTop() {
+  const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location.pathname, location.search]);
+
+  return null;
+}
+
 function SessionExpiredHandler() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -108,6 +118,7 @@ function RequireRole({ roles, fallbackTo = "/", children }) {
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <SessionExpiredHandler />
       <ToastViewport />
 

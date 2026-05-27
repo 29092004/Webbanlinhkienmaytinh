@@ -12,6 +12,7 @@ import voucherRoute from "./voucherRoute.js";
 import shippingRoute from "./shippingRoute.js";
 import saleEventRoute from "./saleEventRoute.js";
 import productRoute from "./productRoute.js";
+import vnpayRoute from "./vnpayRoute.js";
 
 const router = express.Router();
 
@@ -29,5 +30,6 @@ router.use("/shipping", shippingRoute);
 router.use("/shippings", shippingRoute);
 router.use("/sale-events", saleEventRoute);
 router.use("/products", productRoute);
+router.use("/vnpay", vnpayRoute);
 
 export default router;

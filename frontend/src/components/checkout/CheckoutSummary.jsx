@@ -11,10 +11,11 @@ export default function CheckoutSummary({
   onCouponCodeChange,
   onApplyCoupon,
   couponApplied,
+  selectedMethod = "cod",
 }) {
   return (
     <div className="bg-white border border-slate-100 rounded-3xl p-7 shadow-sm space-y-6">
-      <h3 className="font-extrabold text-slate-800 text-xl border-b border-slate-50 pb-4">
+      <h3 className="border-b border-slate-50 pb-4 text-sm font-bold text-slate-900">
         Tóm tắt đơn hàng
       </h3>
 
@@ -28,8 +29,8 @@ export default function CheckoutSummary({
             </div>
             {/* Details */}
             <div className="flex-1 min-w-0">
-              <h4 className="font-bold text-slate-800 text-sm truncate">{item.name}</h4>
-              <p className="text-xs font-bold text-slate-400 mt-1">Số lượng: {String(item.quantity).padStart(2, "0")}</p>
+              <h4 className="truncate text-sm font-black text-slate-950">{item.name}</h4>
+              <p className="mt-1 text-xs font-semibold text-slate-600">Số lượng: {String(item.quantity).padStart(2, "0")}</p>
               <p className="text-red-600 font-extrabold text-sm mt-1">
                 {item.price.toLocaleString("vi-VN")}đ
               </p>
@@ -39,22 +40,22 @@ export default function CheckoutSummary({
       </div>
 
       {/* Pricing Breakdown */}
-      <div className="border-t border-slate-50 pt-5 space-y-3.5 font-semibold text-sm text-slate-500">
+      <div className="border-t border-slate-50 pt-5 space-y-3.5 text-sm font-semibold text-slate-700">
         <div className="flex justify-between items-center">
-          <span>Tạm tính</span>
-          <span className="text-slate-800 text-base">{itemsSubtotal.toLocaleString("vi-VN")}đ</span>
+          <span className="font-bold text-slate-900">Tạm tính</span>
+          <span className="text-base font-bold text-slate-950">{itemsSubtotal.toLocaleString("vi-VN")}đ</span>
         </div>
 
         <div className="flex justify-between items-center">
-          <span>Phí vận chuyển</span>
+          <span className="font-bold text-slate-900">Phí vận chuyển</span>
           <span className="text-slate-900 font-bold text-base">
             {shippingCost === 0 ? "Miễn phí" : `${shippingCost.toLocaleString("vi-VN")}đ`}
           </span>
         </div>
 
         <div className="flex justify-between items-center">
-          <span>Thuế VAT (10%)</span>
-          <span className="text-slate-800 text-base">{vat.toLocaleString("vi-VN")}đ</span>
+          <span className="font-bold text-slate-900">Thuế VAT (10%)</span>
+          <span className="text-base font-bold text-slate-950">{vat.toLocaleString("vi-VN")}đ</span>
         </div>
 
         {voucherDiscount > 0 && (
@@ -65,7 +66,7 @@ export default function CheckoutSummary({
         )}
 
         <div className="border-t border-slate-50 pt-4 flex justify-between items-center">
-          <span className="text-lg font-extrabold text-slate-800">Tổng cộng</span>
+          <span className="text-sm font-bold text-slate-900">Tổng cộng</span>
           <span className="text-[30px] font-black text-red-600 tracking-tight">
             {totalPayment.toLocaleString("vi-VN")}đ
           </span>
@@ -74,7 +75,7 @@ export default function CheckoutSummary({
 
       {/* Promo Coupon Form */}
       <div className="space-y-2 pt-5 border-t border-slate-100">
-        <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+        <label className="block text-sm font-bold text-slate-900">
           Mã giảm giá
         </label>
         <div className="flex gap-2">
@@ -110,10 +111,10 @@ export default function CheckoutSummary({
           disabled={isSubmitting}
           className="w-full bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-extrabold py-4 px-4 rounded-xl text-sm md:text-base tracking-wide uppercase transition-all shadow-md hover:shadow-lg disabled:cursor-not-allowed cursor-pointer"
         >
-          {isSubmitting ? "Đang xử lý..." : "Đặt hàng ngay"}
+          {isSubmitting ? "Đang xử lý..." : selectedMethod === "vnpay" ? "Thanh toán với VNPay" : "Đặt hàng ngay"}
         </button>
 
-        <p className="text-xs font-semibold text-slate-400 text-center leading-normal">
+        <p className="text-center text-xs font-semibold leading-normal text-slate-600">
           Bằng cách đặt hàng, bạn đồng ý với các{" "}
           <a href="#" className="text-red-600 hover:underline">
             Điều khoản dịch vụ

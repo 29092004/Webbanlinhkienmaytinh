@@ -7,7 +7,7 @@ export function CartSummary({
 }) {
   return (
     <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm space-y-4">
-      <h3 className="font-extrabold text-slate-800 text-sm border-b border-slate-50 pb-2">
+      <h3 className="border-b border-slate-50 pb-2 text-sm font-bold text-slate-900">
         Tóm tắt đơn hàng
       </h3>
 
@@ -29,7 +29,7 @@ export function CartSummary({
 
       {/* Total Payment Row */}
       <div className="border-t border-slate-100 pt-3.5 flex items-center justify-between">
-        <span className="text-xs font-black uppercase tracking-wider text-slate-800">Tổng cộng</span>
+        <span className="text-sm font-bold text-slate-900">Tổng cộng</span>
         <span className="text-[19px] font-black tracking-tight text-red-600">{total.toLocaleString("vi-VN")}đ</span>
       </div>
 

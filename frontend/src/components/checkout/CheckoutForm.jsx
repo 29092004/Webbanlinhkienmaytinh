@@ -43,14 +43,19 @@ export default function CheckoutForm({
         const matched = list.find((d) => d.name === formData.district);
         if (matched) {
           setSelectedDistrictCode(matched.code);
-        } else if (list.length > 0) {
-          updateDistrict(list[0].name, list[0].code);
         } else {
-          updateDistrict("", "");
+          setSelectedDistrictCode("");
+          if (formData.district) {
+            onFormChange({ target: { name: "district", value: "" } });
+          }
+          if (formData.ward) {
+            onFormChange({ target: { name: "ward", value: "" } });
+          }
+          setWardsList([]);
         }
       })
       .catch((err) => console.error("Lỗi tải danh sách Quận/Huyện:", err));
-  }, [selectedCityCode]);
+  }, [formData.district, formData.ward, onFormChange, selectedCityCode]);
 
   // Load wards when selectedDistrictCode changes
   useEffect(() => {
@@ -64,14 +69,12 @@ export default function CheckoutForm({
 
         // Find if current formData.ward matches any ward name
         const matched = list.find((w) => w.name === formData.ward);
-        if (!matched && list.length > 0) {
-          updateWard(list[0].name);
-        } else if (list.length === 0) {
+        if (!matched && formData.ward) {
           updateWard("");
         }
       })
       .catch((err) => console.error("Lỗi tải danh sách Phường/Xã:", err));
-  }, [selectedDistrictCode]);
+  }, [formData.ward, selectedDistrictCode]);
 
   const updateCity = (name, code) => {
     setSelectedCityCode(code);
@@ -92,14 +95,29 @@ export default function CheckoutForm({
     const cityObj = citiesList.find((c) => c.name === cityName);
     if (cityObj) {
       updateCity(cityName, cityObj.code);
+      setSelectedDistrictCode("");
+      setDistrictsList([]);
+      setWardsList([]);
+      onFormChange({ target: { name: "district", value: "" } });
+      onFormChange({ target: { name: "ward", value: "" } });
     }
   };
 
   const handleDistrictChange = (e) => {
     const districtName = e.target.value;
+
+    if (!districtName) {
+      setSelectedDistrictCode("");
+      setWardsList([]);
+      onFormChange({ target: { name: "district", value: "" } });
+      onFormChange({ target: { name: "ward", value: "" } });
+      return;
+    }
+
     const districtObj = districtsList.find((d) => d.name === districtName);
     if (districtObj) {
       updateDistrict(districtName, districtObj.code);
+      onFormChange({ target: { name: "ward", value: "" } });
     }
   };
 
@@ -108,14 +126,14 @@ export default function CheckoutForm({
       {/* Title */}
       <div className="flex items-center gap-3">
         <span className="flex items-center justify-center size-6 rounded-full bg-red-600 text-white text-xs font-bold">1</span>
-        <h2 className="text-[17px] font-bold text-slate-800">Thông tin giao hàng</h2>
+        <h2 className="text-sm font-bold text-slate-900">Địa chỉ nhận hàng</h2>
       </div>
 
       {/* Inputs stacked vertically */}
       <div className="space-y-4">
         {/* Name */}
         <div className="space-y-1.5">
-          <label htmlFor="fullName" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+          <label htmlFor="fullName" className="block text-sm font-bold text-slate-900">
             Họ và tên
           </label>
           <input
@@ -125,13 +143,13 @@ export default function CheckoutForm({
             value={formData.fullName}
             onChange={onFormChange}
             placeholder=""
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs font-bold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-red-500"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-red-500"
           />
         </div>
 
         {/* Phone */}
         <div className="space-y-1.5">
-          <label htmlFor="phone" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+          <label htmlFor="phone" className="block text-sm font-bold text-slate-900">
             Số điện thoại
           </label>
           <input
@@ -141,13 +159,13 @@ export default function CheckoutForm({
             value={formData.phone}
             onChange={onFormChange}
             placeholder=""
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs font-bold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-red-500"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-red-500"
           />
         </div>
 
         {/* Email */}
         <div className="space-y-1.5">
-          <label htmlFor="email" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+          <label htmlFor="email" className="block text-sm font-bold text-slate-900">
             Email
           </label>
           <input
@@ -157,7 +175,7 @@ export default function CheckoutForm({
             value={formData.email}
             onChange={onFormChange}
             placeholder=""
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs font-bold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-red-500"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-red-500"
           />
         </div>
 
@@ -165,7 +183,7 @@ export default function CheckoutForm({
 
         {/* City (dropdown) */}
         <div className="space-y-1.5">
-          <label htmlFor="city" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+          <label htmlFor="city" className="block text-sm font-bold text-slate-900">
             Tỉnh/Thành phố
           </label>
           <select
@@ -173,7 +191,7 @@ export default function CheckoutForm({
             name="city"
             value={formData.city}
             onChange={handleCityChange}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-red-500 cursor-pointer"
+            className="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-1 focus:ring-red-500"
           >
             {citiesList.map((city) => (
               <option key={city.code} value={city.name}>{city.name}</option>
@@ -183,7 +201,7 @@ export default function CheckoutForm({
 
         {/* District (dropdown) */}
         <div className="space-y-1.5">
-          <label htmlFor="district" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+          <label htmlFor="district" className="block text-sm font-bold text-slate-900">
             Quận/Huyện
           </label>
           <select
@@ -191,8 +209,9 @@ export default function CheckoutForm({
             name="district"
             value={formData.district}
             onChange={handleDistrictChange}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-red-500 cursor-pointer"
+            className="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-1 focus:ring-red-500"
           >
+            <option value="">Chọn quận/huyện</option>
             {districtsList.map((d) => (
               <option key={d.code} value={d.name}>{d.name}</option>
             ))}
@@ -201,7 +220,7 @@ export default function CheckoutForm({
 
         {/* Ward (dropdown) */}
         <div className="space-y-1.5">
-          <label htmlFor="ward" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+          <label htmlFor="ward" className="block text-sm font-bold text-slate-900">
             Phường/Xã
           </label>
           <select
@@ -209,8 +228,9 @@ export default function CheckoutForm({
             name="ward"
             value={formData.ward}
             onChange={onFormChange}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-red-500 cursor-pointer"
+            className="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-1 focus:ring-red-500"
           >
+            <option value="">Chọn phường/xã</option>
             {wardsList.map((w) => (
               <option key={w.code} value={w.name}>{w.name}</option>
             ))}
@@ -219,7 +239,7 @@ export default function CheckoutForm({
 
         {/* Detailed Address */}
         <div className="space-y-1.5">
-          <label htmlFor="address" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+          <label htmlFor="address" className="block text-sm font-bold text-slate-900">
             Địa chỉ
           </label>
           <input
@@ -229,13 +249,13 @@ export default function CheckoutForm({
             value={formData.address}
             onChange={onFormChange}
             placeholder="Số nhà, tên đường"
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs font-bold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-red-500"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-red-500"
           />
         </div>
 
         {/* Note */}
         <div className="space-y-1.5">
-          <label htmlFor="note" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide">
+          <label htmlFor="note" className="block text-sm font-bold text-slate-900">
             Ghi chú 
           </label>
           <textarea
@@ -245,7 +265,7 @@ export default function CheckoutForm({
             value={formData.note}
             onChange={onFormChange}
             placeholder="Ghi chú đơn hàng"
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-xs font-bold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-red-500 resize-none"
+            className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-red-500"
           />
         </div>
       </div>

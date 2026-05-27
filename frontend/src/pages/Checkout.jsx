@@ -13,6 +13,7 @@ import { getStoredUser, isAuthenticated } from "@/lib/auth";
 import { mapCartEntriesToItems, mapGuestCartItems } from "@/lib/cartMappers";
 import {
   clearGuestCart,
+  clearServerCart,
   fetchServerCartEntries,
   getGuestCartItems,
   notifyCartStateChanged,
@@ -20,6 +21,23 @@ import {
 import { showToast } from "@/lib/toast";
 
 const LAST_ORDER_SNAPSHOT_KEY = "last_order_snapshot";
+const PENDING_VNPAY_ORDER_KEY = "pending_vnpay_order";
+
+function normalizeCheckoutAddress(value) {
+  const normalizedValue = String(value || "").trim();
+
+  if (!normalizedValue) {
+    return "";
+  }
+
+  const loweredValue = normalizedValue.toLowerCase();
+
+  if (loweredValue === "chưa cập nhật" || loweredValue === "chua cap nhat") {
+    return "";
+  }
+
+  return normalizedValue;
+}
 
 function buildCheckoutFullName(user, customer) {
   const profileLastName = String(customer?.firstName || user?.lastName || "").trim();
@@ -52,8 +70,8 @@ export default function Checkout() {
     email: user?.email || user?.username || "",
     address: "",
     city: "Hồ Chí Minh",
-    district: "Quận 1",
-    ward: "Phường Bến Nghé",
+    district: "",
+    ward: "",
     note: "",
   });
 
@@ -93,7 +111,7 @@ export default function Checkout() {
             fullName: buildCheckoutFullName(user, customer),
             phone: customer?.phone || user?.phone || current.phone,
             email: customer?.email || user?.email || user?.username || current.email,
-            address: customer?.address || current.address,
+            address: normalizeCheckoutAddress(customer?.address) || current.address,
           }));
         } else {
           setCartEntries([]);
@@ -159,19 +177,7 @@ export default function Checkout() {
   };
 
   const clearCurrentServerCart = async () => {
-    const uniqueCartIds = Array.from(
-      new Set(
-        cartItems
-          .map((item) => Number(item.cartId))
-          .filter((cartId) => cartId > 0)
-      )
-    );
-
-    if (uniqueCartIds.length === 0) {
-      return;
-    }
-
-    await Promise.all(uniqueCartIds.map((cartId) => api.delete(`/carts/${cartId}`)));
+    await clearServerCart(customerId);
     notifyCartStateChanged();
   };
 
@@ -183,6 +189,11 @@ export default function Checkout() {
 
     if (!formData.fullName.trim() || !formData.phone.trim()) {
       showToast({ message: "Vui lòng nhập họ tên và số điện thoại giao hàng.", type: "error" });
+      return;
+    }
+
+    if (!formData.district.trim() || !formData.ward.trim()) {
+      showToast({ message: "Vui lòng chọn quận/huyện và phường/xã giao hàng.", type: "error" });
       return;
     }
 
@@ -225,13 +236,25 @@ export default function Checkout() {
 
     try {
       if (isLoggedIn) {
+        if (selectedMethod === "vnpay") {
+          sessionStorage.setItem(PENDING_VNPAY_ORDER_KEY, JSON.stringify(snapshot));
+          const paymentResponse = await api.post("/vnpay/create-payment-url", {
+            totalPrice: totalPayment,
+          });
+          const paymentUrl = paymentResponse.data?.paymentUrl;
+
+          if (!paymentUrl) {
+            throw new Error("VNPay payment URL was not returned");
+          }
+
+          window.location.assign(paymentUrl);
+          return;
+        }
+
         const response = await api.post("/orders", orderPayload);
         const orderId = response.data?.orderId;
 
-        await clearCurrentServerCart();
-        setCartEntries([]);
-        setGuestCartEntries([]);
-
+        sessionStorage.removeItem(PENDING_VNPAY_ORDER_KEY);
         sessionStorage.setItem(
           LAST_ORDER_SNAPSHOT_KEY,
           JSON.stringify({
@@ -240,8 +263,13 @@ export default function Checkout() {
           })
         );
 
+        await clearCurrentServerCart();
+        setCartEntries([]);
+        setGuestCartEntries([]);
+
         navigate(`/order-confirmation?orderId=${orderId}`);
       } else {
+        sessionStorage.removeItem(PENDING_VNPAY_ORDER_KEY);
         clearGuestCart();
         setGuestCartEntries([]);
 
@@ -280,10 +308,10 @@ export default function Checkout() {
 
         {/* Title Section */}
         <div className="border-b border-slate-200 pb-4">
-          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight my-0">
+          <h1 className="my-0 text-[1.9rem] font-black uppercase tracking-[-0.02em] text-slate-950 md:text-[2.2rem]">
             Thanh Toán
           </h1>
-          <p className="text-xs font-semibold text-slate-400 mt-1.5 leading-relaxed">
+          <p className="mt-2 text-sm font-semibold text-slate-600 leading-relaxed">
             Vui lòng hoàn tất các thông tin bên dưới để xác nhận đơn hàng của bạn.
           </p>
         </div>
@@ -352,6 +380,7 @@ export default function Checkout() {
                   onCouponCodeChange={setCouponCode}
                   onApplyCoupon={handleApplyCoupon}
                   couponApplied={couponApplied}
+                  selectedMethod={selectedMethod}
                 />
               </aside>
             </div>

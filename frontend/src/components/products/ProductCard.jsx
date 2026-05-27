@@ -24,6 +24,12 @@ export function ProductCard({ product }) {
 
   return (
     <div className="bg-white rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-slate-100 flex flex-col relative group hover:shadow-[0_10px_30px_rgba(0,0,0,0.05)] transition-all duration-300">
+      {product.isOnSale ? (
+        <span className="absolute left-3 top-3 z-10 rounded-lg bg-[#e21a36] px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.08em] text-white shadow-sm">
+          Sale
+        </span>
+      ) : null}
+
       {/* Image container */}
       <Link to={productDetailPath} className="aspect-square bg-slate-50 rounded-xl overflow-hidden p-2 flex items-center justify-center mb-4">
         {product.image ? (

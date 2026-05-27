@@ -144,6 +144,7 @@ export const mapProductForListing = (product) => {
     category: slugifyCategory(product.category_name),
     price: salePricing.finalPrice,
     originalPrice: salePricing.finalPrice < salePricing.basePrice ? salePricing.basePrice : null,
+    isOnSale: Boolean(product.sale_id) && salePricing.finalPrice < salePricing.basePrice,
     rating: buildProductRating(product),
     reviewsCount: Number(product.quantity || 0),
     image: resolveAssetUrl(product.images?.[0]?.url),

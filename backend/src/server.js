@@ -1,8 +1,6 @@
-import dotenv from 'dotenv';
+import 'dotenv/config';
 import app from './app.js';
 import db from './config/mysql.js';
-
-dotenv.config();
 
 const PORT = process.env.PORT || 9000;
 
