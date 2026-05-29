@@ -1,5 +1,7 @@
 import voucherModel from '../models/voucherModel.js';
 
+const ALLOWED_DISCOUNT_TYPES = new Set(['PERCENT', 'FIXED']);
+
 const normalizeDateInput = (value) => {
     if (!value) {
         return '';
@@ -15,7 +17,6 @@ const normalizeDateInput = (value) => {
     }
 
     const parsedDate = new Date(value);
-
     if (Number.isNaN(parsedDate.getTime())) {
         return '';
     }
@@ -32,13 +33,100 @@ const parseOptionalInteger = (value, fallback = undefined) => {
     return Number.isNaN(parsed) ? fallback : parsed;
 };
 
-const parseRequiredNumber = (value) => {
+const parseOptionalNumber = (value, fallback = undefined) => {
     if (value === undefined || value === null || value === '') {
-        return null;
+        return fallback;
     }
 
     const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : null;
+    return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const normalizeVoucherPayload = (body = {}, fallbackVoucher = null) => {
+    const voucherCode = String(body.voucherCode ?? body.voucher_code ?? fallbackVoucher?.voucherCode ?? '').trim().toUpperCase();
+    const discountType = String(body.discountType ?? body.discount_type ?? fallbackVoucher?.discountType ?? 'PERCENT').trim().toUpperCase();
+    const discountValue = parseOptionalNumber(body.discountValue ?? body.discount_value, fallbackVoucher?.discountValue);
+    const minOrderValue = parseOptionalNumber(body.minOrderValue ?? body.min_order_value, fallbackVoucher?.minOrderValue ?? 0);
+    const maxDiscountValue = parseOptionalNumber(body.maxDiscountValue ?? body.max_discount_value, fallbackVoucher?.maxDiscountValue ?? null);
+    const startDate = normalizeDateInput(body.startDate ?? body.start_date ?? fallbackVoucher?.startDate);
+    const expiredDate = normalizeDateInput(body.expiredDate ?? body.expired_date ?? fallbackVoucher?.expiredDate);
+    const usageLimit = parseOptionalInteger(body.usageLimit ?? body.usage_limit, fallbackVoucher?.usageLimit ?? 0);
+    const usedCount = parseOptionalInteger(body.usedCount ?? body.used_count, fallbackVoucher?.usedCount ?? 0);
+    const isActive = parseOptionalInteger(body.isActive ?? body.is_active, fallbackVoucher?.isActive ?? 1);
+    const usagePerCustomer = parseOptionalInteger(
+        body.usagePerCustomer ?? body.usage_per_customer,
+        fallbackVoucher?.usagePerCustomer ?? 1
+    );
+
+    return {
+        voucherCode,
+        discountType,
+        discountValue,
+        minOrderValue,
+        maxDiscountValue,
+        startDate,
+        expiredDate,
+        usageLimit,
+        usedCount,
+        isActive,
+        usagePerCustomer,
+    };
+};
+
+const validateVoucherPayload = (payload) => {
+    if (!payload.voucherCode) {
+        return 'Vui lòng nhập mã voucher.';
+    }
+
+    if (!ALLOWED_DISCOUNT_TYPES.has(payload.discountType)) {
+        return 'Loại giảm giá không hợp lệ.';
+    }
+
+    if (payload.discountValue === undefined || payload.discountValue === null || payload.discountValue < 0) {
+        return 'Giá trị giảm không hợp lệ.';
+    }
+
+    if (payload.discountType === 'PERCENT' && payload.discountValue > 100) {
+        return 'Giảm theo phần trăm không được vượt quá 100%.';
+    }
+
+    if (!payload.startDate) {
+        return 'Ngày bắt đầu không hợp lệ.';
+    }
+
+    if (!payload.expiredDate) {
+        return 'Ngày kết thúc không hợp lệ.';
+    }
+
+    if (payload.startDate > payload.expiredDate) {
+        return 'Ngày bắt đầu không được lớn hơn ngày kết thúc.';
+    }
+
+    if (payload.minOrderValue === undefined || payload.minOrderValue < 0) {
+        return 'Giá trị đơn tối thiểu không hợp lệ.';
+    }
+
+    if (payload.maxDiscountValue !== null && payload.maxDiscountValue !== undefined && payload.maxDiscountValue < 0) {
+        return 'Giảm tối đa không hợp lệ.';
+    }
+
+    if (payload.usageLimit === undefined || payload.usageLimit < 0) {
+        return 'Số lượt dùng tối đa không hợp lệ.';
+    }
+
+    if (payload.usedCount === undefined || payload.usedCount < 0) {
+        return 'Số lượt đã dùng không hợp lệ.';
+    }
+
+    if (payload.usedCount > payload.usageLimit) {
+        return 'Số lượt đã dùng không được lớn hơn giới hạn.';
+    }
+
+    if (payload.usagePerCustomer === undefined || payload.usagePerCustomer < 0) {
+        return 'Giới hạn mỗi khách không hợp lệ.';
+    }
+
+    return null;
 };
 
 const voucherController = {
@@ -58,6 +146,7 @@ const voucherController = {
             if (!row) {
                 return res.status(404).json({ message: 'Voucher not found' });
             }
+
             res.json({ success: true, data: row });
         } catch (error) {
             return res.status(500).json({ message: 'Internal Server Error' });
@@ -66,32 +155,22 @@ const voucherController = {
 
     createVoucher: async (req, res, next) => {
         try {
-            const voucherCode = String(req.body.voucherCode ?? req.body.voucher_code ?? '').trim();
-            const voucherValue = parseRequiredNumber(req.body.voucherValue ?? req.body.voucher_value);
-            const expiredDate = normalizeDateInput(req.body.expiredDate ?? req.body.expired_date);
-            const isActive = parseOptionalInteger(req.body.isActive, 1);
-            const usageLimit = parseOptionalInteger(req.body.usageLimit);
-            const useCount = parseOptionalInteger(req.body.useCount, 0);
-            const forSingleUse = parseOptionalInteger(req.body.forSingleUse, 0);
+            const payload = normalizeVoucherPayload(req.body);
+            const validationMessage = validateVoucherPayload(payload);
 
-            if (!voucherCode) {
-                return res.status(400).json({ message: 'Vui long nhap ma voucher.' });
+            if (validationMessage) {
+                return res.status(400).json({ message: validationMessage });
             }
 
-            if (voucherValue === null || voucherValue < 0) {
-                return res.status(400).json({ message: 'Gia tri giam khong hop le.' });
+            const existingVoucher = await voucherModel.getByCode(payload.voucherCode);
+            if (existingVoucher) {
+                return res.status(409).json({ message: 'Mã voucher đã tồn tại.' });
             }
 
-            if (!expiredDate) {
-                return res.status(400).json({ message: 'Ngay het han khong hop le.' });
-            }
+            const voucherId = await voucherModel.create(payload);
+            const createdVoucher = await voucherModel.getById(voucherId);
 
-            if (usageLimit === undefined || usageLimit < 0) {
-                return res.status(400).json({ message: 'So luot dung toi da khong hop le.' });
-            }
-
-            const voucherId = await voucherModel.create(voucherCode, voucherValue, expiredDate, isActive, usageLimit, useCount, forSingleUse);
-            res.status(201).json({ success: true, voucherId });
+            res.status(201).json({ success: true, data: createdVoucher, voucherId });
         } catch (error) {
             next(error);
         }
@@ -100,45 +179,31 @@ const voucherController = {
     updateVoucher: async (req, res, next) => {
         try {
             const { id } = req.params;
-            const voucherCode = String(req.body.voucherCode ?? req.body.voucher_code ?? '').trim();
-            const voucherValue = parseRequiredNumber(req.body.voucherValue ?? req.body.voucher_value);
-            const expiredDate = normalizeDateInput(req.body.expiredDate ?? req.body.expired_date);
-            const isActive = parseOptionalInteger(req.body.isActive, 1);
-            const usageLimit = parseOptionalInteger(req.body.usageLimit);
-            let useCount = parseOptionalInteger(req.body.useCount);
-            const forSingleUse = parseOptionalInteger(req.body.forSingleUse, 0);
+            const existingVoucher = await voucherModel.getById(id);
 
-            if (!voucherCode) {
-                return res.status(400).json({ message: 'Vui long nhap ma voucher.' });
+            if (!existingVoucher) {
+                return res.status(404).json({ message: 'Voucher not found' });
             }
 
-            if (voucherValue === null || voucherValue < 0) {
-                return res.status(400).json({ message: 'Gia tri giam khong hop le.' });
+            const payload = normalizeVoucherPayload(req.body, existingVoucher);
+            const validationMessage = validateVoucherPayload(payload);
+
+            if (validationMessage) {
+                return res.status(400).json({ message: validationMessage });
             }
 
-            if (!expiredDate) {
-                return res.status(400).json({ message: 'Ngay het han khong hop le.' });
+            const duplicatedVoucher = await voucherModel.getByCode(payload.voucherCode);
+            if (duplicatedVoucher && Number(duplicatedVoucher.id) !== Number(id)) {
+                return res.status(409).json({ message: 'Mã voucher đã tồn tại.' });
             }
 
-            if (usageLimit === undefined || usageLimit < 0) {
-                return res.status(400).json({ message: 'So luot dung toi da khong hop le.' });
-            }
-
-            if (useCount === undefined) {
-                const existingVoucher = await voucherModel.getById(id);
-
-                if (!existingVoucher) {
-                    return res.status(404).json({ message: 'Voucher not found' });
-                }
-
-                useCount = existingVoucher.useCount ?? 0;
-            }
-
-            const affectedRows = await voucherModel.update(id, voucherCode, voucherValue, expiredDate, isActive, usageLimit, useCount, forSingleUse);
+            const affectedRows = await voucherModel.update(id, payload);
             if (affectedRows === 0) {
                 return res.status(404).json({ message: 'Voucher not found' });
             }
-            res.json({ success: true });
+
+            const updatedVoucher = await voucherModel.getById(id);
+            res.json({ success: true, data: updatedVoucher });
         } catch (error) {
             next(error);
         }
@@ -151,6 +216,7 @@ const voucherController = {
             if (affectedRows === 0) {
                 return res.status(404).json({ message: 'Voucher not found' });
             }
+
             res.json({ success: true });
         } catch (error) {
             return res.status(500).json({ message: 'Internal Server Error' });

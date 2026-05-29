@@ -1,16 +1,20 @@
+import { ChevronDown, TicketPercent } from "lucide-react";
+
 export default function CheckoutSummary({
   cartItems = [],
   itemsSubtotal,
   shippingCost,
-  vat,
   voucherDiscount,
   totalPayment,
   onOrderSubmit,
   isSubmitting,
-  couponCode,
-  onCouponCodeChange,
-  onApplyCoupon,
-  couponApplied,
+  vouchers = [],
+  selectedVoucherId = "",
+  onSelectVoucher,
+  selectedVoucher = null,
+  isLoadingVouchers = false,
+  orderAmountBeforeDiscount = 0,
+  voucherProgressHint = "",
   selectedMethod = "cod",
 }) {
   return (
@@ -53,11 +57,6 @@ export default function CheckoutSummary({
           </span>
         </div>
 
-        <div className="flex justify-between items-center">
-          <span className="font-bold text-slate-900">Thuế VAT (10%)</span>
-          <span className="text-base font-bold text-slate-950">{vat.toLocaleString("vi-VN")}đ</span>
-        </div>
-
         {voucherDiscount > 0 && (
           <div className="flex justify-between items-center text-red-500">
             <span>Giảm giá</span>
@@ -73,34 +72,57 @@ export default function CheckoutSummary({
         </div>
       </div>
 
-      {/* Promo Coupon Form */}
+      {/* Voucher Selection */}
       <div className="space-y-2 pt-5 border-t border-slate-100">
         <label className="block text-sm font-bold text-slate-900">
-          Mã giảm giá
+          Voucher giảm giá
         </label>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={couponCode}
-            onChange={(e) => onCouponCodeChange(e.target.value)}
-            disabled={couponApplied}
-            placeholder="EXOCORE2024"
-            className="flex-1 bg-slate-50 border border-slate-150 rounded-xl py-3 px-4 text-sm font-bold text-slate-800 uppercase focus:outline-none focus:ring-1 focus:ring-red-500 disabled:opacity-60"
-          />
-          <button
-            type="button"
-            onClick={onApplyCoupon}
-            disabled={couponApplied || !couponCode.trim()}
-            className="bg-red-600 hover:bg-red-700 text-white rounded-xl px-4 py-3 text-sm font-bold transition-colors disabled:opacity-55 cursor-pointer"
-          >
-            {couponApplied ? "Đã dùng" : "Áp dụng"}
-          </button>
-        </div>
-        {couponApplied && (
-          <p className="text-xs font-bold text-red-600">
-            ✓ Đã áp dụng mã giảm giá 10%!
-          </p>
+        {isLoadingVouchers ? (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500">
+            Đang tải danh sách voucher...
+          </div>
+        ) : vouchers.length > 0 ? (
+          <>
+            <div className="rounded-2xl border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-2 shadow-sm transition focus-within:border-red-300 focus-within:shadow-[0_10px_30px_rgba(239,68,68,0.08)]">
+              <div className="relative">
+                <div className="pointer-events-none absolute left-4 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-xl bg-red-50 text-red-600">
+                  <TicketPercent className="size-4.5" />
+                </div>
+                <select
+                  value={selectedVoucherId}
+                  onChange={(event) => onSelectVoucher?.(event.target.value)}
+                  className="h-16 w-full appearance-none rounded-xl border-0 bg-transparent pl-16 pr-14 text-sm font-semibold text-slate-800 outline-none"
+                >
+                  <option value="">Không áp dụng voucher</option>
+                  {vouchers.map((voucher) => (
+                    <option key={voucher.id} value={voucher.id} disabled={!voucher.isEligible}>
+                      {voucher.summaryLabel}
+                      {!voucher.isEligible ? " - Chưa đủ điều kiện" : ""}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute right-4 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                  <ChevronDown className="size-4" />
+                </div>
+              </div>
+              <div className="px-3 pb-2 pt-1 text-[11px] font-medium text-slate-500">
+                Chọn voucher phù hợp theo tổng đơn hàng hiện tại.
+              </div>
+            </div>
+            {selectedVoucher ? (
+              <p className="text-xs font-bold text-red-600">
+                ✓ Đã chọn voucher {selectedVoucher.voucherCode}.
+              </p>
+            ) : null}
+          </>
+        ) : (
+          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500">
+            Chưa có voucher phù hợp cho đơn hàng {orderAmountBeforeDiscount.toLocaleString("vi-VN")}đ.
+          </div>
         )}
+        {voucherProgressHint ? (
+          <p className="text-xs font-medium text-amber-600">{voucherProgressHint}</p>
+        ) : null}
       </div>
 
       {/* Button & Terms */}

@@ -296,8 +296,7 @@ function Cart() {
   }, [cartItems, selectedIds]);
 
   const subtotal = rawSubtotal;
-  const vat = Math.round(subtotal * 0.1);
-  const total = subtotal + vat;
+  const total = subtotal;
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
@@ -457,7 +456,6 @@ function Cart() {
             <div className="lg:col-span-4 shrink-0">
               <CartSummary
                 subtotal={subtotal}
-                vat={vat}
                 total={total}
               />
             </div>

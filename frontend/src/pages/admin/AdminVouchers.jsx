@@ -1,9 +1,13 @@
-import { Pencil, Plus, Search, Tag, Trash2, X, BadgePercent } from "lucide-react";
+import { BadgePercent, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { AdminSidebar } from "@/components/admin/layout/AdminSidebar";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+
+function formatVnd(value) {
+  return `${Number(value || 0).toLocaleString("vi-VN")}đ`;
+}
 
 function VoucherModal({
   open,
@@ -61,40 +65,27 @@ function VoucherModal({
                 <label className="mb-2 block text-sm font-semibold text-slate-700">Giá trị giảm</label>
                 <input
                   type="number"
-                  value={formData.voucherValue}
-                  onChange={(e) => onChange("voucherValue", e.target.value)}
+                  value={formData.discountValue}
+                  onChange={(e) => onChange("discountValue", e.target.value)}
                   disabled={isSubmitting}
                   className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
                   placeholder="Ví dụ: 50000"
                   required
                 />
               </div>
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">Ngày hết hạn</label>
-                <input
-                  type="date"
-                  value={formData.expiredDate ? formData.expiredDate.split("T")[0] : ""}
-                  onChange={(e) => onChange("expiredDate", e.target.value)}
-                  disabled={isSubmitting}
-                  className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
-                  required
-                />
-              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">Số lượt dùng tối đa</label>
-                  <input
-                    type="number"
-                    value={formData.usageLimit}
-                    onChange={(e) => onChange("usageLimit", e.target.value)}
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Loại giảm giá</label>
+                  <select
+                    value={formData.discountType}
+                    onChange={(e) => onChange("discountType", e.target.value)}
                     disabled={isSubmitting}
                     className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
-                    placeholder="Ví dụ: 100 lượt"
-                    required
-                  />
+                  >
+                    <option value="PERCENT">Theo phần trăm</option>
+                    <option value="FIXED">Giảm số tiền cố định</option>
+                  </select>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-700">Trạng thái</label>
                   <select
@@ -107,17 +98,91 @@ function VoucherModal({
                     <option value={0}>Ẩn</option>
                   </select>
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">Sử dụng 1 lần</label>
-                  <select
-                    value={formData.forSingleUse}
-                    onChange={(e) => onChange("forSingleUse", e.target.value)}
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Đơn tối thiểu</label>
+                  <input
+                    type="number"
+                    value={formData.minOrderValue}
+                    onChange={(e) => onChange("minOrderValue", e.target.value)}
                     disabled={isSubmitting}
                     className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
-                  >
-                    <option value={1}>Có</option>
-                    <option value={0}>Không</option>
-                  </select>
+                    placeholder="Ví dụ: 5000000"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Giảm tối đa</label>
+                  <input
+                    type="number"
+                    value={formData.maxDiscountValue}
+                    onChange={(e) => onChange("maxDiscountValue", e.target.value)}
+                    disabled={isSubmitting}
+                    className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                    placeholder="Để trống nếu không giới hạn"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Ngày bắt đầu</label>
+                  <input
+                    type="date"
+                    value={formData.startDate ? formData.startDate.split("T")[0] : ""}
+                    onChange={(e) => onChange("startDate", e.target.value)}
+                    disabled={isSubmitting}
+                    className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Ngày kết thúc</label>
+                  <input
+                    type="date"
+                    value={formData.expiredDate ? formData.expiredDate.split("T")[0] : ""}
+                    onChange={(e) => onChange("expiredDate", e.target.value)}
+                    disabled={isSubmitting}
+                    className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">Số lượt dùng tối đa</label>
+                <input
+                  type="number"
+                  value={formData.usageLimit}
+                  onChange={(e) => onChange("usageLimit", e.target.value)}
+                  disabled={isSubmitting}
+                  className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                  placeholder="Ví dụ: 100"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Đã dùng</label>
+                  <input
+                    type="number"
+                    value={formData.usedCount}
+                    onChange={(e) => onChange("usedCount", e.target.value)}
+                    disabled={isSubmitting}
+                    className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                    placeholder="Ví dụ: 0"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">Mỗi khách dùng tối đa</label>
+                  <input
+                    type="number"
+                    value={formData.usagePerCustomer}
+                    onChange={(e) => onChange("usagePerCustomer", e.target.value)}
+                    disabled={isSubmitting}
+                    className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                    placeholder="Ví dụ: 1"
+                    required
+                  />
                 </div>
               </div>
             </div>
@@ -163,11 +228,16 @@ function AdminVouchers() {
 
   const initialFormData = {
     voucherCode: "",
-    voucherValue: "",
+    discountType: "PERCENT",
+    discountValue: "",
+    minOrderValue: "",
+    maxDiscountValue: "",
+    startDate: "",
     expiredDate: "",
     isActive: 1,
     usageLimit: "",
-    forSingleUse: 0,
+    usedCount: 0,
+    usagePerCustomer: 1,
   };
   const [formData, setFormData] = useState(initialFormData);
 
@@ -191,7 +261,7 @@ function AdminVouchers() {
   const filteredVouchers = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
     if (!normalizedSearch) return vouchers;
-    return vouchers.filter((voucher) => String(voucher.voucher_code ?? "").toLowerCase().includes(normalizedSearch));
+    return vouchers.filter((voucher) => String(voucher.voucherCode ?? voucher.voucher_code ?? "").toLowerCase().includes(normalizedSearch));
   }, [vouchers, searchTerm]);
 
   const handleFormChange = (field, value) => {
@@ -217,12 +287,17 @@ function AdminVouchers() {
     setModalMode("edit");
     setSelectedVoucher(voucher);
     setFormData({
-      voucherCode: voucher.voucher_code ?? "",
-      voucherValue: voucher.voucher_value ?? "",
-      expiredDate: voucher.expired_date ?? "",
-      isActive: voucher.isActive ?? 1,
-      usageLimit: voucher.usageLimit ?? "",
-      forSingleUse: voucher.ForSingleUse ?? voucher.forSingleUse ?? 0,
+      voucherCode: voucher.voucherCode ?? voucher.voucher_code ?? "",
+      discountType: voucher.discountType ?? voucher.discount_type ?? "PERCENT",
+      discountValue: voucher.discountValue ?? voucher.discount_value ?? "",
+      minOrderValue: voucher.minOrderValue ?? voucher.min_order_value ?? 0,
+      maxDiscountValue: voucher.maxDiscountValue ?? voucher.max_discount_value ?? "",
+      startDate: voucher.startDate ?? voucher.start_date ?? "",
+      expiredDate: voucher.expiredDate ?? voucher.expired_date ?? "",
+      isActive: voucher.isActive ?? voucher.is_active ?? 1,
+      usageLimit: voucher.usageLimit ?? voucher.usage_limit ?? "",
+      usedCount: voucher.usedCount ?? voucher.used_count ?? 0,
+      usagePerCustomer: voucher.usagePerCustomer ?? voucher.usage_per_customer ?? 1,
     });
     setModalError("");
   };
@@ -230,7 +305,7 @@ function AdminVouchers() {
   const openDeleteModal = (voucher) => {
     setModalMode("delete");
     setSelectedVoucher(voucher);
-    setFormData({ voucherCode: voucher.voucher_code });
+    setFormData({ voucherCode: voucher.voucherCode ?? voucher.voucher_code });
     setModalError("");
   };
 
@@ -247,11 +322,16 @@ function AdminVouchers() {
     try {
       const payload = {
         voucherCode: formData.voucherCode,
-        voucherValue: Number(formData.voucherValue),
+        discountType: formData.discountType,
+        discountValue: Number(formData.discountValue),
+        minOrderValue: Number(formData.minOrderValue),
+        maxDiscountValue: formData.maxDiscountValue === "" ? null : Number(formData.maxDiscountValue),
+        startDate: formData.startDate,
         expiredDate: formData.expiredDate,
         isActive: Number(formData.isActive),
         usageLimit: Number(formData.usageLimit),
-        forSingleUse: Number(formData.forSingleUse),
+        usedCount: Number(formData.usedCount),
+        usagePerCustomer: Number(formData.usagePerCustomer),
       };
 
       if (modalMode === "create") {
@@ -314,13 +394,13 @@ function AdminVouchers() {
               <div className="rounded-2xl border border-[#d7e0ec] bg-white px-6 py-6 shadow-sm">
                 <p className="text-[0.85rem] text-slate-500">Đang hoạt động</p>
                 <p className="mt-2 text-2xl font-bold leading-none text-slate-950">
-                  {vouchers.filter((v) => v.isActive === 1).length}
+                  {vouchers.filter((v) => Number(v.isActive) === 1).length}
                 </p>
               </div>
               <div className="rounded-2xl border border-[#d7e0ec] bg-white px-6 py-6 shadow-sm">
                 <p className="text-[0.85rem] text-slate-500">Đã hết hạn / Ẩn</p>
                 <p className="mt-2 text-2xl font-bold leading-none text-slate-950">
-                  {vouchers.filter((v) => v.isActive !== 1).length}
+                  {vouchers.filter((v) => Number(v.isActive) !== 1).length}
                 </p>
               </div>
             </div>
@@ -333,6 +413,7 @@ function AdminVouchers() {
                       <th className="px-6 py-4">Mã Voucher</th>
                       <th className="px-6 py-4">Giá trị</th>
                       <th className="px-6 py-4">Đã dùng / Giới hạn</th>
+                      <th className="px-6 py-4">Đơn tối thiểu</th>
                       <th className="px-6 py-4">Ngày hết hạn</th>
                       <th className="px-6 py-4">Trạng thái</th>
                       <th className="px-6 py-4 text-right">Hành động</th>
@@ -341,13 +422,13 @@ function AdminVouchers() {
                   <tbody className="divide-y divide-slate-100 bg-white">
                     {isLoading ? (
                       <tr>
-                        <td colSpan={6} className="px-6 py-8 text-center text-sm font-medium text-slate-500">
+                        <td colSpan={7} className="px-6 py-8 text-center text-sm font-medium text-slate-500">
                           Đang tải dữ liệu...
                         </td>
                       </tr>
                     ) : filteredVouchers.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-6 py-8 text-center text-sm font-medium text-slate-500">
+                        <td colSpan={7} className="px-6 py-8 text-center text-sm font-medium text-slate-500">
                           Chưa có dữ liệu voucher trong database.
                         </td>
                       </tr>
@@ -359,20 +440,25 @@ function AdminVouchers() {
                               <div className="flex size-10 items-center justify-center rounded-xl bg-[#eef3f9] text-slate-500">
                                 <BadgePercent className="size-4" />
                               </div>
-                              <div className="text-[0.9rem] font-semibold text-slate-950">{voucher.voucher_code}</div>
+                              <div className="text-[0.9rem] font-semibold text-slate-950">{voucher.voucherCode}</div>
                             </div>
                           </td>
                           <td className="px-6 py-4 font-medium text-slate-900">
-                            {Number(voucher.voucher_value).toLocaleString('vi-VN')}đ
+                            {voucher.discountType === "PERCENT"
+                              ? `${Number(voucher.discountValue).toLocaleString("vi-VN")}%`
+                              : formatVnd(voucher.discountValue)}
                           </td>
                           <td className="px-6 py-4">
-                            {voucher.useCount} / {voucher.usageLimit}
+                            {voucher.usedCount} / {voucher.usageLimit}
                           </td>
                           <td className="px-6 py-4 text-slate-500">
-                            {voucher.expired_date ? new Date(voucher.expired_date).toLocaleDateString('vi-VN') : ""}
+                            {formatVnd(voucher.minOrderValue)}
+                          </td>
+                          <td className="px-6 py-4 text-slate-500">
+                            {voucher.expiredDate ? new Date(voucher.expiredDate).toLocaleDateString('vi-VN') : ""}
                           </td>
                           <td className="px-6 py-4">
-                            {voucher.isActive === 1 ? (
+                            {Number(voucher.isActive) === 1 ? (
                               <span className="inline-flex rounded-full bg-[#dffbe8] px-3 py-1 text-[0.75rem] font-semibold text-[#13a34b]">
                                 Hoạt động
                               </span>

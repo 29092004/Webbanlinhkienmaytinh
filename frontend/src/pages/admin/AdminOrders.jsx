@@ -22,6 +22,10 @@ function buildOrderPayload(order, overrides = {}) {
     accountId: Number(overrides.accountId ?? order.account_id ?? order.accountId),
     voucherId: overrides.voucherId ?? order.voucher_id ?? order.voucherId ?? null,
     totalPrice: Number(overrides.totalPrice ?? order.total_price ?? order.totalPrice ?? 0),
+    discountAmount: Number(overrides.discountAmount ?? order.discount_amount ?? order.discountAmount ?? 0),
+    finalPrice: Number(
+      overrides.finalPrice ?? order.final_price ?? order.finalPrice ?? order.total_price ?? order.totalPrice ?? 0
+    ),
     details: Array.isArray(overrides.details ?? order.details) ? (overrides.details ?? order.details) : [],
     productId: Number(overrides.productId ?? order.product_id ?? order.productId ?? 0),
     quantity: Number(overrides.quantity ?? order.quantity ?? 1),
