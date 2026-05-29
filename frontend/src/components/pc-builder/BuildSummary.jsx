@@ -14,9 +14,6 @@ export default function BuildSummary({ total }) {
         <p className="mt-2 text-3xl font-black leading-none text-blue-700">
           {formatCurrency(total)}
         </p>
-        <p className="mt-2 text-sm font-medium text-slate-500">
-          Đã bao gồm VAT
-        </p>
       </div>
 
       <div className="mt-6 space-y-5 text-sm font-medium text-slate-700">

@@ -128,7 +128,9 @@ const ProductModel = {
                 c.name AS category_name,
                 se.sale_type,
                 se.sale_value,
-                se.sale_duration
+                se.start_date,
+                se.end_date,
+                se.is_active AS sale_is_active
             FROM ${table_name} p
             LEFT JOIN brand b ON b.brand_id = p.brand_id
             LEFT JOIN category c ON c.id = p.category_id
@@ -145,7 +147,9 @@ const ProductModel = {
                 c.name AS category_name,
                 se.sale_type,
                 se.sale_value,
-                se.sale_duration
+                se.start_date,
+                se.end_date,
+                se.is_active AS sale_is_active
             FROM ${table_name} p
             LEFT JOIN brand b ON b.brand_id = p.brand_id
             LEFT JOIN category c ON c.id = p.category_id

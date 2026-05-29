@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 
 export function CartSummary({
   subtotal,
-  vat,
   total,
 }) {
   return (
@@ -20,10 +19,6 @@ export function CartSummary({
         <div className="flex items-center justify-between">
           <span className="text-slate-900">Phí vận chuyển</span>
           <span className="text-slate-900 font-bold">Miễn phí</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-slate-900">Thuế VAT (10%)</span>
-          <span className="text-slate-800">{vat.toLocaleString("vi-VN")}đ</span>
         </div>
       </div>
 

@@ -1,6 +1,46 @@
 import db from '../config/mysql.js';
 
-const table_name = '`order`';
+const tableName = '`order`';
+
+const orderSelect = `
+    SELECT
+        o.*,
+        o.created_at AS createdAt,
+        o.payment_method AS paymentMethod,
+        o.account_id AS accountId,
+        o.voucher_id AS voucherId,
+        o.total_price AS totalPrice,
+        o.discount_amount AS discountAmount,
+        o.final_price AS finalPrice,
+        a.username AS account_username,
+        a.role AS account_role,
+        v.voucher_code,
+        v.voucher_code AS voucherCode,
+        v.discount_type AS voucherDiscountType,
+        v.discount_value AS voucherDiscountValue,
+        c.customer_id,
+        c.first_name AS customer_first_name,
+        c.last_name AS customer_last_name,
+        c.email AS customer_email,
+        c.phone AS customer_phone,
+        c.address AS profile_customer_address,
+        ls.shipping_address,
+        ls.shipping_address AS shippingAddress,
+        COALESCE(ls.shipping_address, c.address) AS customer_address
+    FROM ${tableName} o
+    LEFT JOIN account a ON a.id = o.account_id
+    LEFT JOIN voucher v ON v.id = o.voucher_id
+    LEFT JOIN customer c ON c.customer_id = o.account_id
+    LEFT JOIN (
+        SELECT s1.order_id, s1.shipping_address, s1.delivery_method, s1.status
+        FROM shipping s1
+        INNER JOIN (
+            SELECT order_id, MAX(id) AS latest_shipping_id
+            FROM shipping
+            GROUP BY order_id
+        ) latest_shipping ON latest_shipping.latest_shipping_id = s1.id
+    ) ls ON ls.order_id = o.id
+`;
 
 const attachOrderDetails = async (orders) => {
     if (orders.length === 0) {
@@ -11,7 +51,11 @@ const attachOrderDetails = async (orders) => {
     const [detailRows] = await db.query(`
         SELECT
             od.*,
-            p.name AS product_name
+            od.product_id AS productId,
+            od.order_id AS orderId,
+            od.subtotal_price AS subtotalPrice,
+            p.name AS product_name,
+            p.name AS productName
         FROM order_detail od
         LEFT JOIN product p ON p.id = od.product_id
         WHERE od.order_id IN (?)
@@ -23,20 +67,27 @@ const attachOrderDetails = async (orders) => {
         if (!detailsByOrderId.has(detail.order_id)) {
             detailsByOrderId.set(detail.order_id, []);
         }
+
         detailsByOrderId.get(detail.order_id).push(detail);
     }
 
-    return orders.map((order) => ({
-        ...order,
-        voucherId: order.voucher_id ?? null,
-        totalPrice: order.total_price ?? null,
-        details: detailsByOrderId.get(order.id) ?? [],
-        product_id: detailsByOrderId.get(order.id)?.[0]?.product_id ?? null,
-        product_name: detailsByOrderId.get(order.id)?.[0]?.product_name ?? null,
-        quantity: detailsByOrderId.get(order.id)?.[0]?.quantity ?? null,
-        subtotal_price: detailsByOrderId.get(order.id)?.[0]?.subtotal_price ?? null,
-        note: detailsByOrderId.get(order.id)?.[0]?.note ?? null,
-    }));
+    return orders.map((order) => {
+        const details = detailsByOrderId.get(order.id) ?? [];
+        const firstDetail = details[0] ?? null;
+
+        return {
+            ...order,
+            details,
+            product_id: firstDetail?.product_id ?? null,
+            productId: firstDetail?.product_id ?? null,
+            product_name: firstDetail?.product_name ?? null,
+            productName: firstDetail?.product_name ?? null,
+            quantity: firstDetail?.quantity ?? null,
+            subtotal_price: firstDetail?.subtotal_price ?? null,
+            subtotalPrice: firstDetail?.subtotal_price ?? null,
+            note: firstDetail?.note ?? null,
+        };
+    });
 };
 
 const insertOrderDetails = async (connection, orderId, details = []) => {
@@ -61,73 +112,17 @@ const replaceOrderDetails = async (connection, orderId, details = []) => {
 
 const OrderModel = {
     getAll: async () => {
-        const [rows] = await db.query(`
-            SELECT
-                o.*,
-                a.username AS account_username,
-                a.role AS account_role,
-                v.voucher_code,
-                v.voucher_value,
-                c.customer_id,
-                c.first_name AS customer_first_name,
-                c.last_name AS customer_last_name,
-                c.email AS customer_email,
-                c.phone AS customer_phone,
-                c.address AS customer_address
-            FROM ${table_name} o
-            LEFT JOIN account a ON a.id = o.account_id
-            LEFT JOIN voucher v ON v.id = o.voucher_id
-            LEFT JOIN customer c ON c.customer_id = o.account_id
-        `);
-
+        const [rows] = await db.query(`${orderSelect} ORDER BY o.created_at DESC, o.id DESC`);
         return attachOrderDetails(rows);
     },
 
     getByAccountId: async (accountId) => {
-        const [rows] = await db.query(`
-            SELECT
-                o.*,
-                a.username AS account_username,
-                a.role AS account_role,
-                v.voucher_code,
-                v.voucher_value,
-                c.customer_id,
-                c.first_name AS customer_first_name,
-                c.last_name AS customer_last_name,
-                c.email AS customer_email,
-                c.phone AS customer_phone,
-                c.address AS customer_address
-            FROM ${table_name} o
-            LEFT JOIN account a ON a.id = o.account_id
-            LEFT JOIN voucher v ON v.id = o.voucher_id
-            LEFT JOIN customer c ON c.customer_id = o.account_id
-            WHERE o.account_id = ?
-        `, [accountId]);
-
+        const [rows] = await db.query(`${orderSelect} WHERE o.account_id = ? ORDER BY o.created_at DESC, o.id DESC`, [accountId]);
         return attachOrderDetails(rows);
     },
 
     getById: async (id) => {
-        const [rows] = await db.query(
-            `SELECT
-                o.*,
-                a.username AS account_username,
-                a.role AS account_role,
-                v.voucher_code,
-                v.voucher_value,
-                c.customer_id,
-                c.first_name AS customer_first_name,
-                c.last_name AS customer_last_name,
-                c.email AS customer_email,
-                c.phone AS customer_phone,
-                c.address AS customer_address
-            FROM ${table_name} o
-            LEFT JOIN account a ON a.id = o.account_id
-            LEFT JOIN voucher v ON v.id = o.voucher_id
-            LEFT JOIN customer c ON c.customer_id = o.account_id
-            WHERE o.id = ?`,
-            [id]
-        );
+        const [rows] = await db.query(`${orderSelect} WHERE o.id = ?`, [id]);
 
         if (rows.length === 0) {
             return null;
@@ -137,15 +132,36 @@ const OrderModel = {
         return order;
     },
 
-    create: async (createdAt, paymentMethod, status, accountId, voucherId, totalPrice, details = []) => {
+    create: async ({
+        createdAt,
+        paymentMethod,
+        status,
+        accountId,
+        voucherId,
+        totalPrice,
+        discountAmount,
+        finalPrice,
+        details = [],
+    }) => {
         const connection = await db.getConnection();
 
         try {
             await connection.beginTransaction();
 
             const [result] = await connection.query(
-                `INSERT INTO ${table_name} (created_at, payment_method, status, account_id, voucher_id, total_price) VALUES (?, ?, ?, ?, ?, ?)`,
-                [createdAt, paymentMethod, status, accountId, voucherId ?? null, totalPrice]
+                `INSERT INTO ${tableName}
+                (created_at, payment_method, status, account_id, voucher_id, total_price, discount_amount, final_price)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    createdAt,
+                    paymentMethod,
+                    status,
+                    accountId,
+                    voucherId ?? null,
+                    totalPrice,
+                    discountAmount,
+                    finalPrice,
+                ]
             );
 
             await insertOrderDetails(connection, result.insertId, details);
@@ -160,15 +176,45 @@ const OrderModel = {
         }
     },
 
-    update: async (id, createdAt, paymentMethod, status, accountId, voucherId, totalPrice, details = []) => {
+    update: async (id, {
+        createdAt,
+        paymentMethod,
+        status,
+        accountId,
+        voucherId,
+        totalPrice,
+        discountAmount,
+        finalPrice,
+        details = [],
+    }) => {
         const connection = await db.getConnection();
 
         try {
             await connection.beginTransaction();
 
             const [result] = await connection.query(
-                `UPDATE ${table_name} SET created_at = ?, payment_method = ?, status = ?, account_id = ?, voucher_id = ?, total_price = ? WHERE id = ?`,
-                [createdAt, paymentMethod, status, accountId, voucherId ?? null, totalPrice, id]
+                `UPDATE ${tableName}
+                SET
+                    created_at = ?,
+                    payment_method = ?,
+                    status = ?,
+                    account_id = ?,
+                    voucher_id = ?,
+                    total_price = ?,
+                    discount_amount = ?,
+                    final_price = ?
+                WHERE id = ?`,
+                [
+                    createdAt,
+                    paymentMethod,
+                    status,
+                    accountId,
+                    voucherId ?? null,
+                    totalPrice,
+                    discountAmount,
+                    finalPrice,
+                    id,
+                ]
             );
 
             if (result.affectedRows === 0) {
@@ -189,19 +235,12 @@ const OrderModel = {
     },
 
     delete: async (id) => {
-        const [result] = await db.query(
-            `DELETE FROM ${table_name} WHERE id = ?`,
-            [id]
-        );
+        const [result] = await db.query(`DELETE FROM ${tableName} WHERE id = ?`, [id]);
         return result.affectedRows;
     },
 
     updateStatus: async (id, status) => {
-        const [result] = await db.query(
-            `UPDATE ${table_name} SET status = ? WHERE id = ?`,
-            [status, id]
-        );
-
+        const [result] = await db.query(`UPDATE ${tableName} SET status = ? WHERE id = ?`, [status, id]);
         return result.affectedRows;
     },
 };

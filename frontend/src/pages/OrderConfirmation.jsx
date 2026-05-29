@@ -78,6 +78,20 @@ export default function OrderConfirmation() {
             accountId: parsedPendingVnpayOrder.accountId ?? parsedPendingVnpayOrder.account_id,
             voucherId: parsedPendingVnpayOrder.voucherId ?? parsedPendingVnpayOrder.voucher_id ?? null,
             totalPrice: parsedPendingVnpayOrder.totalPrice ?? parsedPendingVnpayOrder.total_price,
+            discountAmount: parsedPendingVnpayOrder.discountAmount ?? parsedPendingVnpayOrder.discount_amount ?? 0,
+            finalPrice:
+              parsedPendingVnpayOrder.finalPrice ??
+              parsedPendingVnpayOrder.final_price ??
+              parsedPendingVnpayOrder.totalPrice ??
+              parsedPendingVnpayOrder.total_price,
+            customerAddress:
+              parsedPendingVnpayOrder.customerAddress ??
+              parsedPendingVnpayOrder.customer_address ??
+              "",
+            deliveryMethod:
+              parsedPendingVnpayOrder.deliveryMethod ??
+              parsedPendingVnpayOrder.delivery_method ??
+              "Standard",
             details: (parsedPendingVnpayOrder.details || []).map((detail) => ({
               productId: detail.productId ?? detail.product_id,
               quantity: detail.quantity,
@@ -105,6 +119,12 @@ export default function OrderConfirmation() {
               created_at: parsedPendingVnpayOrder.createdAt ?? parsedPendingVnpayOrder.created_at,
               payment_method: parsedPendingVnpayOrder.paymentMethod ?? parsedPendingVnpayOrder.payment_method,
               total_price: parsedPendingVnpayOrder.totalPrice ?? parsedPendingVnpayOrder.total_price,
+              discount_amount: parsedPendingVnpayOrder.discountAmount ?? parsedPendingVnpayOrder.discount_amount ?? 0,
+              final_price:
+                parsedPendingVnpayOrder.finalPrice ??
+                parsedPendingVnpayOrder.final_price ??
+                parsedPendingVnpayOrder.totalPrice ??
+                parsedPendingVnpayOrder.total_price,
             })
           );
 
@@ -246,6 +266,8 @@ export default function OrderConfirmation() {
                 items={orderView.items}
                 subtotal={orderView.subtotal}
                 shippingCost={orderView.shippingCost}
+                voucherCode={orderView.voucherCode}
+                discount={orderView.discount}
                 total={orderView.total}
               />
             </div>

@@ -24,13 +24,17 @@ const syncOrderStatusWithShipping = async (orderId, shippingStatus) => {
 
     await orderModel.update(
         orderId,
-        order.created_at,
-        order.payment_method,
-        nextOrderStatus,
-        order.account_id,
-        order.voucher_id ?? null,
-        order.total_price,
-        order.details ?? []
+        {
+            createdAt: order.createdAt ?? order.created_at,
+            paymentMethod: order.paymentMethod ?? order.payment_method,
+            status: nextOrderStatus,
+            accountId: order.accountId ?? order.account_id,
+            voucherId: order.voucherId ?? order.voucher_id ?? null,
+            totalPrice: order.totalPrice ?? order.total_price,
+            discountAmount: order.discountAmount ?? order.discount_amount ?? 0,
+            finalPrice: order.finalPrice ?? order.final_price ?? order.totalPrice ?? order.total_price,
+            details: order.details ?? [],
+        }
     );
 };
 

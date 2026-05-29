@@ -22,6 +22,97 @@ import { showToast } from "@/lib/toast";
 
 const LAST_ORDER_SNAPSHOT_KEY = "last_order_snapshot";
 const PENDING_VNPAY_ORDER_KEY = "pending_vnpay_order";
+const VOUCHER_DATE_FORMATTER = new Intl.DateTimeFormat("vi-VN", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
+
+function normalizeVoucherRecord(voucher) {
+  return {
+    id: voucher.id,
+    voucherCode: voucher.voucherCode ?? voucher.voucher_code ?? "",
+    discountType: String(voucher.discountType ?? voucher.discount_type ?? "").trim().toUpperCase(),
+    discountValue: Number(voucher.discountValue ?? voucher.discount_value ?? 0),
+    minOrderValue: Number(voucher.minOrderValue ?? voucher.min_order_value ?? 0),
+    maxDiscountValue:
+      voucher.maxDiscountValue === null || voucher.maxDiscountValue === undefined
+        ? (voucher.max_discount_value === null || voucher.max_discount_value === undefined
+            ? null
+            : Number(voucher.max_discount_value))
+        : Number(voucher.maxDiscountValue),
+    startDate: voucher.startDate ?? voucher.start_date ?? "",
+    expiredDate: voucher.expiredDate ?? voucher.expired_date ?? "",
+    usageLimit: Number(voucher.usageLimit ?? voucher.usage_limit ?? 0),
+    usedCount: Number(voucher.usedCount ?? voucher.used_count ?? 0),
+    usagePerCustomer: Number(voucher.usagePerCustomer ?? voucher.usage_per_customer ?? 0),
+    isActive: Number(voucher.isActive ?? voucher.is_active ?? 0),
+  };
+}
+
+function isVoucherActive(voucher, referenceDate = new Date()) {
+  const start = voucher.startDate ? new Date(voucher.startDate) : null;
+  const end = voucher.expiredDate ? new Date(voucher.expiredDate) : null;
+  const hasRemainingUsage = voucher.usageLimit <= 0 || voucher.usedCount < voucher.usageLimit;
+
+  return (
+    voucher.isActive === 1 &&
+    hasRemainingUsage &&
+    (!start || start <= referenceDate) &&
+    (!end || end >= referenceDate)
+  );
+}
+
+function calculateVoucherDiscount(voucher, orderAmount) {
+  if (!voucher || orderAmount <= 0) {
+    return 0;
+  }
+
+  const rawDiscount =
+    voucher.discountType === "PERCENT"
+      ? Math.round((orderAmount * Number(voucher.discountValue || 0)) / 100)
+      : Math.round(Number(voucher.discountValue || 0));
+
+  const cappedDiscount =
+    voucher.maxDiscountValue === null || voucher.maxDiscountValue === undefined
+      ? rawDiscount
+      : Math.min(rawDiscount, Number(voucher.maxDiscountValue || 0));
+
+  return Math.max(0, Math.min(orderAmount, cappedDiscount));
+}
+
+function formatVoucherSummary(voucher) {
+  const valueLabel =
+    voucher.discountType === "PERCENT"
+      ? `${Number(voucher.discountValue).toLocaleString("vi-VN")}%`
+      : `${Number(voucher.discountValue).toLocaleString("vi-VN")}đ`;
+
+  return `${voucher.voucherCode} - Giảm ${valueLabel} - Đơn từ ${Number(voucher.minOrderValue).toLocaleString(
+    "vi-VN"
+  )}đ - HSD ${voucher.expiredDate ? VOUCHER_DATE_FORMATTER.format(new Date(voucher.expiredDate)) : "không giới hạn"}`;
+}
+
+function isVoucherEligible(voucher, orderAmount) {
+  return orderAmount >= Number(voucher.minOrderValue || 0);
+}
+
+function buildVoucherProgressHint(vouchers, orderAmount) {
+  const now = new Date();
+  const upcomingVoucher = [...vouchers]
+    .filter((voucher) => isVoucherActive(voucher, now) && voucher.minOrderValue > orderAmount)
+    .sort((left, right) => left.minOrderValue - right.minOrderValue)[0];
+
+  if (!upcomingVoucher) {
+    return "";
+  }
+
+  const missingAmount = Math.max(0, upcomingVoucher.minOrderValue - orderAmount);
+  if (missingAmount <= 0) {
+    return "";
+  }
+
+  return `Mua thêm ${missingAmount.toLocaleString("vi-VN")}đ để dùng mã ${upcomingVoucher.voucherCode}.`;
+}
 
 function normalizeCheckoutAddress(value) {
   const normalizedValue = String(value || "").trim();
@@ -60,8 +151,9 @@ export default function Checkout() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedMethod, setSelectedMethod] = useState("cod"); // Default COD
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [couponCode, setCouponCode] = useState("");
-  const [couponApplied, setCouponApplied] = useState(false);
+  const [vouchers, setVouchers] = useState([]);
+  const [isLoadingVouchers, setIsLoadingVouchers] = useState(true);
+  const [selectedVoucherId, setSelectedVoucherId] = useState("");
 
   // Form Fields State
   const [formData, setFormData] = useState({
@@ -86,14 +178,18 @@ export default function Checkout() {
     const fetchCheckoutData = async () => {
       try {
         setIsLoading(true);
+        setIsLoadingVouchers(true);
         const productResponse = await api.get("/products");
+        const voucherResponse = await api.get("/vouchers").catch(() => ({ data: { data: [] } }));
         const productRows = Array.isArray(productResponse.data?.data) ? productResponse.data.data : [];
+        const voucherRows = Array.isArray(voucherResponse.data?.data) ? voucherResponse.data.data : [];
 
         if (!isMounted) {
           return;
         }
 
         setProducts(productRows);
+        setVouchers(voucherRows.map(normalizeVoucherRecord));
 
         if (isLoggedIn) {
           const nextCartEntries = await fetchServerCartEntries(customerId);
@@ -131,9 +227,11 @@ export default function Checkout() {
         setProducts([]);
         setCartEntries([]);
         setGuestCartEntries([]);
+        setVouchers([]);
       } finally {
         if (isMounted) {
           setIsLoading(false);
+          setIsLoadingVouchers(false);
         }
       }
     };
@@ -156,25 +254,45 @@ export default function Checkout() {
   }, [cartItems]);
 
   const shippingCost = 0; // Free shipping
-  const vat = useMemo(() => {
-    return Math.round(itemsSubtotal * 0.1);
-  }, [itemsSubtotal]);
+  const orderAmountBeforeDiscount = useMemo(() => itemsSubtotal + shippingCost, [itemsSubtotal, shippingCost]);
+
+  const activeVouchers = useMemo(() => {
+    const now = new Date();
+
+    return vouchers.filter((voucher) => isVoucherActive(voucher, now));
+  }, [vouchers]);
+
+  const availableVouchers = useMemo(() => {
+    return activeVouchers.filter((voucher) => isVoucherEligible(voucher, orderAmountBeforeDiscount));
+  }, [activeVouchers, orderAmountBeforeDiscount]);
+
+  const voucherProgressHint = useMemo(() => {
+    return buildVoucherProgressHint(vouchers, orderAmountBeforeDiscount);
+  }, [orderAmountBeforeDiscount, vouchers]);
+
+  const selectedVoucher = useMemo(
+    () => availableVouchers.find((voucher) => String(voucher.id) === String(selectedVoucherId)) || null,
+    [availableVouchers, selectedVoucherId]
+  );
+
+  useEffect(() => {
+    if (!selectedVoucherId) {
+      return;
+    }
+
+    const stillAvailable = availableVouchers.some((voucher) => String(voucher.id) === String(selectedVoucherId));
+    if (!stillAvailable) {
+      setSelectedVoucherId("");
+    }
+  }, [availableVouchers, selectedVoucherId]);
 
   const voucherDiscount = useMemo(() => {
-    return couponApplied ? Math.round(itemsSubtotal * 0.1) : 0;
-  }, [itemsSubtotal, couponApplied]);
+    return calculateVoucherDiscount(selectedVoucher, orderAmountBeforeDiscount);
+  }, [orderAmountBeforeDiscount, selectedVoucher]);
 
   const totalPayment = useMemo(() => {
-    return Math.max(0, itemsSubtotal + shippingCost + vat - voucherDiscount);
-  }, [itemsSubtotal, shippingCost, vat, voucherDiscount]);
-
-  const handleApplyCoupon = () => {
-    if (couponCode.trim().toUpperCase() === "EXOCORE2024") {
-      setCouponApplied(true);
-    } else {
-      alert("Mã giảm giá không hợp lệ. Vui lòng thử lại với EXOCORE2024!");
-    }
-  };
+    return Math.max(0, orderAmountBeforeDiscount - voucherDiscount);
+  }, [orderAmountBeforeDiscount, voucherDiscount]);
 
   const clearCurrentServerCart = async () => {
     await clearServerCart(customerId);
@@ -199,13 +317,21 @@ export default function Checkout() {
 
     setIsSubmitting(true);
 
+    const customerAddress = [formData.address, formData.ward, formData.district, formData.city]
+      .filter(Boolean)
+      .join(", ");
+
     const orderPayload = {
       createdAt: new Date().toISOString().slice(0, 19).replace("T", " "),
       paymentMethod: String(selectedMethod || "cod").toUpperCase(),
       status: "PENDING",
       accountId: customerId || 999999,
-      voucherId: null,
-      totalPrice: totalPayment,
+      voucherId: selectedVoucher?.id ?? null,
+      totalPrice: orderAmountBeforeDiscount,
+      discountAmount: voucherDiscount,
+      finalPrice: totalPayment,
+      customerAddress,
+      deliveryMethod: "Standard",
       details: cartItems.map((item) => ({
         productId: item.productId,
         quantity: item.quantity,
@@ -220,11 +346,19 @@ export default function Checkout() {
       created_at: orderPayload.createdAt,
       payment_method: orderPayload.paymentMethod,
       total_price: orderPayload.totalPrice,
+      voucher_id: orderPayload.voucherId,
+      voucherCode: selectedVoucher?.voucherCode || "",
+      voucher_code: selectedVoucher?.voucherCode || "",
+      discount_amount: orderPayload.discountAmount,
+      final_price: orderPayload.finalPrice,
       customer_first_name: formData.fullName.trim().split(" ").slice(0, -1).join(" "),
       customer_last_name: formData.fullName.trim().split(" ").slice(-1).join(" "),
       customer_email: formData.email,
       customer_phone: formData.phone,
-      customer_address: [formData.address, formData.ward, formData.district, formData.city].filter(Boolean).join(", "),
+      customerAddress,
+      customer_address: customerAddress,
+      deliveryMethod: orderPayload.deliveryMethod,
+      delivery_method: orderPayload.deliveryMethod,
       details: cartItems.map((item) => ({
         product_id: item.productId,
         product_name: item.name,
@@ -239,7 +373,7 @@ export default function Checkout() {
         if (selectedMethod === "vnpay") {
           sessionStorage.setItem(PENDING_VNPAY_ORDER_KEY, JSON.stringify(snapshot));
           const paymentResponse = await api.post("/vnpay/create-payment-url", {
-            totalPrice: totalPayment,
+            totalPrice: orderPayload.finalPrice,
           });
           const paymentUrl = paymentResponse.data?.paymentUrl;
 
@@ -371,15 +505,21 @@ export default function Checkout() {
                   cartItems={cartItems}
                   itemsSubtotal={itemsSubtotal}
                   shippingCost={shippingCost}
-                  vat={vat}
                   voucherDiscount={voucherDiscount}
                   totalPayment={totalPayment}
                   onOrderSubmit={handleOrderSubmit}
                   isSubmitting={isSubmitting}
-                  couponCode={couponCode}
-                  onCouponCodeChange={setCouponCode}
-                  onApplyCoupon={handleApplyCoupon}
-                  couponApplied={couponApplied}
+                  vouchers={activeVouchers.map((voucher) => ({
+                    ...voucher,
+                    summaryLabel: formatVoucherSummary(voucher),
+                    isEligible: isVoucherEligible(voucher, orderAmountBeforeDiscount),
+                  }))}
+                  selectedVoucherId={selectedVoucherId}
+                  onSelectVoucher={setSelectedVoucherId}
+                  selectedVoucher={selectedVoucher}
+                  isLoadingVouchers={isLoadingVouchers}
+                  orderAmountBeforeDiscount={orderAmountBeforeDiscount}
+                  voucherProgressHint={voucherProgressHint}
                   selectedMethod={selectedMethod}
                 />
               </aside>

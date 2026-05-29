@@ -2,6 +2,8 @@ export default function OrderSummaryCard({
   items = [],
   subtotal = 53700000,
   shippingCost = 0,
+  voucherCode = "Không có",
+  discount = 0,
   total = 53700000,
 }) {
   return (
@@ -51,6 +53,12 @@ export default function OrderSummaryCard({
           <span>Phí vận chuyển</span>
           <span className="text-blue-600 font-bold tracking-[-0.01em]">
             {shippingCost === 0 ? "Miễn phí" : `${shippingCost.toLocaleString("vi-VN")}đ`}
+          </span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span>Mã giảm giá ({voucherCode || "Không có"})</span>
+          <span className={`font-bold tracking-[-0.01em] ${discount > 0 ? "text-red-600" : "text-gray-400"}`}>
+            {discount > 0 ? `-${discount.toLocaleString("vi-VN")}đ` : "0đ"}
           </span>
         </div>
       </div>

@@ -47,7 +47,7 @@ export const mapOrdersForHistory = (orders = [], accountId) =>
         year: "numeric",
       }),
       status: getOrderStatusLabel(order.status),
-      total: Number(order.total_price || order.totalPrice || 0),
+      total: Number(order.final_price || order.finalPrice || order.total_price || order.totalPrice || 0),
       items: (order.details || [])
         .map((detail) => detail.product_name || `Sản phẩm #${detail.product_id}`)
         .join(", "),
@@ -145,7 +145,8 @@ export const mapOrderDetailForView = (order, products = []) => {
     (sum, detail) => sum + Number(detail.subtotal_price || 0),
     0
   );
-  const total = Number(order.total_price || order.totalPrice || subtotal || 0);
+  const total = Number(order.final_price || order.finalPrice || order.total_price || order.totalPrice || subtotal || 0);
+  const discount = Number(order.discount_amount || order.discountAmount || 0);
   const customerName = [order.customer_first_name, order.customer_last_name].filter(Boolean).join(" ").trim();
 
   return {
@@ -194,8 +195,8 @@ export const mapOrderDetailForView = (order, products = []) => {
       subtotal,
       shippingMethod: "Tiêu chuẩn",
       insurance: 0,
-      voucherCode: order.voucher_code || "Không có",
-      discount: 0,
+      voucherCode: order.voucher_code || order.voucherCode || "Không có",
+      discount,
       total,
     },
   };
@@ -231,6 +232,8 @@ export const mapOrderConfirmationForView = (order, products = []) => {
     items: detailView.items,
     subtotal: detailView.billing.subtotal,
     shippingCost: 0,
+    voucherCode: detailView.billing.voucherCode,
+    discount: detailView.billing.discount,
     total: detailView.billing.total,
   };
 };

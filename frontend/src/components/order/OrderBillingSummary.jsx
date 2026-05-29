@@ -95,9 +95,6 @@ function TotalCard({ billing, onEditOrderInfo }) {
             <p className="text-[20px] font-bold leading-none tracking-[-0.01em] text-red-600">
               {formatCurrency(billing.total)}
             </p>
-            <p className="mt-2 text-[12px] font-medium text-slate-500">
-              (Đã bao gồm VAT 10%)
-            </p>
           </div>
         </div>
       </div>
