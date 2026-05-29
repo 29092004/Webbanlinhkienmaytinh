@@ -9,9 +9,11 @@ const __dirname = path.dirname(__filename);
 const productUploadDir = path.resolve(__dirname, '../../uploads/products');
 const productTempUploadDir = path.resolve(__dirname, '../../uploads/products-temp');
 const specUploadDir = path.resolve(__dirname, '../../uploads/specs-temp');
+const supportUploadDir = path.resolve(__dirname, '../../uploads/support');
 fs.mkdirSync(productUploadDir, { recursive: true });
 fs.mkdirSync(productTempUploadDir, { recursive: true });
 fs.mkdirSync(specUploadDir, { recursive: true });
+fs.mkdirSync(supportUploadDir, { recursive: true });
 
 const sanitizeFileName = (originalName, fallbackName) => {
     const extension = path.extname(originalName);
@@ -50,6 +52,11 @@ const storage = multer.diskStorage({
             return;
         }
 
+        if (file.fieldname === 'supportImage') {
+            cb(null, supportUploadDir);
+            return;
+        }
+
         cb(null, productTempUploadDir);
     },
     filename: (req, file, cb) => {
@@ -57,6 +64,8 @@ const storage = multer.diskStorage({
 
         if (file.fieldname === 'specFile') {
             fileName = createUniqueFileName(specUploadDir, file.originalname, 'specification');
+        } else if (file.fieldname === 'supportImage') {
+            fileName = createUniqueFileName(supportUploadDir, file.originalname, 'support');
         } else {
             fileName = createUniqueFileName(productTempUploadDir, file.originalname, 'product');
         }
@@ -74,6 +83,11 @@ const uploadFileFilter = (req, file, cb) => {
     }
 
     if (file.fieldname === 'specFile' && allowedSpecExtensions.has(path.extname(file.originalname).toLowerCase())) {
+        cb(null, true);
+        return;
+    }
+
+    if (file.fieldname === 'supportImage' && file.mimetype.startsWith('image/')) {
         cb(null, true);
         return;
     }
@@ -134,5 +148,35 @@ const withProductAssetUpload = (fields) => {
     };
 };
 
+const uploadSupportImage = uploadProductAssets.single('supportImage');
+
+const withSupportImageUpload = (req, res, next) => {
+    uploadSupportImage(req, res, (error) => {
+        if (!error) {
+            next();
+            return;
+        }
+
+        cleanupUploadedFiles(req.file ? [req.file] : []);
+
+        if (error instanceof multer.MulterError) {
+            error.status = 400;
+        }
+
+        if (error.message === 'Request aborted' || req.aborted) {
+            error.status = 499;
+        }
+
+        next(error);
+    });
+};
+
 export { uploadProductAssets, withProductAssetUpload };
-export { createUniqueFileName, productTempUploadDir, productUploadDir, sanitizeFileName };
+export {
+    createUniqueFileName,
+    productTempUploadDir,
+    productUploadDir,
+    sanitizeFileName,
+    supportUploadDir,
+    withSupportImageUpload,
+};

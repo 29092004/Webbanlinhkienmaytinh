@@ -36,6 +36,7 @@ import AdminOrders from "./pages/admin/AdminOrders";
 import AdminShipping from "./pages/admin/AdminShipping";
 import AdminAccounts from "./pages/admin/AdminAccounts";
 import AdminSupport from "./pages/admin/AdminSupport";
+import { SupportChatWidget } from "./components/support/SupportChatWidget";
 
 function ScrollToTop() {
   const location = useLocation();
@@ -121,6 +122,7 @@ function App() {
       <ScrollToTop />
       <SessionExpiredHandler />
       <ToastViewport />
+      <SupportChatWidget />
 
       <Routes>
 
