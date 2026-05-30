@@ -16,10 +16,15 @@ export function ProductFilters({
     price: true,
     brands: true,
   });
+  const [isCategoriesExpanded, setIsCategoriesExpanded] = useState(false);
 
   const toggleSection = (section) => {
     setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
+
+  const visibleCategories = isCategoriesExpanded
+    ? categoriesList
+    : categoriesList.slice(0, 6);
 
   return (
     <div className="w-full space-y-6">
@@ -36,7 +41,7 @@ export function ProductFilters({
 
         {openSections.categories && (
           <div className="mt-4 space-y-3">
-            {categoriesList.map((cat) => (
+            {visibleCategories.map((cat) => (
               <label key={cat.id} className="flex items-center gap-3 cursor-pointer select-none text-[14px] text-slate-600 hover:text-slate-900 transition-colors font-medium">
                 <input
                   type="checkbox"
@@ -47,6 +52,17 @@ export function ProductFilters({
                 <span>{cat.label}</span>
               </label>
             ))}
+
+            {categoriesList.length > 6 && (
+              <button
+                type="button"
+                onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
+                className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors pt-1 cursor-pointer w-full text-left"
+              >
+                <span>{isCategoriesExpanded ? "Thu gọn" : `Xem thêm (${categoriesList.length - 6})`}</span>
+                {isCategoriesExpanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+              </button>
+            )}
           </div>
         )}
       </div>
