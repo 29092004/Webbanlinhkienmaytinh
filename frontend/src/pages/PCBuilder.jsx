@@ -17,6 +17,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import * as XLSX from "xlsx";
+import { calculateDiscountedPrice } from "@/components/admin/product/productUtils";
 
 const BUILDER_SLOTS = [
   { id: 1, name: "CPU (Vi xử lý)", category_name: "CPU" },
@@ -101,7 +102,13 @@ export default function PCBuilder() {
 
   const totalPrice = useMemo(() => {
     return Object.values(currentConfig).reduce((sum, item) => {
-      return sum + (item.product.retail_price * item.quantity);
+      const pricing = calculateDiscountedPrice({
+        retailPrice: item.product.retail_price,
+        saleType: item.product.sale_type,
+        saleValue: item.product.sale_value,
+        isOnSale: Boolean(item.product.sale_id),
+      });
+      return sum + (pricing.finalPrice * item.quantity);
     }, 0);
   }, [currentConfig]);
 
@@ -273,14 +280,20 @@ export default function PCBuilder() {
 
     const data = items.map(([slotId, item], index) => {
       const slot = BUILDER_SLOTS.find((s) => s.id === Number(slotId));
+      const pricing = calculateDiscountedPrice({
+        retailPrice: item.product.retail_price,
+        saleType: item.product.sale_type,
+        saleValue: item.product.sale_value,
+        isOnSale: Boolean(item.product.sale_id),
+      });
       return {
         "STT": index + 1,
         "Linh kiện": slot?.name || "",
         "Tên sản phẩm": item.product.name,
         "Thương hiệu": item.product.brand_name || "",
         "Số lượng": item.quantity,
-        "Đơn giá (đ)": item.product.retail_price,
-        "Thành tiền (đ)": item.product.retail_price * item.quantity,
+        "Đơn giá (đ)": pricing.finalPrice,
+        "Thành tiền (đ)": pricing.finalPrice * item.quantity,
       };
     });
 
@@ -352,6 +365,13 @@ export default function PCBuilder() {
 
     items.forEach(([slotId, item], index) => {
       const slot = BUILDER_SLOTS.find((s) => s.id === Number(slotId));
+      const pricing = calculateDiscountedPrice({
+        retailPrice: item.product.retail_price,
+        saleType: item.product.sale_type,
+        saleValue: item.product.sale_value,
+        isOnSale: Boolean(item.product.sale_id),
+      });
+      const finalPrice = pricing.finalPrice;
       
       // Zebra striping
       if (index % 2 === 0) {
@@ -372,11 +392,11 @@ export default function PCBuilder() {
       ctx.font = "12px sans-serif";
       ctx.fillStyle = "#475569";
       ctx.fillText(String(item.quantity), 560, currentY + 26);
-      ctx.fillText(item.product.retail_price.toLocaleString("vi-VN") + "đ", 620, currentY + 26);
+      ctx.fillText(finalPrice.toLocaleString("vi-VN") + "đ", 620, currentY + 26);
       
       ctx.fillStyle = "#0f172a";
       ctx.font = "bold 12px sans-serif";
-      ctx.fillText((item.product.retail_price * item.quantity).toLocaleString("vi-VN") + "đ", 710, currentY + 26);
+      ctx.fillText((finalPrice * item.quantity).toLocaleString("vi-VN") + "đ", 710, currentY + 26);
 
       // Draw horizontal line
       ctx.strokeStyle = "#f1f5f9";
@@ -418,14 +438,21 @@ export default function PCBuilder() {
     const printWindow = window.open("", "_blank");
     const rowsHtml = items.map(([slotId, item], index) => {
       const slot = BUILDER_SLOTS.find((s) => s.id === Number(slotId));
+      const pricing = calculateDiscountedPrice({
+        retailPrice: item.product.retail_price,
+        saleType: item.product.sale_type,
+        saleValue: item.product.sale_value,
+        isOnSale: Boolean(item.product.sale_id),
+      });
+      const finalPrice = pricing.finalPrice;
       return `
         <tr>
           <td>${index + 1}</td>
           <td><b>${slot?.name || ""}</b></td>
           <td>${item.product.name}</td>
           <td>${item.quantity}</td>
-          <td>${item.product.retail_price.toLocaleString("vi-VN")} đ</td>
-          <td style="text-align: right; font-weight: bold;">${(item.product.retail_price * item.quantity).toLocaleString("vi-VN")} đ</td>
+          <td>${finalPrice.toLocaleString("vi-VN")} đ</td>
+          <td style="text-align: right; font-weight: bold;">${(finalPrice * item.quantity).toLocaleString("vi-VN")} đ</td>
         </tr>
       `;
     }).join("");

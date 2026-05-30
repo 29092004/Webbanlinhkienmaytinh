@@ -1,5 +1,5 @@
 import { Plus, Trash2, RefreshCw, ImageOff } from "lucide-react";
-import { resolveAssetUrl } from "@/components/admin/product/productUtils";
+import { resolveAssetUrl, calculateDiscountedPrice } from "@/components/admin/product/productUtils";
 
 export function PCBuilderRow({
   index,
@@ -13,6 +13,17 @@ export function PCBuilderRow({
   const mainImage = selectedProduct?.images?.[0]?.url
     ? resolveAssetUrl(selectedProduct.images[0].url)
     : null;
+
+  const pricing = calculateDiscountedPrice({
+    retailPrice: selectedProduct?.retail_price,
+    saleType: selectedProduct?.sale_type,
+    saleValue: selectedProduct?.sale_value,
+    isOnSale: Boolean(selectedProduct?.sale_id),
+  });
+
+  const unitPrice = pricing.finalPrice;
+  const originalPrice = pricing.basePrice;
+  const hasDiscount = unitPrice < originalPrice;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr_auto] items-center gap-4 py-4 border-b border-slate-100 last:border-b-0 hover:bg-slate-50/30 px-3 rounded-2xl transition">
@@ -78,13 +89,18 @@ export function PCBuilderRow({
           </div>
 
           {/* Pricing Info */}
-          <div className="text-right">
+          <div className="text-right flex flex-col items-end">
             <div className="text-sm font-extrabold text-slate-950">
-              {Number(selectedProduct.retail_price * quantity).toLocaleString("vi-VN")} đ
+              {Number(unitPrice * quantity).toLocaleString("vi-VN")} đ
             </div>
+            {hasDiscount && (
+              <span className="text-[10px] text-slate-400 line-through font-semibold">
+                {Number(originalPrice * quantity).toLocaleString("vi-VN")} đ
+              </span>
+            )}
             {quantity > 1 && (
               <span className="text-[10px] text-slate-400 font-bold">
-                {Number(selectedProduct.retail_price).toLocaleString("vi-VN")} đ / chiếc
+                {Number(unitPrice).toLocaleString("vi-VN")} đ / chiếc
               </span>
             )}
           </div>
@@ -121,3 +137,4 @@ export function PCBuilderRow({
     </div>
   );
 }
+
