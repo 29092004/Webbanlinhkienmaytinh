@@ -24,6 +24,7 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import OrderDetail from "./pages/OrderDetail";
+import Compare from "./pages/Compare";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -134,6 +135,7 @@ function App() {
         <Route path="/" element={<RequireAuth><Home /></RequireAuth>} />
         <Route path="/products" element={<RequireAuth><Products /></RequireAuth>} />
         <Route path="/product/:id" element={<RequireAuth><ProductDetail /></RequireAuth>} />
+        <Route path="/compare" element={<RequireAuth><Compare /></RequireAuth>} />
         <Route path="/search" element={<RequireAuth><SearchResults /></RequireAuth>} />
         <Route path="/pc-builder" element={<RequireAuth><PCBuilder /></RequireAuth>} />
         <Route path="/promotions" element={<RequireAuth><Promotions /></RequireAuth>} />
