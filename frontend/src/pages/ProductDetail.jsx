@@ -5,7 +5,7 @@ import { ProductGallery } from "@/components/products/ProductGallery";
 import { ProductSpecsTable } from "@/components/products/ProductSpecsTable";
 import { ProductReviewsTab } from "@/components/products/ProductReviewsTab";
 import { ProductCard } from "@/components/products/ProductCard";
-import { Star, ShoppingBag } from "lucide-react";
+import { Star, ShoppingBag, RefreshCw } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -15,6 +15,7 @@ import {
 import { api } from "@/lib/api";
 import { addProductToCart } from "@/lib/cartStore";
 import { showToast } from "@/lib/toast";
+import { CompareSelectionModal } from "@/components/products/CompareSelectionModal";
 
 function ProductDetail() {
   const { id } = useParams();
@@ -24,6 +25,7 @@ function ProductDetail() {
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -242,6 +244,14 @@ function ProductDetail() {
               <button className="w-full border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold py-3.5 px-4 rounded-2xl text-[10px] flex items-center justify-center transition-colors uppercase">
                 TRẢ GÓP 0% QUA THẺ TÍN DỤNG (XÉT DUYỆT TỨC THÌ)
               </button>
+              <button
+                type="button"
+                onClick={() => setIsCompareModalOpen(true)}
+                className="w-full bg-white hover:bg-blue-50 border border-blue-600 text-blue-600 font-bold py-3.5 px-4 rounded-2xl text-[10px] flex items-center justify-center gap-1.5 transition-colors uppercase cursor-pointer"
+              >
+                <RefreshCw className="size-3.5" />
+                So sánh sản phẩm này
+              </button>
             </div>
           </div>
         </div>
@@ -322,6 +332,19 @@ function ProductDetail() {
         ) : null}
 
       </div>
+
+      {/* Compare Selection Modal */}
+      {product && (
+        <CompareSelectionModal
+          isOpen={isCompareModalOpen}
+          onClose={() => setIsCompareModalOpen(false)}
+          currentProduct={product}
+          onSelect={(selectedProduct) => {
+            setIsCompareModalOpen(false);
+            navigate(`/compare?ids=${product.id},${selectedProduct.id}`);
+          }}
+        />
+      )}
 
       <Footer />
     </div>
