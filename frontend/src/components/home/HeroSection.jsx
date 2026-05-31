@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import heroBanner1 from "@/assets/home-banners/hero-banner-1.png";
 import heroBanner2 from "@/assets/home-banners/hero-banner-2.png";
 import heroBanner3 from "@/assets/home-banners/hero-banner-3.png";
@@ -83,6 +84,9 @@ export function HeroSection() {
           </div>
 
         </div>
+
+
+
       </div>
     </section>
   );

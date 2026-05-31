@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import { HeroSection } from "@/components/home/HeroSection";
 import { CategorySection } from "@/components/home/CategorySection";
@@ -86,10 +87,10 @@ function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white font-sans text-slate-900 relative">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 relative">
       <Header />
 
-      <main>
+      <main className="mx-auto max-w-7xl">
         <HeroSection />
         <CategorySection />
         <FlashSaleSection products={saleProducts} />
@@ -102,6 +103,7 @@ function Home() {
           />
         ))}
       </main>
+
       <Footer />
     </div>
   );
