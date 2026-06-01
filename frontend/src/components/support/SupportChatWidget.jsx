@@ -6,6 +6,7 @@ import { useLocation } from "react-router-dom";
 import { getStoredUser, subscribeToAuthState } from "@/lib/auth";
 import {
   buildSupportMessageFormData,
+  deleteSupportMessage,
   fetchSupportConversationSummary,
   fetchSupportMessages,
   formatSupportConversationTime,
@@ -26,6 +27,30 @@ function isNearBottom(element) {
   return element.scrollHeight - element.scrollTop - element.clientHeight <= STICKY_SCROLL_THRESHOLD;
 }
 
+function mergeMessagesWithRecalledPlaceholders(messages, placeholders) {
+  if (!Array.isArray(placeholders) || placeholders.length === 0) {
+    return messages;
+  }
+
+  const existingIds = new Set(messages.map((message) => String(message.id)));
+  const merged = [...messages];
+
+  placeholders.forEach((placeholder) => {
+    if (!existingIds.has(String(placeholder.id))) {
+      merged.push(placeholder);
+    }
+  });
+
+  return merged.sort((left, right) => {
+    const timeDiff = new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+    if (timeDiff !== 0) {
+      return timeDiff;
+    }
+
+    return Number(left.id) - Number(right.id);
+  });
+}
+
 export function SupportChatWidget() {
   const location = useLocation();
   const messagesEndRef = useRef(null);
@@ -42,10 +67,11 @@ export function SupportChatWidget() {
   const [isBootstrapping, setIsBootstrapping] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [recallingMessageId, setRecallingMessageId] = useState(null);
 
   const isAdminArea = location.pathname.startsWith("/admin");
   const isAuthRoute = ["/login", "/register", "/otp"].includes(location.pathname);
-  const isVisible = authUser?.role === "user" && !isAdminArea && !isAuthRoute;
+  const isVisible = ["user", "customer"].includes(authUser?.role) && !isAdminArea && !isAuthRoute;
 
   useEffect(() => {
     return subscribeToAuthState(() => {
@@ -66,7 +92,10 @@ export function SupportChatWidget() {
         setIsLoadingMessages(true);
         const { conversation: detailedConversation, messages: nextMessages } = await fetchSupportMessages(nextConversation.id);
         setConversation(detailedConversation || nextConversation);
-        setMessages(nextMessages);
+        setMessages((current) => {
+          const placeholders = current.filter((message) => message.isDeleted && message.senderRole === "user");
+          return mergeMessagesWithRecalledPlaceholders(nextMessages, placeholders);
+        });
 
         if (Number(nextConversation.unreadForUser || 0) > 0) {
           await markSupportConversationRead(nextConversation.id);
@@ -186,6 +215,48 @@ export function SupportChatWidget() {
     setSelectedImage(file);
   };
 
+  const handleRecallMessage = async (messageId) => {
+    if (!conversation?.id || !messageId || recallingMessageId) {
+      return;
+    }
+
+    setRecallingMessageId(messageId);
+
+    try {
+      const recalledMessage = messages.find((message) => String(message.id) === String(messageId));
+      const { conversation: nextConversation, messages: nextMessages } = await deleteSupportMessage(conversation.id, messageId);
+      setConversation(nextConversation);
+      setMessages(() => {
+        if (!recalledMessage) {
+          return nextMessages;
+        }
+
+        const placeholder = {
+          ...recalledMessage,
+          content: "",
+          imageUrl: "",
+          imageName: "",
+          imageMimeType: "",
+          isDeleted: true,
+          canRecall: false,
+        };
+
+        return mergeMessagesWithRecalledPlaceholders(nextMessages, [placeholder]);
+      });
+      showToast({
+        message: "Đã thu hồi tin nhắn.",
+        type: "success",
+      });
+    } catch (error) {
+      showToast({
+        message: error.response?.data?.message || "Không thể thu hồi tin nhắn.",
+        type: "error",
+      });
+    } finally {
+      setRecallingMessageId(null);
+    }
+  };
+
   if (!isVisible) {
     return null;
   }
@@ -231,16 +302,22 @@ export function SupportChatWidget() {
                 <div className="space-y-3">
                   {messages.map((message) => {
                     const isUserMessage = message.senderRole === "user";
+                    const recalledText = isUserMessage
+                      ? "Bạn đã thu hồi tin nhắn"
+                      : "Tin nhắn đã được thu hồi";
 
                     return (
                       <div
                         key={message.id}
                         className={`flex ${isUserMessage ? "justify-end" : "justify-start"}`}
                       >
-                        <div
-                          className="max-w-[82%] rounded-[20px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm"
-                        >
-                          {message.imageUrl ? (
+                        <div className="max-w-[82%]">
+                          <div className={`rounded-[20px] border px-4 py-3 text-sm shadow-sm ${
+                            message.isDeleted
+                              ? "border-slate-200 bg-slate-100 text-slate-500 italic"
+                              : "border-slate-200 bg-white text-slate-900"
+                          }`}>
+                          {!message.isDeleted && message.imageUrl ? (
                             <a
                               href={resolveSupportImageUrl(message.imageUrl)}
                               target="_blank"
@@ -254,13 +331,28 @@ export function SupportChatWidget() {
                               />
                             </a>
                           ) : null}
-                          <p className="whitespace-pre-wrap break-words leading-6">{message.content}</p>
+                          <p className="whitespace-pre-wrap break-words leading-6">
+                            {message.isDeleted ? recalledText : message.content}
+                          </p>
                           <p
                             className="mt-2 text-[11px] font-medium text-slate-400"
                           >
                             {isUserMessage ? "Bạn" : message.senderName || "Hỗ trợ"} •{" "}
                             {formatSupportConversationTime(message.createdAt)}
                           </p>
+                          </div>
+                          {isUserMessage && !message.isDeleted ? (
+                            <div className="mt-1 flex justify-end">
+                              <button
+                                type="button"
+                                onClick={() => handleRecallMessage(message.id)}
+                                disabled={recallingMessageId === message.id}
+                                className="text-[11px] font-semibold text-rose-500 transition hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                {recallingMessageId === message.id ? "Đang thu hồi..." : "Thu hồi"}
+                              </button>
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                     );

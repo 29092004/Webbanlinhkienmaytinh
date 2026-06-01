@@ -21,7 +21,7 @@ export function resolveSupportImageUrl(value) {
     return "";
   }
 
-  if (/^https?:\/\//i.test(value)) {
+  if (/^(https?:\/\/|data:)/i.test(value)) {
     return value;
   }
 
@@ -91,5 +91,15 @@ export async function sendUserSupportMessage(formData) {
 
   return {
     conversation: response.data?.data?.conversation || null,
+  };
+}
+
+export async function deleteSupportMessage(conversationId, messageId) {
+  const response = await api.delete(`/support/conversations/${conversationId}/messages/${messageId}`);
+
+  return {
+    conversation: response.data?.data?.conversation || null,
+    messages: Array.isArray(response.data?.data?.messages) ? response.data.data.messages : [],
+    deletedMessageId: response.data?.data?.deletedMessageId || null,
   };
 }

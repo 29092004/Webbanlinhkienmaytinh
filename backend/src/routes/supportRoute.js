@@ -16,5 +16,6 @@ router.get('/conversations/admin', authenticateToken, requireAdminOrStaff, suppo
 router.get('/conversations/:conversationId/messages', authenticateToken, requireAuthenticatedUser, supportController.getConversationMessages);
 router.post('/conversations/:conversationId/messages', authenticateToken, requireAdminOrStaff, withSupportImageUpload, supportController.sendAdminMessage);
 router.patch('/conversations/:conversationId/read', authenticateToken, requireAuthenticatedUser, supportController.markConversationRead);
+router.delete('/conversations/:conversationId/messages/:messageId', authenticateToken, requireAuthenticatedUser, supportController.deleteMessage);
 
 export default router;

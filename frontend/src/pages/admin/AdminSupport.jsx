@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AdminSidebar } from "@/components/admin/layout/AdminSidebar";
 import {
   buildSupportMessageFormData,
+  deleteSupportMessage,
   fetchAdminSupportConversations,
   fetchSupportMessages,
   formatSupportConversationTime,
@@ -23,6 +24,30 @@ function isNearBottom(element) {
   }
 
   return element.scrollHeight - element.scrollTop - element.clientHeight <= STICKY_SCROLL_THRESHOLD;
+}
+
+function mergeMessagesWithRecalledPlaceholders(messages, placeholders) {
+  if (!Array.isArray(placeholders) || placeholders.length === 0) {
+    return messages;
+  }
+
+  const existingIds = new Set(messages.map((message) => String(message.id)));
+  const merged = [...messages];
+
+  placeholders.forEach((placeholder) => {
+    if (!existingIds.has(String(placeholder.id))) {
+      merged.push(placeholder);
+    }
+  });
+
+  return merged.sort((left, right) => {
+    const timeDiff = new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+    if (timeDiff !== 0) {
+      return timeDiff;
+    }
+
+    return Number(left.id) - Number(right.id);
+  });
 }
 
 function AdminSupport() {
@@ -44,6 +69,7 @@ function AdminSupport() {
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [recallingMessageId, setRecallingMessageId] = useState(null);
 
   const activeConversationSummary = useMemo(
     () => conversations.find((conversation) => conversation.id === activeConversationId) || activeConversation,
@@ -84,7 +110,10 @@ function AdminSupport() {
       setIsLoadingMessages(true);
       const { conversation: nextConversation, messages: nextMessages } = await fetchSupportMessages(conversationId);
       setActiveConversation(nextConversation);
-      setMessages(nextMessages);
+      setMessages((current) => {
+        const placeholders = current.filter((message) => message.isDeleted && message.senderRole !== "user");
+        return mergeMessagesWithRecalledPlaceholders(nextMessages, placeholders);
+      });
 
       if (Number(nextConversation?.unreadForAdmin || 0) > 0) {
         await markSupportConversationRead(conversationId);
@@ -208,6 +237,52 @@ function AdminSupport() {
     setSelectedImage(file);
   };
 
+  const handleRecallMessage = async (messageId) => {
+    if (!activeConversationId || !messageId || recallingMessageId) {
+      return;
+    }
+
+    setRecallingMessageId(messageId);
+
+    try {
+      const recalledMessage = messages.find((message) => String(message.id) === String(messageId));
+      const { conversation: nextConversation, messages: nextMessages } = await deleteSupportMessage(
+        activeConversationId,
+        messageId
+      );
+      setActiveConversation(nextConversation);
+      setMessages(() => {
+        if (!recalledMessage) {
+          return nextMessages;
+        }
+
+        const placeholder = {
+          ...recalledMessage,
+          content: "",
+          imageUrl: "",
+          imageName: "",
+          imageMimeType: "",
+          isDeleted: true,
+          canRecall: false,
+        };
+
+        return mergeMessagesWithRecalledPlaceholders(nextMessages, [placeholder]);
+      });
+      await loadConversations({ silent: true });
+      showToast({
+        message: "Đã thu hồi tin nhắn.",
+        type: "success",
+      });
+    } catch (error) {
+      showToast({
+        message: error.response?.data?.message || "Không thể thu hồi tin nhắn.",
+        type: "error",
+      });
+    } finally {
+      setRecallingMessageId(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#f4f7fb] font-sans flex">
       <AdminSidebar />
@@ -317,16 +392,22 @@ function AdminSupport() {
                           <div className="space-y-3">
                             {messages.map((message) => {
                               const isCustomer = message.senderRole === "user";
+                              const recalledText = isCustomer
+                                ? "Khách hàng đã thu hồi tin nhắn"
+                                : "Bạn đã thu hồi tin nhắn";
 
                               return (
                                 <div
                                   key={message.id}
                                   className={`flex ${isCustomer ? "justify-start" : "justify-end"}`}
                                 >
-                                  <div
-                                    className="max-w-[78%] rounded-[20px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm"
-                                  >
-                                    {message.imageUrl ? (
+                                  <div className="max-w-[78%]">
+                                    <div className={`rounded-[20px] border px-4 py-3 text-sm shadow-sm ${
+                                      message.isDeleted
+                                        ? "border-slate-200 bg-slate-100 text-slate-500 italic"
+                                        : "border-slate-200 bg-white text-slate-900"
+                                    }`}>
+                                    {!message.isDeleted && message.imageUrl ? (
                                       <a
                                         href={resolveSupportImageUrl(message.imageUrl)}
                                         target="_blank"
@@ -340,13 +421,28 @@ function AdminSupport() {
                                         />
                                       </a>
                                     ) : null}
-                                    <p className="whitespace-pre-wrap break-words leading-6">{message.content}</p>
+                                    <p className="whitespace-pre-wrap break-words leading-6">
+                                      {message.isDeleted ? recalledText : message.content}
+                                    </p>
                                     <p
                                       className="mt-2 text-[11px] font-medium text-slate-400"
                                     >
                                       {message.senderName || (isCustomer ? "Khách hàng" : "Admin")} •{" "}
                                       {formatSupportConversationTime(message.createdAt)}
                                     </p>
+                                    </div>
+                                    {!isCustomer && !message.isDeleted ? (
+                                      <div className="mt-1 flex justify-end">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRecallMessage(message.id)}
+                                          disabled={recallingMessageId === message.id}
+                                          className="text-[11px] font-semibold text-rose-500 transition hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                          {recallingMessageId === message.id ? "Đang thu hồi..." : "Thu hồi"}
+                                        </button>
+                                      </div>
+                                    ) : null}
                                   </div>
                                 </div>
                               );
