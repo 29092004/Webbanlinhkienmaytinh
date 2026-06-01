@@ -176,7 +176,6 @@ export function buildDashboardMetrics({ orders = [], products = [], customers = 
   const revenuePrevious = sumOrderRevenue(previousActiveOrders);
   const orderCountCurrent = activeRangeOrders.length;
   const orderCountPrevious = previousActiveOrders.length;
-  const totalProductStock = products.reduce((total, product) => total + Number(product.quantity || 0), 0);
   const outOfStockCount = products.filter((product) => Number(product.quantity || 0) <= 0).length;
   const lowStockCount = products.filter((product) => Number(product.quantity || 0) > 0 && Number(product.quantity || 0) <= 5).length;
   const customerCurrent = rangeCustomers.length;

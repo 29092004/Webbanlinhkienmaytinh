@@ -10,10 +10,10 @@ export default function ProfileInfoForm({
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
       <div className="flex flex-col gap-2">
         <div>
-          <h2 className="m-0 text-2xl font-black text-slate-950">
+          <h2 className="m-0 text-[2rem] font-bold tracking-[-0.02em] text-slate-950 sm:text-[2.15rem]">
             Thông tin cá nhân
           </h2>
-          <p className="mt-2 text-sm font-medium text-slate-500">
+          <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
             Cập nhật thông tin cơ bản của tài khoản. Email được giữ theo tài khoản đăng nhập.
           </p>
         </div>
@@ -56,7 +56,7 @@ export default function ProfileInfoForm({
           <button
             type="submit"
             disabled={isSaving}
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-blue-700 px-6 text-sm font-black text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-blue-700 px-6 text-sm font-semibold tracking-[-0.01em] text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Save className="size-4" />
             {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
@@ -77,14 +77,14 @@ function ProfileInput({
 }) {
   return (
     <label className="block">
-      <span className="text-sm font-black text-slate-700">{label}</span>
+      <span className="text-sm font-semibold tracking-[-0.01em] text-slate-800">{label}</span>
       <input
         type={type}
         value={value}
         disabled={disabled}
         placeholder={placeholder}
         onChange={(event) => onChange?.(event.target.value)}
-        className="mt-2 h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-950 outline-none transition focus:border-blue-700 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200"
+        className="mt-2 h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-[15px] font-medium tracking-[-0.01em] text-slate-950 outline-none transition focus:border-blue-700 focus:ring-2 focus:ring-blue-100 disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-500"
       />
     </label>
   );

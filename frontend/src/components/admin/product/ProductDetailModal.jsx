@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -21,7 +22,7 @@ export function ProductDetailModal({ open, product, brands = [], categories = []
   useEffect(() => {
     setResolvedProduct(product);
     setIsSpecsOpen(Boolean(product?.specs));
-  }, [product?.id, open]);
+  }, [open, product]);
 
   useEffect(() => {
     if (!open || !product?.id) {

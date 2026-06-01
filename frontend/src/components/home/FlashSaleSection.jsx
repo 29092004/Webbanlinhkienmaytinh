@@ -1,19 +1,37 @@
-import React, { useEffect, useState, useRef } from "react";
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, ImageOff, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
-import { ProductHoverPopup } from "@/components/products/ProductHoverPopup";
 
 export function FlashSaleSection({ products = [] }) {
+  const resolveSaleEndTime = () => {
+    const fallbackTarget = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    const saleTargets = products
+      .filter((product) => product?.sale_is_active !== false)
+      .map((product) => {
+        if (!product?.sale_end_date) {
+          return null;
+        }
+
+        const endDate = new Date(`${product.sale_end_date}T23:59:59`);
+        return Number.isNaN(endDate.getTime()) ? null : endDate;
+      })
+      .filter(Boolean)
+      .sort((left, right) => left.getTime() - right.getTime());
+
+    return saleTargets[0] ?? fallbackTarget;
+  };
+
   // 1. Live Countdown Timer
-  const [timeLeft, setTimeLeft] = useState({ hours: "02", minutes: "00", seconds: "00" });
+  const [timeLeft, setTimeLeft] = useState({ hours: "24", minutes: "00", seconds: "00" });
 
   useEffect(() => {
+    const saleEndTime = resolveSaleEndTime();
+
     const calculateTimeLeft = () => {
       const now = new Date();
-      const endOfDay = new Date();
-      endOfDay.setHours(23, 59, 59, 999);
-
-      const diff = endOfDay.getTime() - now.getTime();
+      const diff = saleEndTime.getTime() - now.getTime();
       if (diff <= 0) {
         return { hours: "00", minutes: "00", seconds: "00" };
       }
@@ -35,17 +53,12 @@ export function FlashSaleSection({ products = [] }) {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [products]);
 
   // 2. Responsive Carousel Slide Logic
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [windowWidth, setWindowWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
-
-  // Hover position state for product cards
-  const [hoveredProductId, setHoveredProductId] = useState(null);
-  const [coords, setCoords] = useState(null);
-  const cardRefs = useRef({});
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -79,56 +92,6 @@ export function FlashSaleSection({ products = [] }) {
     setCurrentIndex((prev) => Math.min(prev + 1, maxStartIndex));
   };
 
-  const updateCardCoords = (e) => {
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-    const { clientX, clientY } = e;
-
-    const popupWidth = 700;
-    const popupHeight = 440; // Conservative height estimate to prevent bottom clipping
-
-    let left = 0;
-    if (clientX > windowWidth / 2) {
-      left = clientX - popupWidth - 24;
-    } else {
-      left = clientX + 24;
-    }
-
-    if (left < 12) {
-      left = 12;
-    } else if (left + popupWidth > windowWidth - 12) {
-      left = windowWidth - popupWidth - 12;
-    }
-
-    let top = 0;
-    if (clientY > windowHeight / 2) {
-      // Near bottom: position popup above the cursor so it isn't cut off
-      top = clientY - popupHeight - 15;
-    } else {
-      // Near top: position popup aligned/below the cursor
-      top = clientY - 80;
-    }
-
-    // Viewport height safety boundaries
-    if (top + popupHeight > windowHeight - 12) {
-      top = windowHeight - popupHeight - 12;
-    }
-    if (top < 12) {
-      top = 12;
-    }
-
-    setCoords({ top, left });
-  };
-
-  const handleCardMouseEnter = (productId, e) => {
-    setHoveredProductId(productId);
-    updateCardCoords(e);
-  };
-
-  const handleCardMouseMove = (productId, e) => {
-    updateCardCoords(e);
-  };
-
   const getTranslateXStyle = () => {
     if (windowWidth < 640) {
       // 1 card per page, 16px gap
@@ -149,11 +112,11 @@ export function FlashSaleSection({ products = [] }) {
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div className="flex flex-wrap items-center gap-4">
-            <div className="bg-[#e21a36] text-white px-4 py-2.5 rounded-xl flex items-center gap-2 font-black uppercase tracking-wider text-xs shadow-md shadow-red-100">
+            <div className="bg-[#e21a36] text-white px-4 py-2.5 rounded-xl flex items-center gap-2 text-sm font-semibold tracking-[-0.01em] shadow-md shadow-red-100">
               <Zap className="w-4 h-4 fill-current animate-pulse text-yellow-300" /> GIÁ TỐT MỖI NGÀY
             </div>
-            <div className="flex items-center gap-2 font-extrabold text-sm text-slate-800">
-              <span className="text-xs uppercase text-slate-400 font-bold tracking-wider mr-1">Kết thúc sau:</span>
+            <div className="flex items-center gap-2 text-[15px] font-semibold text-slate-800 tracking-[-0.01em]">
+              <span className="text-[15px] text-slate-400 font-semibold mr-1">Kết thúc sau:</span>
               <span className="bg-slate-900 text-white px-2.5 py-1.5 rounded-lg font-mono text-sm tracking-widest">{timeLeft.hours}</span>
               <span className="text-slate-950 animate-pulse">:</span>
               <span className="bg-slate-900 text-white px-2.5 py-1.5 rounded-lg font-mono text-sm tracking-widest">{timeLeft.minutes}</span>
@@ -161,7 +124,7 @@ export function FlashSaleSection({ products = [] }) {
               <span className="bg-slate-900 text-white px-2.5 py-1.5 rounded-lg font-mono text-sm tracking-widest">{timeLeft.seconds}</span>
             </div>
           </div>
-          <Link to="/products" className="text-[#e21a36] hover:text-red-700 hover:underline text-xs font-bold uppercase tracking-widest">
+          <Link to="/products" className="text-[#e21a36] hover:text-red-700 hover:underline text-sm font-semibold tracking-[-0.01em]">
             Xem tất cả deal sốc &rarr;
           </Link>
         </div>
@@ -170,10 +133,7 @@ export function FlashSaleSection({ products = [] }) {
         <div 
           className="relative"
           onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => {
-            setIsHovered(false);
-            setHoveredProductId(null);
-          }}
+          onMouseLeave={() => setIsHovered(false)}
         >
           {/* Navigation Controls */}
           {products.length > cardsPerPage && (
@@ -209,22 +169,10 @@ export function FlashSaleSection({ products = [] }) {
                 products.map((p) => (
                   <div 
                     key={p.id} 
-                    ref={(el) => (cardRefs.current[p.id] = el)}
-                    onMouseEnter={(e) => handleCardMouseEnter(p.id, e)}
-                    onMouseMove={(e) => handleCardMouseMove(p.id, e)}
-                    onMouseLeave={() => {
-                      setHoveredProductId(null);
-                      setCoords(null);
-                    }}
                     className="w-full sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] shrink-0 bg-white rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.015)] border border-slate-100 flex flex-col relative group hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] transition-all duration-300"
                   >
-                    {/* Hover spec details popup */}
-                    {hoveredProductId === p.id && (
-                      <ProductHoverPopup product={p} coords={coords} />
-                    )}
-
                     {/* Sale label */}
-                    <div className="absolute top-3 left-3 bg-[#e21a36] text-white text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg z-10 shadow-sm">
+                    <div className="absolute top-3 left-3 bg-[#e21a36] text-white text-[11px] font-semibold tracking-[-0.01em] px-2 py-1 rounded-lg z-10 shadow-sm">
                       {p.discount || "Sale"}
                     </div>
                     
@@ -246,7 +194,7 @@ export function FlashSaleSection({ products = [] }) {
 
                     {/* Title */}
                     <Link to={`/product/${p.id}`} className="flex-1">
-                      <h3 className="font-semibold text-slate-900 text-sm leading-snug mb-2 group-hover:text-blue-600 transition-colors line-clamp-2 min-h-[40px]">
+                      <h3 className="text-[15px] font-semibold text-slate-900 leading-snug tracking-[-0.01em] mb-2 group-hover:text-red-600 transition-colors line-clamp-2 min-h-[40px]">
                         {p.name}
                       </h3>
                     </Link>
@@ -264,9 +212,9 @@ export function FlashSaleSection({ products = [] }) {
                       <div className="w-full bg-slate-100 h-1.5 rounded-full mb-1.5 overflow-hidden">
                         <div className="bg-[#e21a36] h-full rounded-full" style={{ width: p.progressWidth || "40%" }}></div>
                       </div>
-                      <div className="flex justify-between text-[10px] text-slate-500 font-bold">
-                        <span className="text-slate-400">{p.saleMeta || "Đang bán chạy"}</span>
-                        <span className="text-[#e21a36]">Còn lại {p.quantity || 5}</span>
+                      <div className="flex justify-between text-[11px] text-slate-500 font-medium tracking-[-0.01em]">
+                        <span className="text-red-400">{p.saleMeta || "Đang bán chạy"}</span>
+                        <span className="text-[#e21a36] font-semibold">Còn lại {p.quantity || 5}</span>
                       </div>
                     </div>
                   </div>

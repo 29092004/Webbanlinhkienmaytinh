@@ -56,7 +56,7 @@ export function ProductGrid({
           <button
             type="button"
             onClick={() => setIsSortOpen((prev) => !prev)}
-            className="flex items-center gap-1 text-[13px] font-bold text-blue-600 focus:outline-none hover:underline"
+            className="flex items-center gap-1 text-[13px] font-bold text-slate-900 focus:outline-none hover:underline"
           >
             <span>{sortLabelMap[sortBy] || "Mới nhất"}</span>
             <ChevronDown className={`size-4 transition-transform duration-200 ${isSortOpen ? "rotate-180" : ""}`} />
@@ -73,7 +73,7 @@ export function ProductGrid({
                     setIsSortOpen(false);
                   }}
                   className={`w-full rounded-lg px-3 py-2 text-left text-[13px] font-semibold transition hover:bg-slate-50 ${
-                    sortBy === key ? "text-blue-600 bg-blue-50/40" : "text-slate-700"
+                    sortBy === key ? "text-slate-900 bg-slate-100" : "text-slate-700"
                   }`}
                 >
                   {val}
@@ -134,7 +134,7 @@ export function ProductGrid({
                 onClick={() => onPageChange(page)}
                 className={`flex items-center justify-center size-9 rounded-full text-xs font-bold transition-all shadow-sm border cursor-pointer ${
                   isActive
-                    ? "bg-blue-600 border-blue-600 text-white font-extrabold"
+                    ? "bg-red-600 border-red-600 text-white font-extrabold"
                     : "bg-white border-slate-100 text-slate-600 hover:border-slate-300"
                 }`}
               >

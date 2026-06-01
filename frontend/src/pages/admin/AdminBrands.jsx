@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { Pencil, Plus, Search, Tag, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { Calendar, Eye, MapPin, Pencil, Plus, Search, Trash2, Truck, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 

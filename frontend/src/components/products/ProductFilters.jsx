@@ -47,7 +47,7 @@ export function ProductFilters({
                   type="checkbox"
                   checked={selectedCategories.includes(cat.id)}
                   onChange={() => onCategoryToggle(cat.id)}
-                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 size-4.5 cursor-pointer accent-blue-600"
+                  className="rounded border-slate-300 text-slate-900 focus:ring-slate-400 size-4.5 cursor-pointer accent-slate-900"
                 />
                 <span>{cat.label}</span>
               </label>
@@ -57,7 +57,7 @@ export function ProductFilters({
               <button
                 type="button"
                 onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
-                className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors pt-1 cursor-pointer w-full text-left"
+                className="flex items-center gap-1.5 text-xs font-bold text-slate-900 hover:text-slate-700 transition-colors pt-1 cursor-pointer w-full text-left"
               >
                 <span>{isCategoriesExpanded ? "Thu gọn" : `Xem thêm (${categoriesList.length - 6})`}</span>
                 {isCategoriesExpanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
@@ -98,7 +98,7 @@ export function ProductFilters({
                 width: 16px;
                 height: 16px;
                 border-radius: 50%;
-                background: #2563eb;
+                background: #0f172a;
                 border: 2px solid #ffffff;
                 box-shadow: 0 1px 3px rgba(0,0,0,0.15);
                 cursor: pointer;
@@ -110,7 +110,7 @@ export function ProductFilters({
                 width: 16px;
                 height: 16px;
                 border-radius: 50%;
-                background: #2563eb;
+                background: #0f172a;
                 border: 2px solid #ffffff;
                 box-shadow: 0 1px 3px rgba(0,0,0,0.15);
                 cursor: pointer;
@@ -122,7 +122,7 @@ export function ProductFilters({
               <div className="absolute left-0 right-0 h-1 bg-slate-200 rounded-full" />
               {/* Active Color Track */}
               <div
-                className="absolute h-1 bg-blue-600 rounded-full"
+                className="absolute h-1 bg-slate-900 rounded-full"
                 style={{
                   left: `${priceRange[0]}%`,
                   right: `${100 - priceRange[1]}%`
@@ -184,7 +184,7 @@ export function ProductFilters({
                   type="checkbox"
                   checked={selectedBrands.includes(brand.id)}
                   onChange={() => onBrandToggle(brand.id)}
-                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 size-4.5 cursor-pointer accent-blue-600"
+                  className="rounded border-slate-300 text-slate-900 focus:ring-slate-400 size-4.5 cursor-pointer accent-slate-900"
                 />
                 <span>{brand.label}</span>
               </label>

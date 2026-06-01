@@ -1,6 +1,5 @@
-import React from "react";
 import { createPortal } from "react-dom";
-import { ShieldCheck, HelpCircle, Gift, Sparkles, AlertCircle } from "lucide-react";
+import { ShieldCheck, Gift } from "lucide-react";
 import { parseStoredSpecs } from "@/components/admin/product/productUtils";
 
 // Helper to format currency

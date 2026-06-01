@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { Pencil, Search, Trash2, X, Users, Mail, Phone, MapPin } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 

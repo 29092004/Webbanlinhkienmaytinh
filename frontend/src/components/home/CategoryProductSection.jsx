@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ProductCard } from "@/components/products/ProductCard";
 
@@ -58,39 +58,40 @@ export function CategoryProductSection({ title, subtitle, products = [] }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Title Block */}
-        <div className="flex justify-between items-end mb-6">
-          <div className="border-l-4 border-blue-600 pl-3">
-            <h2 className="text-xl font-extrabold text-gray-900 tracking-tight uppercase">
+        <div className="mb-6 flex items-end justify-between">
+          <div className="border-l-4 border-slate-950 pl-3">
+            <h2 className="m-0 text-[22px] font-semibold text-slate-900 tracking-[-0.02em]">
               {title}
             </h2>
-            <p className="text-xs text-gray-500 font-semibold mt-0.5">{subtitle}</p>
+            <p className="mt-1 text-[15px] text-slate-500 font-medium tracking-[-0.01em]">{subtitle}</p>
           </div>
-          
-          {/* Custom navigation inside title bar on mobile/desktop */}
+        </div>
+
+        {/* Carousel Window */}
+        <div className="relative">
           {products.length > cardsPerPage && (
-            <div className="flex gap-2">
+            <>
               <button
                 type="button"
                 onClick={handlePrev}
                 disabled={currentIndex === 0}
-                className="rounded-lg border border-slate-200 bg-white p-2 text-slate-700 shadow-sm hover:text-blue-600 hover:border-blue-300 disabled:opacity-35 transition"
+                aria-label={`Xem ${title} trước`}
+                className="absolute -left-5 top-1/2 z-30 hidden -translate-y-1/2 rounded-full border border-slate-200 bg-white p-3 text-slate-700 shadow-lg transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-slate-200 disabled:hover:bg-white md:inline-flex"
               >
-                <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
+                <ChevronLeft className="h-5 w-5 stroke-[2.5]" />
               </button>
               <button
                 type="button"
                 onClick={handleNext}
                 disabled={currentIndex >= maxStartIndex}
-                className="rounded-lg border border-slate-200 bg-white p-2 text-slate-700 shadow-sm hover:text-blue-600 hover:border-blue-300 disabled:opacity-35 transition"
+                aria-label={`Xem thêm ${title}`}
+                className="absolute -right-5 top-1/2 z-30 hidden -translate-y-1/2 rounded-full border border-slate-200 bg-white p-3 text-slate-700 shadow-lg transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-slate-200 disabled:hover:bg-white md:inline-flex"
               >
-                <ChevronRight className="w-4 h-4 stroke-[2.5]" />
+                <ChevronRight className="h-5 w-5 stroke-[2.5]" />
               </button>
-            </div>
+            </>
           )}
-        </div>
 
-        {/* Carousel Window */}
-        <div className="relative">
           <div className="overflow-hidden py-4 px-1 -mx-1">
             <div 
               className="flex transition-transform duration-500 ease-in-out gap-4"
@@ -106,7 +107,7 @@ export function CategoryProductSection({ title, subtitle, products = [] }) {
                   </div>
                 ))
               ) : (
-                <div className="w-full rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center text-sm text-slate-400">
+                <div className="w-full rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center text-sm text-slate-700">
                   Danh mục này hiện chưa có sản phẩm.
                 </div>
               )}
@@ -122,7 +123,7 @@ export function CategoryProductSection({ title, subtitle, products = [] }) {
                   type="button"
                   onClick={() => setCurrentIndex(index)}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
-                    index === currentIndex ? "w-5 bg-blue-600" : "w-1.5 bg-slate-300 hover:bg-slate-450"
+                    index === currentIndex ? "w-5 bg-slate-900" : "w-1.5 bg-slate-300 hover:bg-slate-450"
                   }`}
                 />
               ))}

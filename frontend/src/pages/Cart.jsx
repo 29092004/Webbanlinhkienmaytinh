@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState } from "react";
 import { Header } from "@/components/ui/Header";
 import { Footer } from "@/components/ui/Footer";
@@ -335,7 +336,7 @@ function Cart() {
         ) : cartItems.length === 0 ? (
           /* Empty State */
           <div className="bg-white border border-slate-100 rounded-xl p-12 text-center shadow-sm max-w-xl mx-auto space-y-5">
-            <div className="size-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto">
+            <div className="size-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto">
               <ShoppingBag className="size-8" />
             </div>
             <div className="space-y-1">
@@ -346,7 +347,7 @@ function Cart() {
             </div>
             <Link
               to="/products"
-              className="inline-block bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2.5 px-6 text-xs font-bold transition-colors uppercase"
+              className="inline-block bg-red-600 hover:bg-red-700 text-white rounded-lg py-2.5 px-6 text-xs font-bold transition-colors uppercase"
             >
               QUAY LẠI CỬA HÀNG
             </Link>

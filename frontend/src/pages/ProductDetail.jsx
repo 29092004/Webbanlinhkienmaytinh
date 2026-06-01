@@ -189,7 +189,7 @@ function ProductDetail() {
                 <span className="text-slate-300">|</span>
                 <button
                   onClick={() => setActiveTab("reviews")}
-                  className="text-blue-600 hover:underline transition font-bold"
+                  className="text-slate-900 hover:underline transition font-bold"
                 >
                   {displayProduct.reviewsCount} Đánh giá
                 </button>
@@ -229,7 +229,7 @@ function ProductDetail() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   onClick={() => handleAddCurrentProductToCart({ redirectToCheckout: true })}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition-colors uppercase cursor-pointer"
+                  className="bg-red-600 hover:bg-red-700 text-white font-extrabold py-3.5 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition-colors uppercase cursor-pointer"
                 >
                   MUA NGAY
                 </button>
@@ -244,13 +244,13 @@ function ProductDetail() {
               <button className="w-full border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold py-3.5 px-4 rounded-2xl text-[10px] flex items-center justify-center transition-colors uppercase">
                 TRẢ GÓP 0% QUA THẺ TÍN DỤNG (XÉT DUYỆT TỨC THÌ)
               </button>
-              <button
-                type="button"
-                onClick={() => setIsCompareModalOpen(true)}
-                className="w-full bg-white hover:bg-blue-50 border border-blue-600 text-blue-600 font-bold py-3.5 px-4 rounded-2xl text-[10px] flex items-center justify-center gap-1.5 transition-colors uppercase cursor-pointer"
-              >
-                <RefreshCw className="size-3.5" />
-                So sánh sản phẩm này
+                <button
+                  type="button"
+                  onClick={() => setIsCompareModalOpen(true)}
+                  className="w-full bg-white hover:bg-slate-50 border border-slate-900 text-slate-900 font-bold py-3.5 px-4 rounded-2xl text-[10px] flex items-center justify-center gap-1.5 transition-colors uppercase cursor-pointer"
+                >
+                  <RefreshCw className="size-3.5" />
+                  So sánh sản phẩm này
               </button>
             </div>
           </div>
@@ -269,7 +269,7 @@ function ProductDetail() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`pb-3 text-xs md:text-sm font-bold tracking-wider whitespace-nowrap border-b-2 transition-all cursor-pointer ${
                     isActive
-                      ? "border-blue-600 text-blue-600"
+                      ? "border-slate-900 text-slate-900"
                       : "border-transparent text-slate-500 hover:text-slate-900"
                   }`}
                 >
@@ -311,7 +311,7 @@ function ProductDetail() {
               <h2 className="font-extrabold text-slate-950 text-xl tracking-tight">Sản phẩm liên quan</h2>
               <p className="text-xs text-slate-400 font-semibold mt-1">Các sản phẩm khác cùng danh mục hoặc gần nhất trong cửa hàng</p>
             </div>
-            <a href="/products" className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1">
+            <a href="/products" className="text-xs font-bold text-slate-900 hover:text-slate-700 transition-colors flex items-center gap-1">
               Xem tất cả →
             </a>
           </div>

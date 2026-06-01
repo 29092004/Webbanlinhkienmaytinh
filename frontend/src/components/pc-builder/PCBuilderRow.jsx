@@ -29,14 +29,14 @@ export function PCBuilderRow({
     <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr_auto] items-center gap-4 py-4 border-b border-slate-100 last:border-b-0 hover:bg-slate-50/30 px-3 rounded-2xl transition">
       {/* Category Info */}
       <div className="flex items-center gap-3">
-        <span className="text-xs font-bold text-slate-300">
+        <span className="text-xs font-medium text-slate-300">
           {String(index + 1).padStart(2, "0")}
         </span>
         <div>
-          <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+          <h3 className="text-[17px] font-semibold text-slate-900 tracking-[-0.01em]">
             {slot.name}
           </h3>
-          <span className="text-[10px] text-slate-400 font-semibold">
+          <span className="text-xs text-slate-400 font-medium">
             {slot.category_name}
           </span>
         </div>
@@ -60,10 +60,10 @@ export function PCBuilderRow({
 
           {/* Name & Brand */}
           <div className="min-w-0">
-            <h4 className="text-sm font-extrabold text-slate-900 truncate">
+            <h4 className="text-[15px] font-semibold text-slate-900 truncate tracking-[-0.01em]">
               {selectedProduct.name}
             </h4>
-            <span className="text-xs font-bold text-slate-400">
+            <span className="text-sm font-medium text-slate-400">
               {selectedProduct.brand_name || "Linh kiện"}
             </span>
           </div>
@@ -73,16 +73,16 @@ export function PCBuilderRow({
             <button
               onClick={() => onQtyChange(slot.id, quantity - 1)}
               disabled={quantity <= 1}
-              className="size-7 rounded-lg border border-slate-200 flex items-center justify-center text-xs font-bold hover:bg-slate-100 disabled:opacity-40 transition cursor-pointer"
+              className="size-7 rounded-lg border border-slate-200 flex items-center justify-center text-sm font-semibold hover:bg-slate-100 disabled:opacity-40 transition cursor-pointer"
             >
               -
             </button>
-            <span className="w-8 text-center text-xs font-black text-slate-800">
+            <span className="w-8 text-center text-sm font-semibold text-slate-800">
               {quantity}
             </span>
             <button
               onClick={() => onQtyChange(slot.id, quantity + 1)}
-              className="size-7 rounded-lg border border-slate-200 flex items-center justify-center text-xs font-bold hover:bg-slate-100 transition cursor-pointer"
+              className="size-7 rounded-lg border border-slate-200 flex items-center justify-center text-sm font-semibold hover:bg-slate-100 transition cursor-pointer"
             >
               +
             </button>
@@ -90,16 +90,16 @@ export function PCBuilderRow({
 
           {/* Pricing Info */}
           <div className="text-right flex flex-col items-end">
-            <div className="text-sm font-extrabold text-slate-950">
+            <div className="text-[15px] font-semibold text-slate-950">
               {Number(unitPrice * quantity).toLocaleString("vi-VN")} đ
             </div>
             {hasDiscount && (
-              <span className="text-[10px] text-slate-400 line-through font-semibold">
+              <span className="text-xs text-slate-400 line-through font-medium">
                 {Number(originalPrice * quantity).toLocaleString("vi-VN")} đ
               </span>
             )}
             {quantity > 1 && (
-              <span className="text-[10px] text-slate-400 font-bold">
+              <span className="text-xs text-slate-400 font-medium">
                 {Number(unitPrice).toLocaleString("vi-VN")} đ / chiếc
               </span>
             )}
@@ -108,7 +108,7 @@ export function PCBuilderRow({
       ) : (
         <button
           onClick={onSelectClick}
-          className="border border-dashed border-slate-200 hover:border-blue-400 bg-white hover:bg-blue-50/10 rounded-xl px-4 py-3 flex items-center justify-center gap-2 text-xs font-bold text-blue-600 hover:text-blue-700 transition cursor-pointer min-h-[58px] w-full text-left sm:w-auto sm:min-w-[280px] lg:justify-start"
+          className="border border-dashed border-slate-200 hover:border-slate-400 bg-white hover:bg-slate-50 rounded-xl px-4 py-3 flex items-center justify-center gap-2 text-[15px] font-semibold text-slate-900 transition cursor-pointer min-h-[58px] w-full text-left sm:w-auto sm:min-w-[280px] lg:justify-start tracking-[-0.01em]"
         >
           <Plus className="size-4" />
           Chọn {slot.name}
@@ -120,7 +120,7 @@ export function PCBuilderRow({
         <div className="flex items-center gap-2 lg:ml-4 justify-end">
           <button
             onClick={onSelectClick}
-            className="p-2 border border-slate-200 hover:border-blue-600 rounded-xl hover:bg-blue-50/30 text-slate-400 hover:text-blue-600 transition cursor-pointer"
+            className="p-2 border border-slate-200 hover:border-slate-400 rounded-xl hover:bg-slate-50 text-slate-400 hover:text-slate-900 transition cursor-pointer"
             title="Đổi linh kiện"
           >
             <RefreshCw className="size-4" />

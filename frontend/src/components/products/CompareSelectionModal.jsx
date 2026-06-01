@@ -69,7 +69,7 @@ export function CompareSelectionModal({
       <div className="bg-white rounded-3xl w-full max-w-lg max-h-[85vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h2 className="text-lg font-extrabold text-slate-900">
+          <h2 className="text-lg font-semibold tracking-[-0.02em] text-slate-900">
             Chọn sản phẩm so sánh
           </h2>
           <button
@@ -85,7 +85,7 @@ export function CompareSelectionModal({
           {/* Recently Viewed / Suggestion Section */}
           {!searchQuery.trim() && sameCategoryProducts.length > 0 && (
             <div className="space-y-3">
-              <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
+              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-[0.04em]">
                 {currentProduct.category_name || "Sản phẩm"} cùng danh mục
               </h3>
               <div className="grid grid-cols-2 gap-4">
@@ -109,7 +109,7 @@ export function CompareSelectionModal({
                           <ImageOff className="size-8 text-slate-300" />
                         )}
                       </div>
-                      <h4 className="text-xs font-bold text-slate-800 line-clamp-2 min-h-[32px] mb-2">
+                      <h4 className="text-[15px] font-semibold tracking-[-0.01em] text-slate-900 line-clamp-2 min-h-[40px] mb-2 leading-5">
                         {product.name}
                       </h4>
                       <p className="text-xs font-extrabold text-red-600 mb-3">
@@ -117,7 +117,7 @@ export function CompareSelectionModal({
                       </p>
                       <button
                         onClick={() => onSelect(product)}
-                        className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl py-2 text-xs font-bold flex items-center justify-center gap-1 transition"
+                        className="w-full bg-red-50 hover:bg-red-100 text-red-600 rounded-xl py-2 text-xs font-semibold flex items-center justify-center gap-1 transition"
                       >
                         <Check className="size-3.5" />
                         So sánh
@@ -131,10 +131,10 @@ export function CompareSelectionModal({
 
           {/* Search Section */}
           <div className="space-y-3">
-            <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-[0.04em]">
               Hoặc nhập tên để tìm
             </h3>
-            <div className="relative flex items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-100 transition">
+            <div className="relative flex items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 focus-within:border-red-600 focus-within:ring-2 focus-within:ring-red-100 transition">
               <Search className="size-4.5 text-slate-400 mr-2 shrink-0" />
               <input
                 type="text"
@@ -183,7 +183,7 @@ export function CompareSelectionModal({
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-bold text-slate-800 truncate">
+                        <h4 className="text-[16px] font-semibold tracking-[-0.01em] text-slate-900 truncate">
                           {product.name}
                         </h4>
                         <p className="text-xs font-semibold text-slate-400">
@@ -195,7 +195,7 @@ export function CompareSelectionModal({
                       </div>
                       <button
                         onClick={() => onSelect(product)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2 text-xs font-bold transition shrink-0"
+                        className="bg-red-600 hover:bg-red-700 text-white rounded-xl px-4 py-2 text-xs font-semibold transition shrink-0"
                       >
                         So sánh
                       </button>

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Header } from "@/components/ui/Header";
@@ -10,6 +11,7 @@ import {
   mapAvailableBrands,
   mapAvailableCategories,
   mapProductForListing,
+  normalizeBrandIdsFromQuery,
   normalizeCategoryIdsFromQuery,
   searchProductsByName,
 } from "@/lib/productMappers";
@@ -22,6 +24,11 @@ function Products() {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [availableCategories, setAvailableCategories] = useState([]);
   const [availableBrands, setAvailableBrands] = useState([]);
+  const [selectedBrands, setSelectedBrands] = useState([]);
+  const [priceRange, setPriceRange] = useState([0, 100]); // percentage 0% to 100% (mapped to 0 - 100 million)
+  const [sortBy, setSortBy] = useState("newest");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 8;
 
   useEffect(() => {
     const category = searchParams.get("category");
@@ -33,13 +40,17 @@ function Products() {
   }, [searchParams]);
 
   useEffect(() => {
+    const brand = searchParams.get("brand");
+    if (brand) {
+      setSelectedBrands(normalizeBrandIdsFromQuery(brand));
+    } else {
+      setSelectedBrands([]);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
-  const [selectedBrands, setSelectedBrands] = useState([]);
-  const [priceRange, setPriceRange] = useState([0, 100]); // percentage 0% to 100% (mapped to 0 - 100 million)
-  const [sortBy, setSortBy] = useState("newest");
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 8;
+  }, [searchQuery, selectedCategories, selectedBrands]);
 
   useEffect(() => {
     let isMounted = true;

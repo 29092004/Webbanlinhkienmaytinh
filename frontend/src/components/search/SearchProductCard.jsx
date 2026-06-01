@@ -3,11 +3,6 @@ import { Link } from "react-router-dom";
 
 const formatCurrency = (value) => `${value.toLocaleString("vi-VN")}đ`;
 
-const tagToneClassName = {
-  blue: "bg-blue-950/70 text-blue-500",
-  orange: "bg-orange-950/60 text-orange-500",
-};
-
 export default function SearchProductCard({ product }) {
   return (
     <article className="overflow-hidden rounded-lg border border-slate-300 bg-white shadow-sm">

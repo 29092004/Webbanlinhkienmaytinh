@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export default function CheckoutForm({
   formData,
@@ -10,6 +10,20 @@ export default function CheckoutForm({
 
   const [selectedCityCode, setSelectedCityCode] = useState("");
   const [selectedDistrictCode, setSelectedDistrictCode] = useState("");
+
+  const updateCity = useCallback((name, code) => {
+    setSelectedCityCode(code);
+    onFormChange({ target: { name: "city", value: name } });
+  }, [onFormChange]);
+
+  const updateDistrict = useCallback((name, code) => {
+    setSelectedDistrictCode(code);
+    onFormChange({ target: { name: "district", value: name } });
+  }, [onFormChange]);
+
+  const updateWard = useCallback((name) => {
+    onFormChange({ target: { name: "ward", value: name } });
+  }, [onFormChange]);
 
   // Load provinces on mount
   useEffect(() => {
@@ -27,7 +41,7 @@ export default function CheckoutForm({
         }
       })
       .catch((err) => console.error("Lỗi tải danh sách Tỉnh/Thành:", err));
-  }, []);
+  }, [formData.city, updateCity]);
 
   // Load districts when selectedCityCode changes
   useEffect(() => {
@@ -74,21 +88,7 @@ export default function CheckoutForm({
         }
       })
       .catch((err) => console.error("Lỗi tải danh sách Phường/Xã:", err));
-  }, [formData.ward, selectedDistrictCode]);
-
-  const updateCity = (name, code) => {
-    setSelectedCityCode(code);
-    onFormChange({ target: { name: "city", value: name } });
-  };
-
-  const updateDistrict = (name, code) => {
-    setSelectedDistrictCode(code);
-    onFormChange({ target: { name: "district", value: name } });
-  };
-
-  const updateWard = (name) => {
-    onFormChange({ target: { name: "ward", value: name } });
-  };
+  }, [formData.ward, selectedDistrictCode, updateWard]);
 
   const handleCityChange = (e) => {
     const cityName = e.target.value;
@@ -272,4 +272,3 @@ export default function CheckoutForm({
     </div>
   );
 }
-
