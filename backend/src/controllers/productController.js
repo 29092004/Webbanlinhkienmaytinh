@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import XLSX from 'xlsx';
 import productModel from '../models/productModel.js';
-import { productUploadDir, sanitizeFileName } from '../middlewares/uploadMiddleware.js';
+import { createUniqueFileName, productUploadDir } from '../middlewares/uploadMiddleware.js';
 
 const normalizeImageValues = (value) => {
     if (typeof value === 'string') {
@@ -43,16 +43,14 @@ const finalizeUploadedImages = async (files = []) => {
     const finalizedNames = [];
 
     for (const file of files) {
-        if (!file?.path) {
+        if (!file?.buffer) {
             continue;
         }
 
-        const { baseName, extension } = sanitizeFileName(file.originalname, 'product');
-        const finalName = `${baseName}${extension}`;
+        const finalName = createUniqueFileName(productUploadDir, file.originalname, 'product');
         const finalPath = path.join(productUploadDir, finalName);
 
-        await fs.copyFile(file.path, finalPath);
-        await fs.unlink(file.path).catch(() => null);
+        await fs.writeFile(finalPath, file.buffer);
 
         file.filename = finalName;
         file.path = finalPath;
@@ -171,12 +169,12 @@ const parseSpecificationFile = async (file) => {
     const extension = path.extname(file.originalname).toLowerCase();
 
     if (extension === '.json') {
-        const content = await fs.readFile(file.path, 'utf8');
+        const content = file.buffer.toString('utf8');
         const parsedJson = JSON.parse(content);
         return JSON.stringify(parsedJson);
     }
 
-    const workbook = XLSX.readFile(file.path);
+    const workbook = XLSX.read(file.buffer, { type: 'buffer' });
     const sheetNames = workbook.SheetNames ?? [];
 
     if (sheetNames.length === 0) {

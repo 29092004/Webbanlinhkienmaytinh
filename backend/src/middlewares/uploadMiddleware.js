@@ -7,13 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const productUploadDir = path.resolve(__dirname, '../../uploads/products');
-const productTempUploadDir = path.resolve(__dirname, '../../uploads/products-temp');
-const specUploadDir = path.resolve(__dirname, '../../uploads/specs-temp');
-const supportUploadDir = path.resolve(__dirname, '../../uploads/support');
 fs.mkdirSync(productUploadDir, { recursive: true });
-fs.mkdirSync(productTempUploadDir, { recursive: true });
-fs.mkdirSync(specUploadDir, { recursive: true });
-fs.mkdirSync(supportUploadDir, { recursive: true });
 
 const sanitizeFileName = (originalName, fallbackName) => {
     const extension = path.extname(originalName);
@@ -45,35 +39,6 @@ const createUniqueFileName = (directory, originalName, fallbackName) => {
     return candidateName;
 };
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        if (file.fieldname === 'specFile') {
-            cb(null, specUploadDir);
-            return;
-        }
-
-        if (file.fieldname === 'supportImage') {
-            cb(null, supportUploadDir);
-            return;
-        }
-
-        cb(null, productTempUploadDir);
-    },
-    filename: (req, file, cb) => {
-        let fileName;
-
-        if (file.fieldname === 'specFile') {
-            fileName = createUniqueFileName(specUploadDir, file.originalname, 'specification');
-        } else if (file.fieldname === 'supportImage') {
-            fileName = createUniqueFileName(supportUploadDir, file.originalname, 'support');
-        } else {
-            fileName = createUniqueFileName(productTempUploadDir, file.originalname, 'product');
-        }
-
-        cb(null, fileName);
-    },
-});
-
 const allowedSpecExtensions = new Set(['.xlsx', '.xls', '.json']);
 
 const uploadFileFilter = (req, file, cb) => {
@@ -96,12 +61,20 @@ const uploadFileFilter = (req, file, cb) => {
 };
 
 const uploadProductAssets = multer({
-    storage,
+    storage: multer.memoryStorage(),
     fileFilter: uploadFileFilter,
     limits: {
         fileSize: 5 * 1024 * 1024,
     },
 });
+
+const uploadSupportImage = multer({
+    storage: multer.memoryStorage(),
+    fileFilter: uploadFileFilter,
+    limits: {
+        fileSize: 5 * 1024 * 1024,
+    },
+}).single('supportImage');
 
 const collectUploadedFiles = (fileGroups = {}) =>
     Object.values(fileGroups)
@@ -148,8 +121,6 @@ const withProductAssetUpload = (fields) => {
     };
 };
 
-const uploadSupportImage = uploadProductAssets.single('supportImage');
-
 const withSupportImageUpload = (req, res, next) => {
     uploadSupportImage(req, res, (error) => {
         if (!error) {
@@ -174,9 +145,7 @@ const withSupportImageUpload = (req, res, next) => {
 export { uploadProductAssets, withProductAssetUpload };
 export {
     createUniqueFileName,
-    productTempUploadDir,
     productUploadDir,
     sanitizeFileName,
-    supportUploadDir,
     withSupportImageUpload,
 };

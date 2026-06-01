@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import app from './app.js';
-import { connectMongo } from './config/mongo.js';
 import db from './config/mysql.js';
+import SupportModel from './models/supportModel.js';
 
 const PORT = process.env.PORT || 9000;
 
@@ -17,7 +17,7 @@ const connectMySQL = async () => {
 
 const startServer = async () => {
     await connectMySQL();
-    await connectMongo();
+    await SupportModel.ensureTables();
 
     app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
