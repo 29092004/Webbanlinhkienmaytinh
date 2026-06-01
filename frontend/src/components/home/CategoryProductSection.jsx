@@ -1,44 +1,135 @@
-import { ImageOff } from "lucide-react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ProductCard } from "@/components/products/ProductCard";
 
 export function CategoryProductSection({ title, subtitle, products = [] }) {
-  return (
-    <section className="bg-[#f8f9fa] border-t border-gray-100 py-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{title}</h2>
-          <p className="mt-2 text-xs font-medium text-gray-500">{subtitle}</p>
-        </div>
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {products.length > 0 ? (
-            products.map((product) => (
-              <div key={product.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex flex-col relative group hover:shadow-md transition-shadow">
-                <Link to={`/product/${product.id}`} className="aspect-square bg-gray-50 rounded-lg mb-4 overflow-hidden p-2 flex items-center justify-center">
-                  {product.image ? (
-                    <img src={product.image} alt={product.name} className="object-cover w-full h-full rounded group-hover:scale-105 transition-transform duration-300" />
-                  ) : (
-                    <div className="flex h-full w-full flex-col items-center justify-center rounded bg-gray-100 text-gray-400">
-                      <ImageOff className="mb-2 size-10" />
-                      <span className="text-xs font-medium">Chưa có hình ảnh</span>
-                    </div>
-                  )}
-                </Link>
-                <Link to={`/product/${product.id}`}>
-                  <h3 className="min-h-[40px] text-sm font-bold text-gray-900 line-clamp-2">{product.name}</h3>
-                </Link>
-                <p className="mb-4 mt-1 min-h-[32px] text-[11px] text-gray-500">{product.desc}</p>
-                <div className="mt-auto">
-                  <div className="text-base font-bold text-blue-600">{product.price}₫</div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="col-span-full rounded-xl border border-dashed border-gray-200 bg-white px-6 py-10 text-center text-sm text-gray-500">
-              Danh mục này hiện chưa có sản phẩm.
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const getCardsPerPage = () => {
+    if (windowWidth < 640) return 1;
+    if (windowWidth < 1024) return 2;
+    return 4;
+  };
+
+  const cardsPerPage = getCardsPerPage();
+  const maxStartIndex = Math.max(products.length - cardsPerPage, 0);
+
+  // Auto-slide effect
+  useEffect(() => {
+    if (products.length <= cardsPerPage || isHovered) return;
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev >= maxStartIndex ? 0 : prev + 1));
+    }, 4500); // slightly different timing from flash sale
+    return () => clearInterval(timer);
+  }, [products.length, maxStartIndex, isHovered, cardsPerPage]);
+
+  const handlePrev = () => {
+    setCurrentIndex((prev) => Math.max(prev - 1, 0));
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => Math.min(prev + 1, maxStartIndex));
+  };
+
+  const getTranslateXStyle = () => {
+    if (windowWidth < 640) {
+      return `translateX(calc(-${currentIndex} * (100% + 16px)))`;
+    } else if (windowWidth < 1024) {
+      return `translateX(calc(-${currentIndex} * (50% + 16px)))`;
+    } else {
+      return `translateX(calc(-${currentIndex} * (25% + 16px)))`;
+    }
+  };
+
+  return (
+    <section 
+      className="bg-slate-50 border-t border-slate-100 py-10"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Title Block */}
+        <div className="flex justify-between items-end mb-6">
+          <div className="border-l-4 border-blue-600 pl-3">
+            <h2 className="text-xl font-extrabold text-gray-900 tracking-tight uppercase">
+              {title}
+            </h2>
+            <p className="text-xs text-gray-500 font-semibold mt-0.5">{subtitle}</p>
+          </div>
+          
+          {/* Custom navigation inside title bar on mobile/desktop */}
+          {products.length > cardsPerPage && (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handlePrev}
+                disabled={currentIndex === 0}
+                className="rounded-lg border border-slate-200 bg-white p-2 text-slate-700 shadow-sm hover:text-blue-600 hover:border-blue-300 disabled:opacity-35 transition"
+              >
+                <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
+              </button>
+              <button
+                type="button"
+                onClick={handleNext}
+                disabled={currentIndex >= maxStartIndex}
+                className="rounded-lg border border-slate-200 bg-white p-2 text-slate-700 shadow-sm hover:text-blue-600 hover:border-blue-300 disabled:opacity-35 transition"
+              >
+                <ChevronRight className="w-4 h-4 stroke-[2.5]" />
+              </button>
             </div>
           )}
         </div>
+
+        {/* Carousel Window */}
+        <div className="relative">
+          <div className="overflow-hidden py-4 px-1 -mx-1">
+            <div 
+              className="flex transition-transform duration-500 ease-in-out gap-4"
+              style={{ transform: getTranslateXStyle() }}
+            >
+              {products.length > 0 ? (
+                products.map((product) => (
+                  <div 
+                    key={product.id} 
+                    className="w-full sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] shrink-0"
+                  >
+                    <ProductCard product={product} />
+                  </div>
+                ))
+              ) : (
+                <div className="w-full rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center text-sm text-slate-400">
+                  Danh mục này hiện chưa có sản phẩm.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Dots Indicator */}
+          {products.length > cardsPerPage && (
+            <div className="mt-4 flex items-center justify-center gap-1.5">
+              {Array.from({ length: maxStartIndex + 1 }, (_, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => setCurrentIndex(index)}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    index === currentIndex ? "w-5 bg-blue-600" : "w-1.5 bg-slate-300 hover:bg-slate-450"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
       </div>
     </section>
   );

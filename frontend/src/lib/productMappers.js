@@ -98,6 +98,13 @@ export const mapSaleProductsForHome = (products = []) => {
       quantity: Number(product.quantity || 0),
       progressWidth: `${Math.max(8, Math.round((Number(product.quantity || 0) / maxQuantity) * 100))}%`,
       saleMeta: product.sale_duration ? `${product.sale_duration} ngày` : product.category_name || "Đang sale",
+      specs: product.specs,
+      warranty: product.warranty,
+      origin: product.origin,
+      description: product.description,
+      sale_id: product.sale_id,
+      sale_type: product.sale_type,
+      sale_value: product.sale_value,
     };
   });
 };
@@ -112,6 +119,11 @@ export const mapRegularProductsForHome = (products = []) =>
       desc: buildProductDescription(product),
       price: formatCurrency(product.retail_price),
       image: resolveAssetUrl(product.images?.[0]?.url),
+      specs: product.specs,
+      warranty: product.warranty,
+      origin: product.origin,
+      quantity: product.quantity,
+      description: product.description,
     }));
 
 export const mapCategoryProductsForHome = (products = [], categoryNames = []) => {
@@ -119,14 +131,33 @@ export const mapCategoryProductsForHome = (products = [], categoryNames = []) =>
 
   return products
     .filter((product) => normalizedCategoryNames.includes(String(product.category_name || "").trim().toLowerCase()))
-    .slice(0, 4)
-    .map((product) => ({
-      id: product.id,
-      name: product.name,
-      desc: buildProductDescription(product),
-      price: formatCurrency(product.retail_price),
-      image: resolveAssetUrl(product.images?.[0]?.url),
-    }));
+    .slice(0, 10)
+    .map((product) => {
+      const pricing = calculateDiscountedPrice({
+        retailPrice: product.retail_price,
+        saleType: product.sale_type,
+        saleValue: product.sale_value,
+        isOnSale: Boolean(product.sale_id),
+      });
+
+      return {
+        id: product.id,
+        name: product.name,
+        desc: buildProductDescription(product),
+        price: formatCurrency(pricing.finalPrice),
+        originalPrice: pricing.finalPrice < pricing.basePrice ? formatCurrency(pricing.basePrice) : "",
+        discount: getSaleLabel(product),
+        image: resolveAssetUrl(product.images?.[0]?.url),
+        specs: product.specs,
+        warranty: product.warranty,
+        origin: product.origin,
+        quantity: product.quantity,
+        description: product.description,
+        sale_id: product.sale_id,
+        sale_type: product.sale_type,
+        sale_value: product.sale_value,
+      };
+    });
 };
 
 export const mapProductForListing = (product) => {
@@ -148,6 +179,14 @@ export const mapProductForListing = (product) => {
     rating: buildProductRating(product),
     reviewsCount: Number(product.quantity || 0),
     image: resolveAssetUrl(product.images?.[0]?.url),
+    specs: product.specs,
+    warranty: product.warranty,
+    origin: product.origin,
+    quantity: product.quantity,
+    description: product.description,
+    sale_id: product.sale_id,
+    sale_type: product.sale_type,
+    sale_value: product.sale_value,
   };
 };
 

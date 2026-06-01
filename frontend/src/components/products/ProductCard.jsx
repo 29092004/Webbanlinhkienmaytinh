@@ -1,10 +1,67 @@
+import { useRef, useState } from "react";
 import { ImageOff, ShoppingCart, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { addProductToCart } from "@/lib/cartStore";
 import { showToast } from "@/lib/toast";
+import { ProductHoverPopup } from "./ProductHoverPopup";
 
 export function ProductCard({ product }) {
+  const cardRef = useRef(null);
+  const [coords, setCoords] = useState(null);
   const productDetailPath = `/product/${product.id || 3}`;
+
+  const updateCoords = (e) => {
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    const { clientX, clientY } = e;
+
+    const popupWidth = 700;
+    const popupHeight = 440; // Conservative height estimate to prevent bottom clipping
+
+    let left = 0;
+    if (clientX > windowWidth / 2) {
+      left = clientX - popupWidth - 24;
+    } else {
+      left = clientX + 24;
+    }
+
+    if (left < 12) {
+      left = 12;
+    } else if (left + popupWidth > windowWidth - 12) {
+      left = windowWidth - popupWidth - 12;
+    }
+
+    let top = 0;
+    if (clientY > windowHeight / 2) {
+      // Near bottom: position popup above the cursor so it isn't cut off
+      top = clientY - popupHeight - 15;
+    } else {
+      // Near top: position popup aligned/below the cursor
+      top = clientY - 80;
+    }
+
+    // Viewport height safety boundaries
+    if (top + popupHeight > windowHeight - 12) {
+      top = windowHeight - popupHeight - 12;
+    }
+    if (top < 12) {
+      top = 12;
+    }
+
+    setCoords({ top, left });
+  };
+
+  const handleMouseEnter = (e) => {
+    updateCoords(e);
+  };
+
+  const handleMouseMove = (e) => {
+    updateCoords(e);
+  };
+
+  const handleMouseLeave = () => {
+    setCoords(null);
+  };
 
   const handleAddToCart = async () => {
     try {
@@ -23,7 +80,15 @@ export function ProductCard({ product }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-slate-100 flex flex-col relative group hover:shadow-[0_10px_30px_rgba(0,0,0,0.05)] transition-all duration-300">
+    <div 
+      ref={cardRef}
+      onMouseEnter={handleMouseEnter}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className="bg-white rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-slate-100 flex flex-col relative group hover:shadow-[0_10px_30px_rgba(0,0,0,0.05)] transition-all duration-300"
+    >
+      <ProductHoverPopup product={product} coords={coords} />
+
       {product.isOnSale ? (
         <span className="absolute left-3 top-3 z-10 rounded-lg bg-[#e21a36] px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.08em] text-white shadow-sm">
           Sale
@@ -67,11 +132,15 @@ export function ProductCard({ product }) {
       {/* Pricing */}
       <div className="flex flex-col gap-0.5 mb-4 pl-0.5">
         <span className="text-red-600 font-extrabold text-[17px]">
-          {product.price.toLocaleString("vi-VN")}đ
+          {typeof product.price === "number" 
+            ? `${product.price.toLocaleString("vi-VN")}đ` 
+            : String(product.price).endsWith("đ") ? product.price : `${product.price}đ`}
         </span>
         {product.originalPrice ? (
           <span className="text-slate-400 text-xs line-through font-semibold">
-            {product.originalPrice.toLocaleString("vi-VN")}đ
+            {typeof product.originalPrice === "number" 
+              ? `${product.originalPrice.toLocaleString("vi-VN")}đ` 
+              : String(product.originalPrice).endsWith("đ") ? product.originalPrice : `${product.originalPrice}đ`}
           </span>
         ) : (
           <span className="text-transparent text-xs select-none">0đ</span>
