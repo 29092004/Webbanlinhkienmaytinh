@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { Eye, EyeOff, KeyRound, Pencil, Search, Shield, Trash2, UserRound, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 

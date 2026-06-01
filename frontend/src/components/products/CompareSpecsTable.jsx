@@ -61,7 +61,7 @@ export function CompareSpecsTable({ products = [] }) {
       {/* Table Title Section with filter toggle */}
       <div className="px-6 py-4 bg-slate-50/50 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <h3 className="text-sm font-extrabold text-slate-800 tracking-wider uppercase">
+          <h3 className="text-[16px] font-semibold tracking-[-0.01em] text-slate-900">
             Thông số kỹ thuật chi tiết
           </h3>
           <span className="text-[11px] font-bold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full">
@@ -70,12 +70,12 @@ export function CompareSpecsTable({ products = [] }) {
         </div>
 
         {products.length > 1 && (
-          <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-slate-600 hover:text-blue-600 transition">
+          <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-bold text-slate-600 hover:text-slate-900 transition">
             <input
               type="checkbox"
               checked={onlyShowDifferences}
               onChange={(e) => setOnlyShowDifferences(e.target.checked)}
-              className="size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              className="size-4 rounded border-slate-300 text-slate-900 focus:ring-slate-400 cursor-pointer accent-slate-900"
             />
             Chỉ xem điểm khác biệt
           </label>

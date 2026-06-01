@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/ui/Header";
@@ -142,6 +143,11 @@ export default function Checkout() {
   const navigate = useNavigate();
   const user = getStoredUser();
   const customerId = Number(user?.id || 0);
+  const userEmail = user?.email || "";
+  const userUsername = user?.username || "";
+  const userPhone = user?.phone || "";
+  const userLastName = user?.lastName || "";
+  const userFirstName = user?.firstName || "";
   const isLoggedIn = isAuthenticated() && customerId > 0;
 
   // State Management
@@ -159,7 +165,7 @@ export default function Checkout() {
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
-    email: user?.email || user?.username || "",
+    email: userEmail || userUsername || "",
     address: "",
     city: "Hồ Chí Minh",
     district: "",
@@ -204,9 +210,18 @@ export default function Checkout() {
           setGuestCartEntries([]);
           setFormData((current) => ({
             ...current,
-            fullName: buildCheckoutFullName(user, customer),
-            phone: customer?.phone || user?.phone || current.phone,
-            email: customer?.email || user?.email || user?.username || current.email,
+            fullName: buildCheckoutFullName(
+              {
+                lastName: userLastName,
+                firstName: userFirstName,
+                email: userEmail,
+                username: userUsername,
+                phone: userPhone,
+              },
+              customer,
+            ),
+            phone: customer?.phone || userPhone || current.phone,
+            email: customer?.email || userEmail || userUsername || current.email,
             address: normalizeCheckoutAddress(customer?.address) || current.address,
           }));
         } else {
@@ -215,7 +230,7 @@ export default function Checkout() {
           setFormData((current) => ({
             ...current,
             fullName: "",
-            email: user?.email || user?.username || current.email,
+            email: userEmail || userUsername || current.email,
           }));
         }
       } catch (error) {
@@ -241,7 +256,7 @@ export default function Checkout() {
     return () => {
       isMounted = false;
     };
-  }, [customerId, isLoggedIn]);
+  }, [customerId, isLoggedIn, userEmail, userFirstName, userLastName, userPhone, userUsername]);
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;

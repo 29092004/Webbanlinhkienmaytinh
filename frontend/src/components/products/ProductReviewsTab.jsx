@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Star, User, ChevronDown } from "lucide-react";
+import { Star, ChevronDown } from "lucide-react";
 
 export function ProductReviewsTab() {
   const [reviews, setReviews] = useState([

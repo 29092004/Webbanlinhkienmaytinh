@@ -64,6 +64,12 @@ export const normalizeCategoryIdsFromQuery = (rawCategory) => {
   return CATEGORY_QUERY_ALIASES[normalized] || [normalized];
 };
 
+export const normalizeBrandIdsFromQuery = (rawBrand) =>
+  String(rawBrand || "")
+    .split(",")
+    .map((brand) => brand.trim())
+    .filter(Boolean);
+
 export const getSaleLabel = (product) => {
   if (!product?.sale_id) {
     return "";
@@ -105,6 +111,9 @@ export const mapSaleProductsForHome = (products = []) => {
       sale_id: product.sale_id,
       sale_type: product.sale_type,
       sale_value: product.sale_value,
+      sale_start_date: product.start_date || null,
+      sale_end_date: product.end_date || null,
+      sale_is_active: Boolean(product.sale_is_active),
     };
   });
 };
@@ -130,6 +139,7 @@ export const mapCategoryProductsForHome = (products = [], categoryNames = []) =>
   const normalizedCategoryNames = categoryNames.map((name) => name.trim().toLowerCase());
 
   return products
+    .filter((product) => !product.sale_id)
     .filter((product) => normalizedCategoryNames.includes(String(product.category_name || "").trim().toLowerCase()))
     .slice(0, 10)
     .map((product) => {

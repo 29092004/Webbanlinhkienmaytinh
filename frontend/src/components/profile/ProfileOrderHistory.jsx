@@ -17,10 +17,10 @@ export default function ProfileOrderHistory({ orders }) {
       <div className="flex items-center gap-3">
         <PackageCheck className="size-6 text-blue-700" />
         <div>
-          <h2 className="m-0 text-2xl font-black text-slate-950">
+          <h2 className="m-0 text-[2rem] font-bold tracking-[-0.02em] text-slate-950 sm:text-[2.15rem]">
             Lịch sử đơn hàng
           </h2>
-          <p className="mt-2 text-sm font-medium text-slate-500">
+          <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
             Theo dõi trạng thái và xem lại các đơn hàng đã mua.
           </p>
         </div>
@@ -35,11 +35,11 @@ export default function ProfileOrderHistory({ orders }) {
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <h3 className="m-0 text-lg font-black text-blue-700">
+                  <h3 className="m-0 text-lg font-semibold tracking-[-0.01em] text-blue-700">
                     {order.code || order.id}
                   </h3>
                   <span
-                    className={`rounded-full px-3 py-1 text-sm font-bold ${
+                    className={`rounded-full px-3 py-1 text-sm font-semibold tracking-[-0.01em] ${
                       statusClassName[order.status] || "bg-slate-100 text-slate-700"
                     }`}
                   >
@@ -55,12 +55,12 @@ export default function ProfileOrderHistory({ orders }) {
               </div>
 
               <div className="md:text-right">
-                <p className="text-xl font-black text-slate-950">
+                <p className="text-xl font-bold tracking-[-0.02em] text-slate-950">
                   {formatCurrency(order.total)}
                 </p>
                 <Link
                   to={`/order/${order.id}`}
-                  className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-blue-700 transition hover:text-blue-900"
+                  className="mt-3 inline-flex items-center gap-1 text-sm font-semibold tracking-[-0.01em] text-blue-700 transition hover:text-blue-900"
                 >
                   Xem chi tiết
                   <ChevronRight className="size-4" />

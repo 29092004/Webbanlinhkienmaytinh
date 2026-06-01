@@ -33,7 +33,7 @@ export function CompareHeader({
       {/* Column 0: Information / Sidebar */}
       <div className="flex flex-col justify-between p-2 border-b md:border-b-0 md:border-r border-slate-100 pr-4">
         <div>
-          <h2 className="text-xl font-black text-blue-700 uppercase tracking-tight">
+          <h2 className="text-xl font-semibold text-slate-900 tracking-[-0.02em]">
             So sánh
           </h2>
           <p className="text-xs text-slate-400 font-bold mt-1">
@@ -96,7 +96,7 @@ export function CompareHeader({
 
                 {/* Name */}
                 <Link to={detailPath} className="block">
-                  <h3 className="font-bold text-slate-900 text-sm hover:text-blue-600 transition line-clamp-2 min-h-[40px] leading-snug">
+                  <h3 className="text-[15px] font-semibold tracking-[-0.01em] text-slate-900 hover:text-slate-700 transition line-clamp-2 min-h-[40px] leading-snug">
                     {product.name}
                   </h3>
                 </Link>
@@ -135,12 +135,12 @@ export function CompareHeader({
           <div
             key={`empty-${index}`}
             onClick={onAddClick}
-            className="border-2 border-dashed border-slate-200 hover:border-blue-500 rounded-2xl p-6 flex flex-col items-center justify-center text-center bg-white hover:bg-blue-50/10 transition duration-300 cursor-pointer group min-h-[220px]"
+            className="border-2 border-dashed border-slate-200 hover:border-slate-900 rounded-2xl p-6 flex flex-col items-center justify-center text-center bg-white hover:bg-slate-50 transition duration-300 cursor-pointer group min-h-[220px]"
           >
-            <div className="size-11 rounded-full bg-slate-50 group-hover:bg-blue-100 flex items-center justify-center text-slate-400 group-hover:text-blue-600 transition mb-3">
+            <div className="size-11 rounded-full bg-slate-50 group-hover:bg-slate-900 flex items-center justify-center text-slate-400 group-hover:text-white transition mb-3">
               <Plus className="size-5" />
             </div>
-            <span className="text-xs font-bold text-slate-600 group-hover:text-blue-600 transition">
+            <span className="text-xs font-bold text-slate-600 group-hover:text-slate-900 transition">
               Thêm sản phẩm
             </span>
             <span className="text-[10px] text-slate-400 font-semibold mt-1">

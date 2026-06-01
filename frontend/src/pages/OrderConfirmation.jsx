@@ -22,6 +22,7 @@ export default function OrderConfirmation() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const user = getStoredUser();
+  const userId = Number(user?.id || 0);
   const paymentStatus = searchParams.get("paymentStatus") || "default";
   const [orderView, setOrderView] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -106,7 +107,7 @@ export default function OrderConfirmation() {
             throw new Error("Order was not created after VNPay success");
           }
 
-          await clearServerCart(user?.id).catch(() => null);
+          await clearServerCart(userId).catch(() => null);
           sessionStorage.removeItem(PENDING_VNPAY_ORDER_KEY);
           sessionStorage.removeItem(PENDING_VNPAY_ORDER_LOCK_KEY);
           sessionStorage.setItem(pendingVnpayOrderResultKey, String(createdOrderId));
@@ -186,7 +187,7 @@ export default function OrderConfirmation() {
     return () => {
       isMounted = false;
     };
-  }, [searchParams]);
+  }, [navigate, searchParams, userId]);
 
   useEffect(() => {
     const paymentStatus = searchParams.get("paymentStatus");

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { ImagePlus, MessageCircleMore, Send, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 

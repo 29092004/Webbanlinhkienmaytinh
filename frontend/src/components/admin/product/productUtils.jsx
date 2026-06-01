@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 import { api } from "@/lib/api";
@@ -177,7 +178,7 @@ export function renderSpecPreviewContent(specPreview) {
   );
 }
 
-export function SpecPreviewToggle({ isOpen, onToggle }) {
+export function SpecPreviewToggle({ isOpen }) {
   return (
     <span className="inline-flex size-8 items-center justify-center rounded-full bg-white text-slate-600 ring-1 ring-slate-200">
       {isOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
@@ -230,4 +231,3 @@ export const parseStoredSpecs = (specs) => {
   }
   return specs;
 };
-

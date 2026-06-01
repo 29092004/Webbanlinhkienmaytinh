@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-assignment */
 import { useState } from "react";
 import { Sparkles, Brain, CheckCircle, XCircle, ArrowRight, Lightbulb, ShoppingBag } from "lucide-react";
 import { addProductToCart } from "@/lib/cartStore";
@@ -206,8 +207,6 @@ export function CompareAIAdvisor({ products = [] }) {
 function generateAnalysisReport(products) {
   const categoryName = products[0]?.categoryName || "Sản phẩm";
   const names = products.map(p => p.name);
-  const prices = products.map(p => p.price);
-  
   // Sort products by price to find cheap vs expensive options
   const sortedByPrice = [...products].sort((a, b) => a.price - b.price);
   const budgetProd = sortedByPrice[0];

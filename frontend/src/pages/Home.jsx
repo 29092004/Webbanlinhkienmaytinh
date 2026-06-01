@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 
 import { HeroSection } from "@/components/home/HeroSection";
 import { CategorySection } from "@/components/home/CategorySection";
 import { CategoryProductSection } from "@/components/home/CategoryProductSection";
 import { FlashSaleSection } from "@/components/home/FlashSaleSection";
+import { StorePolicies } from "@/components/home/StorePolicies";
+import { PromoBanners } from "@/components/home/PromoBanners";
+import { BrandShowcase } from "@/components/home/BrandShowcase";
 import {
   mapCategoryProductsForHome,
   mapSaleProductsForHome,
@@ -13,18 +15,26 @@ import { Header } from "@/components/ui/Header";
 import { Footer } from "@/components/ui/Footer";
 import { api } from "@/lib/api";
 
+const HOME_PRODUCTS_CACHE_KEY = "exo_home_products_cache_v2";
+
 const HOME_CATEGORY_SECTIONS = [
   {
     key: "laptop",
     title: "Laptop",
     subtitle: "Các mẫu laptop nổi bật đang có trong cửa hàng",
-    categoryNames: ["Laptop"],
+    categoryNames: ["Laptop", "Gaming Laptop"],
   },
   {
     key: "keyboard",
     title: "Bàn phím",
     subtitle: "Phụ kiện bàn phím phục vụ làm việc và gaming",
     categoryNames: ["Bàn phím", "Keyboard"],
+  },
+  {
+    key: "mouse",
+    title: "Chuột",
+    subtitle: "Các mẫu chuột máy tính cho công việc và gaming",
+    categoryNames: ["Chuột", "Mouse"],
   },
   {
     key: "case",
@@ -40,9 +50,34 @@ const HOME_CATEGORY_SECTIONS = [
   },
 ];
 
+function buildHomeSections(products = []) {
+  return HOME_CATEGORY_SECTIONS.map((section) => ({
+    ...section,
+    products: mapCategoryProductsForHome(products, section.categoryNames),
+  }));
+}
+
+function readCachedHomeProducts() {
+  try {
+    const cachedValue = localStorage.getItem(HOME_PRODUCTS_CACHE_KEY);
+    const cachedProducts = cachedValue ? JSON.parse(cachedValue) : [];
+    const normalizedProducts = Array.isArray(cachedProducts) ? cachedProducts : [];
+
+    return {
+      saleProducts: mapSaleProductsForHome(normalizedProducts),
+      categorySections: buildHomeSections(normalizedProducts),
+    };
+  } catch {
+    return {
+      saleProducts: [],
+      categorySections: buildHomeSections([]),
+    };
+  }
+}
+
 function Home() {
-  const [saleProducts, setSaleProducts] = useState([]);
-  const [categorySections, setCategorySections] = useState([]);
+  const [saleProducts, setSaleProducts] = useState(() => readCachedHomeProducts().saleProducts);
+  const [categorySections, setCategorySections] = useState(() => readCachedHomeProducts().categorySections);
 
   useEffect(() => {
     let isMounted = true;
@@ -56,26 +91,18 @@ function Home() {
           return;
         }
 
+        localStorage.setItem(HOME_PRODUCTS_CACHE_KEY, JSON.stringify(products));
         setSaleProducts(mapSaleProductsForHome(products));
-        setCategorySections(
-          HOME_CATEGORY_SECTIONS.map((section) => ({
-            ...section,
-            products: mapCategoryProductsForHome(products, section.categoryNames),
-          }))
-        );
+        setCategorySections(buildHomeSections(products));
       } catch (error) {
         if (!isMounted) {
           return;
         }
 
         console.error("Failed to fetch home products", error);
-        setSaleProducts([]);
-        setCategorySections(
-          HOME_CATEGORY_SECTIONS.map((section) => ({
-            ...section,
-            products: [],
-          }))
-        );
+        const cachedHomeState = readCachedHomeProducts();
+        setSaleProducts(cachedHomeState.saleProducts);
+        setCategorySections(cachedHomeState.categorySections);
       }
     };
 
@@ -90,11 +117,14 @@ function Home() {
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 relative">
       <Header />
 
-      <main className="mx-auto max-w-7xl">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16">
         <HeroSection />
+        <StorePolicies />
         <CategorySection />
         <FlashSaleSection products={saleProducts} />
-        {categorySections.map((section) => (
+        
+        {/* Render first two categories */}
+        {categorySections.slice(0, 2).map((section) => (
           <CategoryProductSection
             key={section.key}
             title={section.title}
@@ -102,6 +132,20 @@ function Home() {
             products={section.products}
           />
         ))}
+
+        <PromoBanners />
+
+        {/* Render remaining categories */}
+        {categorySections.slice(2).map((section) => (
+          <CategoryProductSection
+            key={section.key}
+            title={section.title}
+            subtitle={section.subtitle}
+            products={section.products}
+          />
+        ))}
+
+        <BrandShowcase />
       </main>
 
       <Footer />

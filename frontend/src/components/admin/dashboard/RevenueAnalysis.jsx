@@ -30,12 +30,16 @@ export function RevenueAnalysis({
   const maxValue = Math.max(1, ...data.map((item) => item.value));
   const stepX = data.length > 1 ? (chartWidth - paddingX * 2) / (data.length - 1) : 0;
 
-  const points = data.map((item, index) => {
-    const x = paddingX + index * stepX;
-    const normalized = item.value / maxValue;
-    const y = chartHeight - paddingY - normalized * (chartHeight - paddingY * 2);
-    return { ...item, x, y };
-  });
+  const points = useMemo(
+    () =>
+      data.map((item, index) => {
+        const x = paddingX + index * stepX;
+        const normalized = item.value / maxValue;
+        const y = chartHeight - paddingY - normalized * (chartHeight - paddingY * 2);
+        return { ...item, x, y };
+      }),
+    [chartHeight, data, maxValue, paddingX, paddingY, stepX],
+  );
 
   const currentRevenue = data.reduce((total, item) => total + item.value, 0);
   const midpoint = Math.max(1, Math.floor(data.length / 2));

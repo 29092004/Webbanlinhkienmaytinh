@@ -6,13 +6,12 @@ export default function OrderBillingSummary({
   address = {},
   payment = {},
   billing = {},
-  onEditOrderInfo,
 }) {
   return (
     <div className="w-full space-y-8">
       <AddressCard address={address} />
       <PaymentCard payment={payment} />
-      <TotalCard billing={billing} onEditOrderInfo={onEditOrderInfo} />
+      <TotalCard billing={billing} />
     </div>
   );
 }
@@ -61,7 +60,7 @@ function PaymentCard({ payment }) {
   );
 }
 
-function TotalCard({ billing, onEditOrderInfo }) {
+function TotalCard({ billing }) {
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-[0_18px_35px_rgba(15,23,42,0.08)]">
       <CardTitle icon={Receipt}>Tổng kết đơn hàng</CardTitle>

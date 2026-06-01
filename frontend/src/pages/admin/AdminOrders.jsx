@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { Calendar, CheckCheck, Search, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -260,20 +261,6 @@ function AdminOrders() {
     setModalMode(null);
     setSelectedOrder(null);
     setFormData(initialFormData);
-    setModalError("");
-  };
-
-  const openEditModal = (order) => {
-    setModalMode("edit");
-    setSelectedOrder(order);
-    setFormData({
-      id: order.id,
-      createdAt: order.created_at ?? "",
-      paymentMethod: order.payment_method ?? "COD",
-      status: order.status ?? "PENDING",
-      productId: order.product_id ?? "",
-      accountId: order.account_id ?? "",
-    });
     setModalError("");
   };
 

@@ -14,7 +14,6 @@ import {
   Printer,
   ShoppingCart,
   RotateCcw,
-  Sparkles,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { calculateDiscountedPrice } from "@/components/admin/product/productUtils";
@@ -39,7 +38,7 @@ const BUILDER_SLOTS = [
 
 export default function PCBuilder() {
   const [allProducts, setAllProducts] = useState([]);
-  const [activeTab, setActiveTab] = useState(1);
+  const activeTab = 1;
   const [configs, setConfigs] = useState({
     1: {},
     2: {},
@@ -205,46 +204,6 @@ export default function PCBuilder() {
     showToast({ message: "Đã tải cấu hình gợi ý sẵn thành công!", type: "success" });
   };
 
-  // Budget suggestion logic
-  const handleSuggestBudget = (budgetAmount) => {
-    if (allProducts.length === 0) return;
-
-    // Define tiers
-    let selectedIds = [];
-    if (budgetAmount < 18000000) {
-      // Tier 1: Low Budget (< 18M)
-      selectedIds = [1, 5, 13, 17, 22, 28, 32, 34]; // CPU i5 13400F, RTX 4060 FE, B760 Prime, Corsair 16GB, NV2 1TB, MSI 650W, Forge 100R, AR120
-    } else if (budgetAmount < 28000000) {
-      // Tier 2: Mid Budget (18M - 28M)
-      selectedIds = [1, 6, 14, 19, 21, 26, 30, 35]; // CPU i5 13400F, RTX 4060 Ti, B760 Mortar, Corsair 32GB, 980 Pro, CV650, 4000D, TF120
-    } else {
-      // Tier 3: High Budget (>= 28M)
-      selectedIds = [2, 6, 14, 19, 23, 27, 31, 36]; // CPU i7 13700K, RTX 4060 Ti, B760 Mortar, Corsair 32GB, MP600, RM750e, GT301, M240
-    }
-
-    const resolved = {};
-    const slots = [1, 7, 3, 4, 5, 8, 9, 2]; // CPU, GPU, Mainboard, RAM, SSD, PSU, Case, Cooler slots
-
-    slots.forEach((slotId, index) => {
-      const prodId = selectedIds[index];
-      const prod = allProducts.find((p) => p.id === prodId);
-      if (prod) {
-        resolved[slotId] = {
-          product: prod,
-          quantity: 1,
-        };
-      }
-    });
-
-    const nextConfigs = {
-      ...configs,
-      [activeTab]: resolved,
-    };
-    setConfigs(nextConfigs);
-    saveConfig(activeTab, resolved);
-    showToast({ message: "Đã thiết lập cấu hình tối ưu phù hợp ngân sách!", type: "success" });
-  };
-
   // Add all selected products to cart
   const handleAddAllToCart = async () => {
     const items = Object.values(currentConfig);
@@ -258,8 +217,14 @@ export default function PCBuilder() {
       for (const item of items) {
         await addProductToCart({ productId: item.product.id, quantity: item.quantity });
       }
+      const clearedConfig = {};
+      setConfigs({
+        ...configs,
+        [activeTab]: clearedConfig,
+      });
+      localStorage.removeItem(`exo_pc_build_tab_${activeTab}`);
       showToast({
-        message: `Đã thêm tất cả ${items.length} linh kiện vào giỏ hàng thành công!`,
+        message: `Đã thêm tất cả ${items.length} linh kiện vào giỏ hàng và làm trống cấu hình hiện tại!`,
         type: "success",
       });
     } catch (error) {
@@ -515,7 +480,7 @@ export default function PCBuilder() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans text-slate-900">
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans tracking-[-0.01em] text-slate-900">
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1 space-y-6">
@@ -527,52 +492,27 @@ export default function PCBuilder() {
           ]}
         />
 
-        {/* Page Title & Banners */}
-        <div className="rounded-3xl overflow-hidden bg-gradient-to-r from-blue-700 to-indigo-900 text-white p-6 md:p-10 shadow-sm relative space-y-2">
-          <span className="text-[10px] font-black tracking-widest text-blue-200 uppercase bg-blue-600/30 px-3 py-1 rounded-full border border-blue-400/20">
-            Build PC cá nhân
-          </span>
-          <h1 className="text-xl md:text-3xl font-black tracking-tight leading-tight">
-            Build PC - Xây dựng cấu hình máy tính PC giá rẻ chuẩn nhất
-          </h1>
-          <p className="text-xs md:text-sm text-blue-100 max-w-2xl font-medium">
-            Chọn linh kiện xây dựng cấu hình - Tự build PC theo ý thích hoặc tham khảo các cấu hình tối ưu của chúng tôi.
-          </p>
-        </div>
-
-        {/* Config Tab Switches */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-slate-100 p-4 rounded-3xl shadow-sm">
-          {/* Tabs */}
-          <div className="flex overflow-x-auto gap-2 no-scrollbar">
-            {[1, 2, 3, 4, 5].map((tabNum) => (
-              <button
-                key={tabNum}
-                onClick={() => setActiveTab(tabNum)}
-                className={`px-5 py-2.5 rounded-2xl text-xs font-black tracking-wider transition-all whitespace-nowrap cursor-pointer ${
-                  activeTab === tabNum
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "bg-slate-50 text-slate-500 hover:text-slate-900"
-                }`}
-              >
-                CẤU HÌNH {tabNum}
-              </button>
-            ))}
+          <div>
+            <span className="text-base font-semibold text-slate-900 tracking-[-0.01em]">
+              Cấu hình PC của bạn
+            </span>
           </div>
 
           {/* Reset and Estimate Cost */}
           <div className="flex items-center justify-between sm:justify-end gap-6">
             <button
               onClick={handleResetConfig}
-              className="text-xs font-bold text-slate-400 hover:text-red-500 transition flex items-center gap-1 cursor-pointer"
+              className="text-sm font-semibold text-slate-500 hover:text-red-500 transition flex items-center gap-1.5 cursor-pointer"
             >
               <RotateCcw className="size-3.5" />
               Làm mới 🔄
             </button>
             <div className="text-right">
-              <span className="text-[10px] font-bold text-slate-400 block uppercase">
+              <span className="text-[11px] font-medium text-slate-400 block">
                 Chi phí dự tính
               </span>
-              <span className="text-lg font-black text-red-600">
+              <span className="text-xl font-bold text-red-600">
                 {totalPrice.toLocaleString("vi-VN")} đ
               </span>
             </div>
@@ -602,10 +542,10 @@ export default function PCBuilder() {
           {/* Total Sum & Action Buttons */}
           <div className="pt-8 border-t border-slate-100 flex flex-col items-stretch md:items-end gap-6">
             <div className="text-right">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-                Tổng chi phí cấu hình {activeTab}
+              <span className="text-sm font-medium text-slate-400 block">
+                Tổng chi phí cấu hình
               </span>
-              <span className="text-2xl font-black text-red-600 mt-1 block">
+              <span className="text-2xl font-bold text-red-600 mt-1 block">
                 {totalPrice.toLocaleString("vi-VN")} đ
               </span>
             </div>
@@ -614,7 +554,7 @@ export default function PCBuilder() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 w-full">
               <button
                 onClick={handleExportImage}
-                className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-extrabold py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-1.5 transition uppercase cursor-pointer"
+                className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold py-3 px-4 rounded-2xl text-sm flex items-center justify-center gap-1.5 transition cursor-pointer"
               >
                 <Download className="size-4 shrink-0 text-slate-400" />
                 Tải ảnh cấu hình
@@ -622,7 +562,7 @@ export default function PCBuilder() {
 
               <button
                 onClick={handleExportExcel}
-                className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-extrabold py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-1.5 transition uppercase cursor-pointer"
+                className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold py-3 px-4 rounded-2xl text-sm flex items-center justify-center gap-1.5 transition cursor-pointer"
               >
                 <FileSpreadsheet className="size-4 shrink-0 text-slate-400" />
                 Xuất file Excel
@@ -630,7 +570,7 @@ export default function PCBuilder() {
 
               <button
                 onClick={handlePrint}
-                className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-extrabold py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-1.5 transition uppercase cursor-pointer"
+                className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold py-3 px-4 rounded-2xl text-sm flex items-center justify-center gap-1.5 transition cursor-pointer"
               >
                 <Printer className="size-4 shrink-0 text-slate-400" />
                 Xem và in
@@ -639,7 +579,7 @@ export default function PCBuilder() {
               <button
                 onClick={handleAddAllToCart}
                 disabled={isAddingAllToCart}
-                className="bg-[#e21a36] hover:bg-red-700 text-white font-extrabold py-3 px-4 rounded-2xl text-xs flex items-center justify-center gap-1.5 transition-colors uppercase cursor-pointer disabled:bg-red-300"
+                className="bg-[#e21a36] hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-2xl text-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:bg-red-300"
               >
                 <ShoppingCart className="size-4 shrink-0" />
                 Thêm hết vào giỏ hàng
@@ -651,7 +591,6 @@ export default function PCBuilder() {
         {/* Presets and Budget recommendations */}
         <PCBuilderPresets
           onSelectPreset={handleSelectPreset}
-          onSuggestBudget={handleSuggestBudget}
         />
       </main>
 

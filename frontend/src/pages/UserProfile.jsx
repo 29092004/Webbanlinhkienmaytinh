@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from "react";
 
 import { Header } from "@/components/ui/Header";
@@ -40,15 +41,24 @@ function splitDisplayName(fullName = "") {
 
 export default function UserProfile({ section = "profile" }) {
   const user = getStoredUser();
-  const nameFromStoredUser = splitDisplayName(user?.fullName || "");
+  const userId = Number(user?.id || 0);
+  const userEmail = user?.email || "";
+  const userUsername = user?.username || "";
+  const userLastName = user?.lastName || "";
+  const userFirstName = user?.firstName || "";
+  const userFullName = user?.fullName || "";
+  const userPhone = user?.phone || "";
+  const userBirthday = user?.birthday || "1998-10-24";
+  const userGender = user?.gender || "Nam";
+  const nameFromStoredUser = splitDisplayName(userFullName);
   const [profile, setProfile] = useState({
-    lastName: user?.lastName || nameFromStoredUser.lastName,
-    firstName: user?.firstName || nameFromStoredUser.firstName,
-    username: user?.username || user?.email || "",
-    email: user?.email || user?.username || "",
-    phone: user?.phone || "",
-    birthday: user?.birthday || "1998-10-24",
-    gender: user?.gender || "Nam",
+    lastName: userLastName || nameFromStoredUser.lastName,
+    firstName: userFirstName || nameFromStoredUser.firstName,
+    username: userUsername || userEmail || "",
+    email: userEmail || userUsername || "",
+    phone: userPhone || "",
+    birthday: userBirthday,
+    gender: userGender,
   });
   const [customerRecord, setCustomerRecord] = useState(null);
   const [orders, setOrders] = useState([]);
@@ -57,7 +67,7 @@ export default function UserProfile({ section = "profile" }) {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (section !== "profile" || !user?.id) {
+    if (section !== "profile" || !userId) {
       setIsLoading(false);
       return;
     }
@@ -67,7 +77,7 @@ export default function UserProfile({ section = "profile" }) {
     const loadProfile = async () => {
       try {
         setIsLoading(true);
-        const response = await api.get(`/customers/${user.id}`);
+        const response = await api.get(`/customers/${userId}`);
         const customer = response.data?.data || null;
 
         if (!isMounted) {
@@ -77,9 +87,20 @@ export default function UserProfile({ section = "profile" }) {
         setCustomerRecord(customer);
         setProfile((current) => ({
           ...current,
-          ...createProfileState(user, customer),
+          ...createProfileState(
+            {
+              lastName: userLastName,
+              firstName: userFirstName,
+              username: userUsername,
+              email: userEmail,
+              phone: userPhone,
+              birthday: userBirthday,
+              gender: userGender,
+            },
+            customer,
+          ),
         }));
-      } catch (error) {
+      } catch {
         if (!isMounted) {
           return;
         }
@@ -87,8 +108,8 @@ export default function UserProfile({ section = "profile" }) {
         setCustomerRecord(null);
         setProfile((current) => ({
           ...current,
-          username: user?.username || user?.email || current.username,
-          email: user?.email || user?.username || current.email,
+          username: userUsername || userEmail || current.username,
+          email: userEmail || userUsername || current.email,
         }));
       } finally {
         if (isMounted) {
@@ -102,10 +123,10 @@ export default function UserProfile({ section = "profile" }) {
     return () => {
       isMounted = false;
     };
-  }, [section, user?.email, user?.id, user?.username]);
+  }, [section, userBirthday, userEmail, userFirstName, userGender, userId, userLastName, userPhone, userUsername]);
 
   useEffect(() => {
-    if (section !== "orders" || !user?.id) {
+    if (section !== "orders" || !userId) {
       setIsOrdersLoading(false);
       return;
     }
@@ -122,7 +143,7 @@ export default function UserProfile({ section = "profile" }) {
         }
 
         const orderRows = Array.isArray(response.data?.data) ? response.data.data : [];
-        setOrders(mapOrdersForHistory(orderRows, user.id));
+        setOrders(mapOrdersForHistory(orderRows, userId));
       } catch (error) {
         if (!isMounted) {
           return;
@@ -142,7 +163,7 @@ export default function UserProfile({ section = "profile" }) {
     return () => {
       isMounted = false;
     };
-  }, [section, user?.id]);
+  }, [section, userId]);
 
   const handleProfileChange = (field, value) => {
     setProfile((current) => ({
@@ -162,7 +183,7 @@ export default function UserProfile({ section = "profile" }) {
       return;
     }
 
-    if (!user?.id) {
+    if (!userId) {
       showToast({ message: "Bạn cần đăng nhập lại để cập nhật hồ sơ.", type: "error" });
       return;
     }
@@ -173,7 +194,7 @@ export default function UserProfile({ section = "profile" }) {
       setIsSaving(true);
 
       if (customerRecord?.customer_id) {
-        await api.put(`/customers/${user.id}`, {
+        await api.put(`/customers/${userId}`, {
           firstName: nextLastName,
           lastName: nextFirstName,
           email: customerRecord.email || profile.email,
@@ -222,8 +243,8 @@ export default function UserProfile({ section = "profile" }) {
           {section === "profile" ? (
             isLoading ? (
               <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-                <h2 className="text-2xl font-black text-slate-950">Thông tin cá nhân</h2>
-                <p className="mt-3 text-sm font-medium text-slate-500">
+                <h2 className="text-[2rem] font-bold tracking-[-0.02em] text-slate-950 sm:text-[2.15rem]">Thông tin cá nhân</h2>
+                <p className="mt-3 text-sm font-medium leading-6 text-slate-500">
                   Đang tải thông tin tài khoản...
                 </p>
               </section>
@@ -240,8 +261,8 @@ export default function UserProfile({ section = "profile" }) {
           {section === "orders" ? (
             isOrdersLoading ? (
               <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-                <h2 className="text-2xl font-black text-slate-950">Lịch sử đơn hàng</h2>
-                <p className="mt-3 text-sm font-medium text-slate-500">
+                <h2 className="text-[2rem] font-bold tracking-[-0.02em] text-slate-950 sm:text-[2.15rem]">Lịch sử đơn hàng</h2>
+                <p className="mt-3 text-sm font-medium leading-6 text-slate-500">
                   Đang tải danh sách đơn hàng...
                 </p>
               </section>

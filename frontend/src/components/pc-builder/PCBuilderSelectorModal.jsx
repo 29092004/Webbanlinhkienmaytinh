@@ -1,5 +1,6 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState, useMemo } from "react";
-import { Search, X, ImageOff, ChevronDown, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { X, ImageOff, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { api } from "@/lib/api";
 import { resolveAssetUrl, calculateDiscountedPrice } from "@/components/admin/product/productUtils";
 import { searchProductsByName } from "@/lib/productMappers";
@@ -341,7 +342,7 @@ export function PCBuilderSelectorModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 bg-blue-700 text-white shrink-0">
           <div className="flex items-center gap-4 flex-1">
-            <h2 className="text-base font-extrabold tracking-wide uppercase shrink-0">
+            <h2 className="m-0 text-[18px] font-semibold tracking-[-0.01em] text-white shrink-0">
               Chọn linh kiện
             </h2>
             {/* Search Input inside header */}
@@ -350,7 +351,7 @@ export function PCBuilderSelectorModal({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-transparent text-sm font-medium outline-none placeholder:text-slate-400"
+                className="w-full bg-transparent text-[15px] font-medium outline-none placeholder:text-slate-400"
                 placeholder="Bạn cần tìm linh kiện gì?"
               />
               {searchQuery && (
@@ -372,14 +373,14 @@ export function PCBuilderSelectorModal({
         </div>
 
         {/* Sorting header bar */}
-        <div className="px-6 py-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between text-xs font-bold text-slate-500 shrink-0 select-none">
+        <div className="px-6 py-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between text-sm font-medium text-slate-500 shrink-0 select-none">
           <div className="flex items-center gap-3">
             <span>Sắp xếp:</span>
             <div className="relative inline-flex items-center border border-slate-200 rounded-lg bg-white px-2.5 py-1 text-slate-700 hover:border-slate-300">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="pr-6 bg-transparent outline-none cursor-pointer appearance-none text-xs font-bold"
+                className="pr-6 bg-transparent outline-none cursor-pointer appearance-none text-sm font-medium"
               >
                 <option value="default">Tùy chọn</option>
                 <option value="price-asc">Giá tăng dần</option>
@@ -392,7 +393,7 @@ export function PCBuilderSelectorModal({
 
           {/* Pagination Indicators (e.g. 1 2 3 4 5 6 7) */}
           <div className="flex items-center gap-3">
-            <span className="text-[11px] text-slate-400 font-semibold">
+            <span className="text-sm text-slate-400 font-medium">
               Có {processedProducts.length} sản phẩm phù hợp
             </span>
             {totalPages > 1 && (
@@ -408,7 +409,7 @@ export function PCBuilderSelectorModal({
                   <button
                     key={pageNum}
                     onClick={() => setCurrentPage(pageNum)}
-                    className={`size-6 rounded flex items-center justify-center text-xs font-bold transition cursor-pointer ${
+                    className={`size-6 rounded flex items-center justify-center text-xs font-medium transition cursor-pointer ${
                       currentPage === pageNum
                         ? "bg-[#e21a36] text-white"
                         : "bg-white hover:bg-slate-100 border border-slate-200 text-slate-600"
@@ -434,7 +435,7 @@ export function PCBuilderSelectorModal({
           
           {/* Left Column: Filters Sidebar */}
           <aside className="w-full md:w-[270px] border-r border-slate-100 overflow-y-auto shrink-0 bg-slate-50/50 flex flex-col">
-            <div className="p-3 bg-slate-100 border-b border-slate-200 text-center text-[10px] font-black text-slate-500 tracking-wider uppercase">
+            <div className="p-3 bg-slate-100 border-b border-slate-200 text-center text-xs font-medium text-slate-500">
               LỌC SẢN PHẨM THEO
             </div>
             
@@ -442,12 +443,12 @@ export function PCBuilderSelectorModal({
               {/* Brand Filter */}
               {filterOptions.brands.length > 0 && (
                 <div className="space-y-2">
-                  <h3 className="text-xs font-extrabold text-slate-800 uppercase">Hãng sản xuất</h3>
+                  <h3 className="text-sm font-semibold text-slate-800 tracking-[-0.01em]">Hãng sản xuất</h3>
                   <div className="space-y-1.5">
                     {filterOptions.brands.map((brand) => {
                       const count = filterCounts.brands[brand] || 0;
                       return (
-                        <label key={brand} className="flex items-center gap-2.5 cursor-pointer text-xs text-slate-600 font-medium hover:text-slate-900 select-none">
+                        <label key={brand} className="flex items-center gap-2.5 cursor-pointer text-sm text-slate-600 font-medium hover:text-slate-900 select-none">
                           <input
                             type="checkbox"
                             checked={selectedBrands.includes(brand)}
@@ -464,12 +465,12 @@ export function PCBuilderSelectorModal({
 
               {/* Price Filter */}
               <div className="space-y-2">
-                <h3 className="text-xs font-extrabold text-slate-800 uppercase">Khoảng giá</h3>
+                <h3 className="text-sm font-semibold text-slate-800 tracking-[-0.01em]">Khoảng giá</h3>
                 <div className="space-y-1.5">
                   {PRICE_RANGES.map((range) => {
                     const count = filterCounts.priceRanges[range.label] || 0;
                     return (
-                      <label key={range.label} className="flex items-center gap-2.5 cursor-pointer text-xs text-slate-600 font-medium hover:text-slate-900 select-none">
+                      <label key={range.label} className="flex items-center gap-2.5 cursor-pointer text-sm text-slate-600 font-medium hover:text-slate-900 select-none">
                         <input
                           type="checkbox"
                           checked={selectedPriceRanges.includes(range.label)}
@@ -486,12 +487,12 @@ export function PCBuilderSelectorModal({
               {/* Spec Filters (Dynamic) */}
               {Object.entries(filterOptions.specs).map(([specKey, values]) => (
                 <div key={specKey} className="space-y-2">
-                  <h3 className="text-xs font-extrabold text-slate-800 uppercase">{specKey}</h3>
+                  <h3 className="text-sm font-semibold text-slate-800 tracking-[-0.01em]">{specKey}</h3>
                   <div className="space-y-1.5">
                     {values.map((val) => {
                       const count = filterCounts.specs[specKey]?.[val] || 0;
                       return (
-                        <label key={val} className="flex items-center gap-2.5 cursor-pointer text-xs text-slate-600 font-medium hover:text-slate-900 select-none">
+                        <label key={val} className="flex items-center gap-2.5 cursor-pointer text-sm text-slate-600 font-medium hover:text-slate-900 select-none">
                           <input
                             type="checkbox"
                             checked={(selectedSpecFilters[specKey] || []).includes(val)}
@@ -554,20 +555,20 @@ export function PCBuilderSelectorModal({
                           )}
                         </div>
                         {/* Custom Badge */}
-                        <div className="bg-[#fffbeb] border border-amber-200 text-amber-600 text-[8px] font-black tracking-wider px-1.5 py-0.5 rounded uppercase leading-none shadow-3xs select-none">
+                        <div className="bg-[#fffbeb] border border-amber-200 text-amber-600 text-[10px] font-medium px-1.5 py-0.5 rounded leading-none shadow-3xs select-none">
                           Giá sốc <span className="text-red-500">khi build pc</span>
                         </div>
                       </div>
 
                       {/* Content */}
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-extrabold text-slate-950 leading-snug line-clamp-2">
+                        <h4 className="text-[15px] font-semibold text-slate-950 leading-snug line-clamp-2 tracking-[-0.01em]">
                           {product.name}
                         </h4>
                         
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-[11px] font-semibold text-slate-400">
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-xs font-medium text-slate-400">
                           <div>Bảo hành: <span className="text-slate-600">{product.warranty ? `${product.warranty} tháng` : "Đang cập nhật"}</span></div>
-                          <div>Kho hàng: <span className="text-emerald-600 font-bold">{product.quantity > 0 ? "Còn hàng" : "Hết hàng"}</span></div>
+                          <div>Kho hàng: <span className="text-emerald-600 font-semibold">{product.quantity > 0 ? "Còn hàng" : "Hết hàng"}</span></div>
                           <div className="col-span-2 truncate">Mã SP: <span className="text-slate-600">SP-${String(product.id).padStart(4, "0")}</span></div>
                         </div>
                       </div>
@@ -575,15 +576,15 @@ export function PCBuilderSelectorModal({
                       {/* Action & Price Column */}
                       <div className="flex flex-col items-end gap-2 shrink-0 w-full sm:w-auto">
                         <div className="flex flex-col items-end">
-                          <span className="text-sm font-black text-[#e21a36]">
+                          <span className="text-[15px] font-semibold text-[#e21a36]">
                             {Number(finalPrice).toLocaleString("vi-VN")}đ
                           </span>
                           {hasDiscount && (
                             <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="text-[11px] text-slate-400 line-through font-semibold">
+                              <span className="text-xs text-slate-400 line-through font-medium">
                                 {Number(originalPrice).toLocaleString("vi-VN")}đ
                               </span>
-                              <span className="text-[9px] font-black text-white bg-red-500 rounded px-1 py-0.25 select-none leading-none">
+                              <span className="text-[10px] font-medium text-white bg-red-500 rounded px-1 py-0.5 select-none leading-none">
                                 -{discountPercent}%
                               </span>
                             </div>
@@ -593,7 +594,7 @@ export function PCBuilderSelectorModal({
                         <button
                           onClick={() => onSelect(product)}
                           disabled={product.quantity <= 0}
-                          className={`w-full sm:w-auto rounded-xl px-5 py-2.5 text-[11px] font-black transition shrink-0 uppercase cursor-pointer flex items-center justify-center gap-1.5 leading-none shadow-sm ${
+                          className={`w-full sm:w-auto rounded-xl px-5 py-2.5 text-sm font-semibold transition shrink-0 cursor-pointer flex items-center justify-center gap-1.5 leading-none shadow-sm ${
                             product.quantity <= 0
                               ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
                               : "bg-[#0b5490] hover:bg-[#084272] text-white"

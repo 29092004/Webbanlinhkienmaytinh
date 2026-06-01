@@ -1,6 +1,4 @@
-import { useState } from "react";
-import { Sparkles, Check, DollarSign } from "lucide-react";
-import { showToast } from "@/lib/toast";
+import { Check } from "lucide-react";
 
 const PRESET_BUILDS = [
   {
@@ -50,28 +48,15 @@ const PRESET_BUILDS = [
   }
 ];
 
-export function PCBuilderPresets({ onSelectPreset, onSuggestBudget }) {
-  const [budget, setBudget] = useState("");
-
-  const handleSuggest = (e) => {
-    e.preventDefault();
-    const budgetAmount = Number(budget.replace(/[^0-9]/g, ""));
-    if (isNaN(budgetAmount) || budgetAmount < 8000000) {
-      showToast({ message: "Ngân sách tối thiểu từ 8.000.000 đ để build PC.", type: "warning" });
-      return;
-    }
-    onSuggestBudget(budgetAmount);
-  };
-
+export function PCBuilderPresets({ onSelectPreset }) {
   return (
-    <div className="space-y-8 border-t border-slate-200 pt-8">
-      {/* Top Presets */}
+    <div className="border-t border-slate-200 pt-8">
       <div className="space-y-4">
         <div>
-          <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">
+          <h2 className="text-xl font-bold text-slate-900 tracking-[-0.02em] m-0">
             Top cấu hình PC gợi ý sẵn
           </h2>
-          <p className="text-xs text-slate-400 font-semibold mt-1">
+          <p className="text-sm text-slate-400 font-medium mt-1">
             Lựa chọn cấu hình tối ưu hiệu năng được dựng sẵn phù hợp từng nhu cầu
           </p>
         </div>
@@ -83,24 +68,24 @@ export function PCBuilderPresets({ onSelectPreset, onSuggestBudget }) {
               className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between"
             >
               <div>
-                <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md uppercase">
+                <span className="text-xs font-semibold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md">
                   Gợi ý {index + 1}
                 </span>
-                <h3 className="font-extrabold text-slate-900 text-sm mt-2 line-clamp-1">
+                <h3 className="font-semibold text-slate-900 text-[15px] mt-2 line-clamp-1 tracking-[-0.01em]">
                   {build.name}
                 </h3>
-                <p className="text-xs text-slate-400 font-semibold mt-1 line-clamp-2">
+                <p className="text-sm text-slate-400 font-medium mt-1 line-clamp-2">
                   {build.description}
                 </p>
               </div>
 
               <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                <span className="text-xs font-black text-red-600">
+                <span className="text-sm font-semibold text-red-600">
                   {build.estimatedPrice}
                 </span>
                 <button
                   onClick={() => onSelectPreset(build.parts)}
-                  className="bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl px-4 py-2 text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-900 rounded-xl px-4 py-2 text-sm font-semibold transition flex items-center gap-1 cursor-pointer"
                 >
                   <Check className="size-3.5" />
                   Chọn
@@ -109,43 +94,6 @@ export function PCBuilderPresets({ onSelectPreset, onSuggestBudget }) {
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Budget Selector */}
-      <div className="bg-gradient-to-tr from-slate-900 to-indigo-950 rounded-3xl p-6 text-white space-y-4 shadow-lg shadow-indigo-100/50">
-        <div className="flex items-center gap-3">
-          <div className="size-9 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
-            <Sparkles className="size-4.5 text-indigo-400" />
-          </div>
-          <div>
-            <h3 className="text-sm font-extrabold tracking-wide uppercase">
-              Tự động gợi ý theo ngân sách
-            </h3>
-            <p className="text-xs text-indigo-200 font-medium mt-0.5">
-              Nhập số tiền của bạn để AI tự động chọn linh kiện tương thích tối ưu nhất
-            </p>
-          </div>
-        </div>
-
-        <form onSubmit={handleSuggest} className="flex flex-col sm:flex-row items-stretch gap-3">
-          <div className="relative flex-1 flex items-center rounded-2xl border border-white/10 bg-white/5 focus-within:bg-white/10 focus-within:border-white/20 px-4 py-3 transition">
-            <DollarSign className="size-4.5 text-slate-400 mr-2 shrink-0" />
-            <input
-              type="text"
-              value={budget}
-              onChange={(e) => setBudget(e.target.value)}
-              className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder:text-slate-500"
-              placeholder="Ví dụ: 15000000"
-            />
-          </div>
-          <button
-            type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-6 py-3 text-xs font-black transition uppercase flex items-center justify-center gap-2 cursor-pointer shadow-sm shadow-blue-500/20"
-          >
-            <Sparkles className="size-4" />
-            Gợi ý cấu hình
-          </button>
-        </form>
       </div>
     </div>
   );

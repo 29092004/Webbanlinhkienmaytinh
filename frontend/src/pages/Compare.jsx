@@ -8,7 +8,6 @@ import { mapProductDetailForView } from "@/lib/productMappers";
 import { CompareHeader } from "@/components/products/CompareHeader";
 import { CompareSpecsTable } from "@/components/products/CompareSpecsTable";
 import { CompareSelectionModal } from "@/components/products/CompareSelectionModal";
-import { CompareAIAdvisor } from "@/components/products/CompareAIAdvisor";
 import { showToast } from "@/lib/toast";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 
@@ -168,7 +167,7 @@ export default function Compare() {
           </div>
           <button
             onClick={() => navigate("/products")}
-            className="text-xs font-bold text-blue-600 hover:text-blue-700 transition flex items-center gap-1.5"
+            className="text-xs font-bold text-slate-900 hover:text-slate-700 transition flex items-center gap-1.5"
           >
             Quay lại trang sản phẩm
           </button>
@@ -191,9 +190,6 @@ export default function Compare() {
 
             {/* Spec Comparison Table */}
             <CompareSpecsTable products={comparedProducts} />
-
-            {/* AI Advisor Panel */}
-            <CompareAIAdvisor products={comparedProducts} />
           </div>
         ) : (
           <div className="rounded-3xl border-2 border-dashed border-slate-200 bg-white p-12 text-center max-w-xl mx-auto shadow-sm space-y-4">
@@ -206,7 +202,7 @@ export default function Compare() {
             <div className="pt-2">
               <button
                 onClick={() => navigate("/products")}
-                className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-6 py-3 text-xs font-black transition cursor-pointer"
+                className="bg-slate-900 hover:bg-slate-800 text-white rounded-2xl px-6 py-3 text-xs font-black transition cursor-pointer"
               >
                 TỚI DANH SÁCH SẢN PHẨM
               </button>
