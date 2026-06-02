@@ -1,5 +1,6 @@
 import orderModel from '../models/orderModel.js';
 import shippingModel from '../models/shippingModel.js';
+import customerModel from '../models/customerModel.js';
 
 const normalizeOrderDetails = (
     value,
@@ -52,6 +53,10 @@ const normalizeOrderPayload = (body = {}) => {
     const discountAmount = parseRequiredNumber(body.discountAmount ?? body.discount_amount ?? 0);
     const finalPrice = parseRequiredNumber(body.finalPrice ?? body.final_price ?? body.totalPrice ?? body.total_price);
     const customerAddress = body.customerAddress ?? body.customer_address ?? '';
+    const customerEmail = body.customerEmail ?? body.customer_email ?? '';
+    const customerPhone = body.customerPhone ?? body.customer_phone ?? '';
+    const customerFirstName = body.customerFirstName ?? body.customer_first_name ?? '';
+    const customerLastName = body.customerLastName ?? body.customer_last_name ?? '';
     const deliveryMethod = body.deliveryMethod ?? body.delivery_method ?? 'Standard';
     const legacyProductId = body.productId ?? body.product_id ?? null;
     const quantity = body.quantity ?? 1;
@@ -69,12 +74,16 @@ const normalizeOrderPayload = (body = {}) => {
         discountAmount,
         finalPrice,
         customerAddress,
+        customerEmail,
+        customerPhone,
+        customerFirstName,
+        customerLastName,
         deliveryMethod,
         details,
     };
 };
 
-const isValidOrderPayload = (payload) => {
+const isValidOrderPayload = (payload, { requireCustomerAddress = true } = {}) => {
     if (!payload.createdAt || !payload.paymentMethod || !payload.status || !payload.accountId) {
         return false;
     }
@@ -83,7 +92,7 @@ const isValidOrderPayload = (payload) => {
         return false;
     }
 
-    if (!String(payload.customerAddress || '').trim()) {
+    if (requireCustomerAddress && !String(payload.customerAddress || '').trim()) {
         return false;
     }
 
@@ -124,19 +133,25 @@ const orderController = {
     createOrder: async (req, res, next) => {
         try {
             const payload = normalizeOrderPayload(req.body);
+            payload.status = 'PENDING';
 
-            if (!isValidOrderPayload(payload)) {
+            if (!isValidOrderPayload(payload, { requireCustomerAddress: true })) {
                 return res.status(400).json({ message: 'Invalid input' });
             }
 
+            const existingCustomer = await customerModel.getById(payload.accountId);
+            if (existingCustomer) {
+                await customerModel.update(
+                    payload.accountId,
+                    String(payload.customerFirstName || existingCustomer.first_name || existingCustomer.firstName || '').trim() || 'Khách hàng',
+                    String(payload.customerLastName || existingCustomer.last_name || existingCustomer.lastName || '').trim(),
+                    String(payload.customerEmail || existingCustomer.email || '').trim(),
+                    String(payload.customerPhone || existingCustomer.phone || '').trim(),
+                    String(payload.customerAddress || existingCustomer.address || '').trim()
+                );
+            }
+
             const orderId = await orderModel.create(payload);
-            await shippingModel.create(
-                payload.createdAt,
-                payload.deliveryMethod,
-                'PENDING',
-                orderId,
-                String(payload.customerAddress).trim()
-            );
             const createdOrder = await orderModel.getById(orderId);
 
             res.status(201).json({ success: true, orderId, data: createdOrder });
@@ -148,15 +163,47 @@ const orderController = {
     updateOrder: async (req, res, next) => {
         try {
             const { id } = req.params;
-            const payload = normalizeOrderPayload(req.body);
+            const existingOrder = await orderModel.getById(id);
 
-            if (!isValidOrderPayload(payload)) {
+            if (!existingOrder) {
+                return res.status(404).json({ message: 'Order not found' });
+            }
+
+            const payload = normalizeOrderPayload({
+                ...req.body,
+                customerAddress:
+                    req.body.customerAddress ??
+                    req.body.customer_address ??
+                    existingOrder.customer_address ??
+                    existingOrder.shipping_address ??
+                    existingOrder.shippingAddress ??
+                    existingOrder.profile_customer_address ??
+                    '',
+                deliveryMethod:
+                    req.body.deliveryMethod ??
+                    req.body.delivery_method ??
+                    existingOrder.shipping_delivery_method ??
+                    existingOrder.shippingDeliveryMethod ??
+                    'Standard',
+                details:
+                    req.body.details ??
+                    existingOrder.details?.map((detail) => ({
+                        productId: detail.product_id,
+                        quantity: detail.quantity,
+                        subtotalPrice: detail.subtotal_price,
+                        note: detail.note ?? null,
+                    })) ??
+                    [],
+            });
+
+            if (!isValidOrderPayload(payload, { requireCustomerAddress: false })) {
                 return res.status(400).json({ message: 'Invalid input' });
             }
 
             const affectedRows = await orderModel.update(id, payload);
-            if (affectedRows === 0) {
-                return res.status(404).json({ message: 'Order not found' });
+
+            if (payload.status?.toUpperCase() === 'COMPLETED') {
+                await shippingModel.updateLatestStatusByOrderId(id, 'DELIVERED');
             }
 
             const updatedOrder = await orderModel.getById(id);

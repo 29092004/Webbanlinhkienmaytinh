@@ -346,6 +346,10 @@ export default function Checkout() {
       discountAmount: voucherDiscount,
       finalPrice: totalPayment,
       customerAddress,
+      customerEmail: formData.email.trim(),
+      customerPhone: formData.phone.trim(),
+      customerFirstName: formData.fullName.trim().split(" ").slice(0, -1).join(" ") || formData.fullName.trim(),
+      customerLastName: formData.fullName.trim().split(" ").slice(-1).join(" "),
       deliveryMethod: "Standard",
       details: cartItems.map((item) => ({
         productId: item.productId,
@@ -416,7 +420,7 @@ export default function Checkout() {
         setCartEntries([]);
         setGuestCartEntries([]);
 
-        navigate(`/order-confirmation?orderId=${orderId}`);
+        navigate("/order-confirmation");
       } else {
         sessionStorage.removeItem(PENDING_VNPAY_ORDER_KEY);
         clearGuestCart();

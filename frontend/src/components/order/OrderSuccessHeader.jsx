@@ -4,16 +4,13 @@ export default function OrderSuccessHeader({ paymentStatus = "default" }) {
   const isSuccess = paymentStatus !== "failed" && paymentStatus !== "invalid";
 
   return (
-    <div className="flex flex-col items-center text-center space-y-4 py-8 animate-fade-in">
+    <div className="w-full max-w-5xl rounded-[28px] border border-slate-200 bg-white px-6 py-8 text-center shadow-sm md:px-10">
       {/* Animated Check Circle */}
       <div className="relative flex items-center justify-center">
-        {/* Outer glowing ripple */}
-        <div className={`absolute inset-0 rounded-full animate-ping opacity-75 ${isSuccess ? "bg-blue-100/40" : "bg-rose-100/70"}`} />
-        
         {/* Main Circle */}
-        <div className={`relative flex size-20 items-center justify-center rounded-full border-4 bg-white shadow-lg transition-transform duration-500 hover:scale-105 ${isSuccess ? "border-blue-600" : "border-rose-500"}`}>
+        <div className={`relative flex size-20 items-center justify-center rounded-full border-4 bg-white shadow-lg ${isSuccess ? "border-slate-900" : "border-rose-500"}`}>
           {isSuccess ? (
-            <Check className="size-10 text-blue-600 stroke-[3.5]" />
+            <Check className="size-10 text-slate-900 stroke-[3.5]" />
           ) : (
             <X className="size-10 text-rose-500 stroke-[3.5]" />
           )}
@@ -21,12 +18,12 @@ export default function OrderSuccessHeader({ paymentStatus = "default" }) {
       </div>
 
       {/* Success Title */}
-      <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-[-0.01em] mt-4">
+      <h2 className="mt-4 text-2xl font-bold tracking-[-0.01em] text-gray-900 md:text-3xl">
         {isSuccess ? "Đặt hàng thành công" : "Thanh toán chưa thành công"}
       </h2>
 
       {/* Sub-description */}
-      <p className="text-xs md:text-sm text-gray-500 font-semibold max-w-md leading-relaxed">
+      <p className="mx-auto mt-3 max-w-2xl text-sm font-semibold leading-7 text-slate-500 md:text-[1.05rem]">
         {isSuccess
           ? "Cảm ơn bạn đã tin tưởng EXO CORE. Đơn hàng của bạn đã được tiếp nhận và đang được xử lý kỹ thuật tỉ mỉ."
           : "Giao dịch VNPay chưa hoàn tất. Bạn có thể kiểm tra lại đơn hàng hoặc quay về checkout để thực hiện thanh toán lại."}

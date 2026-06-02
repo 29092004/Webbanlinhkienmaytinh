@@ -340,13 +340,13 @@ export function PCBuilderSelectorModal({
       <div className="bg-white rounded-3xl w-full max-w-6xl max-h-[90vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-blue-700 text-white shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 bg-white text-slate-900 shrink-0 border-b border-slate-200">
           <div className="flex items-center gap-4 flex-1">
-            <h2 className="m-0 text-[18px] font-semibold tracking-[-0.01em] text-white shrink-0">
+            <h2 className="m-0 text-[18px] font-semibold tracking-[-0.01em] text-slate-950 shrink-0">
               Chọn linh kiện
             </h2>
             {/* Search Input inside header */}
-            <div className="relative flex-1 max-w-lg flex items-center rounded-xl bg-white text-slate-900 px-4 py-1.5 shadow-sm">
+            <div className="relative flex-1 max-w-lg flex items-center rounded-xl bg-white text-slate-900 px-4 py-1.5 shadow-sm border border-slate-200">
               <input
                 type="text"
                 value={searchQuery}
@@ -366,7 +366,7 @@ export function PCBuilderSelectorModal({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-blue-800 text-white/80 hover:text-white transition ml-4 cursor-pointer"
+            className="p-1.5 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition ml-4 cursor-pointer"
           >
             <X className="size-5" />
           </button>
@@ -453,7 +453,7 @@ export function PCBuilderSelectorModal({
                             type="checkbox"
                             checked={selectedBrands.includes(brand)}
                             onChange={() => handleBrandToggle(brand)}
-                            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 size-4 cursor-pointer"
+                            className="rounded border-slate-300 text-slate-900 focus:ring-slate-400 size-4 cursor-pointer"
                           />
                           <span>{brand} <span className="text-slate-400 font-semibold">({count})</span></span>
                         </label>
@@ -475,7 +475,7 @@ export function PCBuilderSelectorModal({
                           type="checkbox"
                           checked={selectedPriceRanges.includes(range.label)}
                           onChange={() => handlePriceRangeToggle(range.label)}
-                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 size-4 cursor-pointer"
+                          className="rounded border-slate-300 text-slate-900 focus:ring-slate-400 size-4 cursor-pointer"
                         />
                         <span>{range.label} <span className="text-slate-400 font-semibold">({count})</span></span>
                       </label>
@@ -497,7 +497,7 @@ export function PCBuilderSelectorModal({
                             type="checkbox"
                             checked={(selectedSpecFilters[specKey] || []).includes(val)}
                             onChange={() => handleSpecFilterToggle(specKey, val)}
-                            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 size-4 cursor-pointer"
+                            className="rounded border-slate-300 text-slate-900 focus:ring-slate-400 size-4 cursor-pointer"
                           />
                           <span>{val} <span className="text-slate-400 font-semibold">({count})</span></span>
                         </label>
@@ -597,7 +597,7 @@ export function PCBuilderSelectorModal({
                           className={`w-full sm:w-auto rounded-xl px-5 py-2.5 text-sm font-semibold transition shrink-0 cursor-pointer flex items-center justify-center gap-1.5 leading-none shadow-sm ${
                             product.quantity <= 0
                               ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
-                              : "bg-[#0b5490] hover:bg-[#084272] text-white"
+                              : "bg-white hover:bg-slate-50 text-slate-900 border border-slate-900"
                           }`}
                         >
                           {product.quantity <= 0 ? "Hết hàng" : "Thêm vào cấu hình >"}

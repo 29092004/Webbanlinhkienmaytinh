@@ -26,6 +26,10 @@ const orderSelect = `
         c.address AS profile_customer_address,
         ls.shipping_address,
         ls.shipping_address AS shippingAddress,
+        ls.status AS shipping_status,
+        ls.status AS shippingStatus,
+        ls.delivery_method AS shipping_delivery_method,
+        ls.delivery_method AS shippingDeliveryMethod,
         COALESCE(ls.shipping_address, c.address) AS customer_address
     FROM ${tableName} o
     LEFT JOIN account a ON a.id = o.account_id
@@ -55,9 +59,20 @@ const attachOrderDetails = async (orders) => {
             od.order_id AS orderId,
             od.subtotal_price AS subtotalPrice,
             p.name AS product_name,
-            p.name AS productName
+            p.name AS productName,
+            pi.url AS product_image,
+            pi.url AS productImage
         FROM order_detail od
         LEFT JOIN product p ON p.id = od.product_id
+        LEFT JOIN (
+            SELECT pi1.product_id, pi1.url
+            FROM product_image pi1
+            INNER JOIN (
+                SELECT product_id, MIN(id) AS min_image_id
+                FROM product_image
+                GROUP BY product_id
+            ) first_image ON first_image.min_image_id = pi1.id
+        ) pi ON pi.product_id = od.product_id
         WHERE od.order_id IN (?)
         ORDER BY od.order_id ASC, od.product_id ASC
     `, [orderIds]);
@@ -108,6 +123,67 @@ const insertOrderDetails = async (connection, orderId, details = []) => {
 const replaceOrderDetails = async (connection, orderId, details = []) => {
     await connection.query('DELETE FROM order_detail WHERE order_id = ?', [orderId]);
     await insertOrderDetails(connection, orderId, details);
+};
+
+const normalizeDetailQuantity = (detail) => Number(detail.quantity ?? 0);
+
+const validateAndReserveProductQuantities = async (connection, details = []) => {
+    if (!Array.isArray(details) || details.length === 0) {
+        return;
+    }
+
+    const aggregatedQuantities = new Map();
+
+    for (const detail of details) {
+        const productId = Number(detail.productId ?? detail.product_id);
+        const quantity = normalizeDetailQuantity(detail);
+
+        if (!Number.isInteger(productId) || productId <= 0) {
+            const error = new Error('Sản phẩm trong đơn hàng không hợp lệ.');
+            error.status = 400;
+            throw error;
+        }
+
+        if (!Number.isFinite(quantity) || quantity <= 0) {
+            const error = new Error('Số lượng sản phẩm phải lớn hơn 0.');
+            error.status = 400;
+            throw error;
+        }
+
+        aggregatedQuantities.set(productId, (aggregatedQuantities.get(productId) ?? 0) + quantity);
+    }
+
+    const productIds = [...aggregatedQuantities.keys()];
+    const [products] = await connection.query(
+        'SELECT id, name, quantity FROM product WHERE id IN (?) FOR UPDATE',
+        [productIds]
+    );
+
+    const productsById = new Map(products.map((product) => [Number(product.id), product]));
+
+    for (const [productId, requestedQuantity] of aggregatedQuantities.entries()) {
+        const product = productsById.get(productId);
+
+        if (!product) {
+            const error = new Error(`Sản phẩm #${productId} không tồn tại.`);
+            error.status = 404;
+            throw error;
+        }
+
+        const availableQuantity = Number(product.quantity ?? 0);
+        if (availableQuantity < requestedQuantity) {
+            const error = new Error(`Sản phẩm "${product.name}" chỉ còn ${availableQuantity} chiếc.`);
+            error.status = 409;
+            throw error;
+        }
+    }
+
+    for (const [productId, requestedQuantity] of aggregatedQuantities.entries()) {
+        await connection.query(
+            'UPDATE product SET quantity = quantity - ? WHERE id = ?',
+            [requestedQuantity, productId]
+        );
+    }
 };
 
 const OrderModel = {
@@ -165,6 +241,7 @@ const OrderModel = {
             );
 
             await insertOrderDetails(connection, result.insertId, details);
+            await validateAndReserveProductQuantities(connection, details);
             await connection.commit();
 
             return result.insertId;
