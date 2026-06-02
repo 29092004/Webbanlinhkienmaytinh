@@ -1,6 +1,7 @@
 import orderModel from '../models/orderModel.js';
 import shippingModel from '../models/shippingModel.js';
 import customerModel from '../models/customerModel.js';
+import { emailService } from '../services/emailService.js';
 
 const normalizeOrderDetails = (
     value,
@@ -154,6 +155,12 @@ const orderController = {
             const orderId = await orderModel.create(payload);
             const createdOrder = await orderModel.getById(orderId);
 
+            if (createdOrder) {
+                emailService.sendOrderConfirmationEmail(createdOrder).catch((err) => {
+                    console.error('Lỗi gửi email xác nhận đặt hàng:', err);
+                });
+            }
+
             res.status(201).json({ success: true, orderId, data: createdOrder });
         } catch (error) {
             next(error);
@@ -200,6 +207,9 @@ const orderController = {
                 return res.status(400).json({ message: 'Invalid input' });
             }
 
+            const oldStatus = existingOrder.status;
+            const newStatus = payload.status;
+
             const affectedRows = await orderModel.update(id, payload);
 
             if (payload.status?.toUpperCase() === 'COMPLETED') {
@@ -207,6 +217,13 @@ const orderController = {
             }
 
             const updatedOrder = await orderModel.getById(id);
+
+            if (updatedOrder && oldStatus !== newStatus) {
+                emailService.sendOrderStatusUpdateEmail(updatedOrder).catch((err) => {
+                    console.error('Lỗi gửi email cập nhật trạng thái đơn hàng:', err);
+                });
+            }
+
             res.json({ success: true, data: updatedOrder });
         } catch (error) {
             next(error);

@@ -1,6 +1,7 @@
 import shippingModel from '../models/shippingModel.js';
 import orderModel from '../models/orderModel.js';
 import customerModel from '../models/customerModel.js';
+import { emailService } from '../services/emailService.js';
 
 const syncOrderStatusWithShipping = async (orderId, shippingStatus) => {
     const order = await orderModel.getById(orderId);
@@ -106,6 +107,15 @@ const shippingController = {
                 );
             }
             await syncOrderStatusWithShipping(orderId, status);
+
+            const updatedOrder = await orderModel.getById(orderId);
+            const createdShipping = await shippingModel.getById(shippingId);
+            if (updatedOrder && createdShipping) {
+                emailService.sendShippingNotificationEmail(updatedOrder, createdShipping).catch((err) => {
+                    console.error('Lỗi gửi email thông báo vận chuyển:', err);
+                });
+            }
+
             res.status(201).json({ success: true, shippingId });
         } catch (error) {
             next(error);
