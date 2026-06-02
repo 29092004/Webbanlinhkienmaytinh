@@ -34,6 +34,16 @@ function getOrderStatusLabel(status) {
   }
 }
 
+function getAutoShippingPayload(order) {
+  return {
+    date: new Date().toISOString().split("T")[0],
+    deliveryMethod: "Standard",
+    status: "IN_TRANSIT",
+    orderId: Number(order?.id || 0),
+    shippingAddress: String(order?.customer_address || "").trim(),
+  };
+}
+
 function OrderDetailsModal({ open, order, onClose }) {
   if (!open || !order) return null;
 
@@ -116,7 +126,9 @@ function ShippingModal({
   orders = [],
   customers = [],
   onPreviewOrder,
-  isCreate = false
+  isCreate = false,
+  selectedOrder = null,
+  autoShippingPayload = null,
 }) {
   if (!open) return null;
 
@@ -215,89 +227,159 @@ function ShippingModal({
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">Mã đơn đã chọn</label>
-                  <input
-                    type="text"
-                    value={formData.orderId ? `#${formData.orderId}` : ""}
-                    readOnly
-                    className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 text-sm text-slate-600 outline-none"
-                    placeholder="Chưa chọn đơn"
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">Khách hàng</label>
-                  <select
-                    value={formData.customerId}
-                    onChange={(e) => onChange("customerId", e.target.value)}
-                    disabled
-                    className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
-                  >
-                    <option value="">Tự lấy theo đơn hàng</option>
-                    {customers.map(c => (
-                      <option key={c.customer_id} value={c.customer_id}>
-                        {c.first_name} {c.last_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+              {isCreate ? (
+                selectedOrder ? (
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Mã đơn hàng</p>
+                        <p className="mt-2 text-sm font-semibold text-slate-900">#{selectedOrder.id}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Mã khách hàng</p>
+                        <p className="mt-2 text-sm font-semibold text-slate-900">
+                          {selectedOrder.customer_id || selectedOrder.account_id || "N/A"}
+                        </p>
+                      </div>
+                    </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">Phương thức giao hàng</label>
-                  <select
-                    value={formData.deliveryMethod}
-                    onChange={(e) => onChange("deliveryMethod", e.target.value)}
-                    disabled={isSubmitting}
-                    className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
-                  >
-                    <option value="Standard">Tiêu chuẩn</option>
-                    <option value="Express">Hỏa tốc</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">Trạng thái vận chuyển</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => onChange("status", e.target.value)}
-                    disabled={isSubmitting}
-                    className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
-                  >
-                    <option value="PENDING">Chờ lấy hàng</option>
-                    <option value="PICKED_UP">Đã lấy hàng</option>
-                    <option value="IN_TRANSIT">Đang vận chuyển</option>
-                    <option value="DELIVERED">Đã giao thành công</option>
-                    <option value="RETURNED">Đã hoàn hàng</option>
-                  </select>
-                </div>
-              </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Khách hàng</p>
+                      <p className="mt-2 text-sm font-semibold text-slate-900">
+                        {[selectedOrder.customer_first_name, selectedOrder.customer_last_name].filter(Boolean).join(" ") ||
+                          selectedOrder.account_username ||
+                          "N/A"}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {selectedOrder.customer_phone || selectedOrder.customer_email || "Không có liên hệ"}
+                      </p>
+                    </div>
 
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">Địa chỉ giao hàng</label>
-                <input
-                  type="text"
-                  value={formData.shippingAddress}
-                  onChange={(e) => onChange("shippingAddress", e.target.value)}
-                  disabled={isSubmitting}
-                  className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
-                  placeholder="123 Đường ABC, Quận XYZ, Hà Nội"
-                  required
-                />
-              </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Địa chỉ giao hàng</p>
+                      {autoShippingPayload?.shippingAddress ? (
+                        <p className="mt-2 text-sm leading-6 text-slate-700">{autoShippingPayload.shippingAddress}</p>
+                      ) : (
+                        <div className="mt-2 space-y-2">
+                          <p className="text-sm text-amber-700">
+                            Đơn cũ chưa có địa chỉ giao hàng. Nhập địa chỉ một lần để tạo vận đơn và lưu lại cho khách hàng.
+                          </p>
+                          <input
+                            type="text"
+                            value={formData.shippingAddress}
+                            onChange={(e) => onChange("shippingAddress", e.target.value)}
+                            disabled={isSubmitting}
+                            className="h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+                            placeholder="123 Đường ABC, Phường/Xã, Quận/Huyện, Tỉnh/Thành"
+                            required
+                          />
+                        </div>
+                      )}
+                    </div>
 
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">Ngày giao (dự kiến / thực tế)</label>
-                <input
-                  type="date"
-                  value={formData.date ? formData.date.split("T")[0] : ""}
-                  onChange={(e) => onChange("date", e.target.value)}
-                  disabled={isSubmitting}
-                  className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
-                  required
-                />
-              </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Phương thức tạo vận đơn</p>
+                        <p className="mt-2 text-sm font-semibold text-slate-900">Tiêu chuẩn</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Trạng thái sau tạo</p>
+                        <p className="mt-2 text-sm font-semibold text-slate-900">Đang giao</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+                    Chọn một đơn hàng đang xử lý để kiểm tra thông tin và tạo vận đơn.
+                  </div>
+                )
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-slate-700">Mã đơn đã chọn</label>
+                      <input
+                        type="text"
+                        value={formData.orderId ? `#${formData.orderId}` : ""}
+                        readOnly
+                        className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 text-sm text-slate-600 outline-none"
+                        placeholder="Chưa chọn đơn"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-slate-700">Khách hàng</label>
+                      <select
+                        value={formData.customerId}
+                        onChange={(e) => onChange("customerId", e.target.value)}
+                        disabled
+                        className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                      >
+                        <option value="">Tự lấy theo đơn hàng</option>
+                        {customers.map(c => (
+                          <option key={c.customer_id} value={c.customer_id}>
+                            {c.first_name} {c.last_name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-slate-700">Phương thức giao hàng</label>
+                      <select
+                        value={formData.deliveryMethod}
+                        onChange={(e) => onChange("deliveryMethod", e.target.value)}
+                        disabled={isSubmitting}
+                        className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                      >
+                        <option value="Standard">Tiêu chuẩn</option>
+                        <option value="Express">Hỏa tốc</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-slate-700">Trạng thái vận chuyển</label>
+                      <select
+                        value={formData.status}
+                        onChange={(e) => onChange("status", e.target.value)}
+                        disabled={isSubmitting}
+                        className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                      >
+                        <option value="PENDING">Chờ lấy hàng</option>
+                        <option value="PICKED_UP">Đã lấy hàng</option>
+                        <option value="IN_TRANSIT">Đang vận chuyển</option>
+                        <option value="DELIVERED">Đã giao thành công</option>
+                        <option value="RETURNED">Đã hoàn hàng</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">Địa chỉ giao hàng</label>
+                    <input
+                      type="text"
+                      value={formData.shippingAddress}
+                      onChange={(e) => onChange("shippingAddress", e.target.value)}
+                      disabled={isSubmitting}
+                      className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                      placeholder="123 Đường ABC, Quận XYZ, Hà Nội"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">Ngày giao (dự kiến / thực tế)</label>
+                    <input
+                      type="date"
+                      value={formData.date ? formData.date.split("T")[0] : ""}
+                      onChange={(e) => onChange("date", e.target.value)}
+                      disabled={isSubmitting}
+                      className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                      required
+                    />
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -407,6 +489,22 @@ function AdminShipping() {
     });
   }, [orders]);
 
+  const selectedCreateOrder = useMemo(() => {
+    if (modalMode !== "create" || !formData.orderId) {
+      return null;
+    }
+
+    return orders.find((order) => String(order.id) === String(formData.orderId)) || null;
+  }, [formData.orderId, modalMode, orders]);
+
+  const createShippingPreview = useMemo(() => {
+    if (!selectedCreateOrder) {
+      return null;
+    }
+
+    return getAutoShippingPayload(selectedCreateOrder);
+  }, [selectedCreateOrder]);
+
   const getShippingCustomerLabel = (shipping) => {
     const matchedCustomer = customers.find((c) => String(c.customer_id) === String(shipping.customer_id));
 
@@ -444,10 +542,15 @@ function AdminShipping() {
     setModalError("");
   };
 
-  const openCreateModal = () => {
+  const openCreateModal = (order = null) => {
     setModalMode("create");
     setSelectedShipping(null);
-    setFormData(initialFormData);
+    setFormData(order ? {
+      ...initialFormData,
+      orderId: String(order.id),
+      customerId: order.customer_id ?? order.account_id ?? "",
+      shippingAddress: order.customer_address ?? "",
+    } : initialFormData);
     setModalError("");
   };
 
@@ -487,17 +590,30 @@ function AdminShipping() {
 
     setIsSubmitting(true);
     try {
-      const payload = {
-        date: formData.date,
-        deliveryMethod: formData.deliveryMethod,
-        status: formData.status,
-        orderId: Number(formData.orderId),
-        shippingAddress: formData.shippingAddress.trim(),
-      };
-
       if (modalMode === "create") {
+        if (!selectedCreateOrder) {
+          setModalError("Vui lòng chọn đơn hàng cần tạo vận đơn.");
+          return;
+        }
+
+        const payload = {
+          ...getAutoShippingPayload(selectedCreateOrder),
+          shippingAddress: formData.shippingAddress.trim() || getAutoShippingPayload(selectedCreateOrder).shippingAddress,
+        };
+        if (!payload.shippingAddress) {
+          setModalError("Đơn hàng chưa có địa chỉ giao hàng.");
+          return;
+        }
+
         await api.post("/shipping", payload);
       } else if (modalMode === "edit" && selectedShipping) {
+        const payload = {
+          date: formData.date,
+          deliveryMethod: formData.deliveryMethod,
+          status: formData.status,
+          orderId: Number(formData.orderId),
+          shippingAddress: formData.shippingAddress.trim(),
+        };
         await api.put(`/shipping/${selectedShipping.id}`, payload);
       } else if (modalMode === "delete" && selectedShipping) {
         await api.delete(`/shipping/${selectedShipping.id}`);
@@ -578,6 +694,77 @@ function AdminShipping() {
                 <p className="mt-2 text-2xl font-bold leading-none text-slate-950">
                   {shippings.filter(s => s.status?.toUpperCase() === 'DELIVERED').length}
                 </p>
+              </div>
+            </div>
+
+            <div className="mt-7 overflow-hidden rounded-[22px] border border-[#d7e0ec] bg-white">
+              <div className="border-b border-[#d7e0ec] px-6 py-4">
+                <h3 className="text-base font-bold text-slate-900">Đơn hàng chờ tạo vận đơn</h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  Chỉ các đơn đã được duyệt sang trạng thái đang xử lý mới xuất hiện ở đây.
+                </p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-100">
+                  <thead className="bg-white">
+                    <tr className="border-b border-[#d7e0ec] text-left text-[0.9rem] font-bold text-slate-900">
+                      <th className="px-6 py-4">Mã ĐH</th>
+                      <th className="px-6 py-4">Mã KH</th>
+                      <th className="px-6 py-4">Khách hàng</th>
+                      <th className="px-6 py-4">Địa chỉ</th>
+                      <th className="px-6 py-4 text-right">Hành động</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white">
+                    {eligibleOrdersForCreate.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-8 text-center text-sm font-medium text-slate-500">
+                          Không có đơn hàng nào đang xử lý và chờ tạo vận đơn.
+                        </td>
+                      </tr>
+                    ) : (
+                      eligibleOrdersForCreate.map((order) => (
+                        <tr key={order.id} className="text-sm text-slate-700 transition hover:bg-slate-50/70">
+                          <td className="px-6 py-4 font-bold text-slate-900">#{order.id}</td>
+                          <td className="px-6 py-4 font-semibold text-slate-700">
+                            {order.customer_id || order.account_id || "N/A"}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="font-semibold text-slate-900">
+                              {[order.customer_first_name, order.customer_last_name].filter(Boolean).join(" ") || order.account_username || "N/A"}
+                            </div>
+                            <div className="text-[0.75rem] text-slate-500">
+                              {order.customer_phone || order.customer_email || order.payment_method}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 max-w-[260px]">
+                            <span className="truncate text-slate-600" title={order.customer_address}>
+                              {order.customer_address || "Chưa có địa chỉ giao hàng"}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => openOrderPreview(order)}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[0.75rem] font-semibold text-slate-700 transition hover:bg-slate-100"
+                              >
+                                <Eye className="size-3.5" /> Xem
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => openCreateModal(order)}
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-[#2563eb] px-3 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#1d4ed8]"
+                              >
+                                <Truck className="size-3.5" /> Tạo vận đơn
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
 
@@ -697,6 +884,8 @@ function AdminShipping() {
         customers={customers}
         onPreviewOrder={openOrderPreview}
         isCreate
+        selectedOrder={selectedCreateOrder}
+        autoShippingPayload={createShippingPreview}
       />
 
       <ShippingModal

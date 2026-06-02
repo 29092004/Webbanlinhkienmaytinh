@@ -1,5 +1,6 @@
 import shippingModel from '../models/shippingModel.js';
 import orderModel from '../models/orderModel.js';
+import customerModel from '../models/customerModel.js';
 
 const syncOrderStatusWithShipping = async (orderId, shippingStatus) => {
     const order = await orderModel.getById(orderId);
@@ -63,13 +64,28 @@ const shippingController = {
 
     createShipping: async (req, res, next) => {
         try {
-            const { date, status } = req.body;
-            const deliveryMethod = req.body.deliveryMethod ?? req.body.delivery_method;
+            const date = req.body.date ?? new Date().toISOString().slice(0, 10);
+            const status = req.body.status ?? 'IN_TRANSIT';
+            const deliveryMethod = req.body.deliveryMethod ?? req.body.delivery_method ?? 'Standard';
             const orderId = req.body.orderId ?? req.body.order_id ?? req.body.id_order;
-            const shippingAddress = req.body.shippingAddress ?? req.body.shipping_address;
+            let shippingAddress = req.body.shippingAddress ?? req.body.shipping_address;
 
-            if (!date || !deliveryMethod || !status || !orderId || !shippingAddress) {
+            if (!date || !deliveryMethod || !status || !orderId) {
                 return res.status(400).json({ message: 'Invalid input' });
+            }
+
+            const order = await orderModel.getById(orderId);
+            if (!order) {
+                return res.status(404).json({ message: 'Order not found' });
+            }
+
+            if (order.status?.toUpperCase() !== 'PROCESSING') {
+                return res.status(400).json({ message: 'Chỉ có thể tạo vận đơn cho đơn hàng đang xử lý.' });
+            }
+
+            shippingAddress = String(shippingAddress ?? order.customer_address ?? '').trim();
+            if (!shippingAddress) {
+                return res.status(400).json({ message: 'Đơn hàng chưa có địa chỉ giao hàng.' });
             }
 
             const existingShipping = await shippingModel.getByOrderId(orderId);
@@ -78,6 +94,17 @@ const shippingController = {
             }
 
             const shippingId = await shippingModel.create(date, deliveryMethod, status, orderId, shippingAddress);
+            const existingCustomer = await customerModel.getById(order.account_id);
+            if (existingCustomer) {
+                await customerModel.update(
+                    order.account_id,
+                    String(existingCustomer.first_name ?? existingCustomer.firstName ?? '').trim() || 'Khách hàng',
+                    String(existingCustomer.last_name ?? existingCustomer.lastName ?? '').trim(),
+                    String(existingCustomer.email ?? '').trim(),
+                    String(existingCustomer.phone ?? '').trim(),
+                    shippingAddress
+                );
+            }
             await syncOrderStatusWithShipping(orderId, status);
             res.status(201).json({ success: true, shippingId });
         } catch (error) {

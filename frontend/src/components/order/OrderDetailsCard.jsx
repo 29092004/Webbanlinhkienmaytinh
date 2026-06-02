@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Truck } from "lucide-react";
 
 export default function OrderDetailsCard({
-  orderCode = "#EXO-99234",
   paymentStatus = "Đã thanh toán",
   paymentMethodBadge = "VNPay",
   deliveryEstimate = "24 Tháng 5, 2026",
@@ -12,16 +11,7 @@ export default function OrderDetailsCard({
   return (
     <div className="space-y-6 w-full">
       {/* Detail info box */}
-      <div className="bg-white border border-slate-100 rounded-xl p-6 shadow-sm grid grid-cols-2 gap-y-6 gap-x-4">
-        {/* Order code */}
-        <div className="space-y-1">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-            Mã đơn hàng
-          </p>
-          <p className="text-sm md:text-base font-bold tracking-[-0.01em] text-blue-600">
-            {orderCode}
-          </p>
-        </div>
+      <div className="grid grid-cols-1 gap-x-4 gap-y-6 rounded-xl border border-slate-100 bg-white p-6 shadow-sm sm:grid-cols-2">
 
         {/* Payment status */}
         <div className="space-y-1">
@@ -33,7 +23,7 @@ export default function OrderDetailsCard({
               {paymentStatus}
             </span>
             {paymentMethodBadge && (
-              <span className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-black tracking-wide">
+              <span className="text-[9px] bg-slate-100 text-slate-900 px-1.5 py-0.5 rounded font-black tracking-wide">
                 {paymentMethodBadge}
               </span>
             )}
@@ -65,7 +55,7 @@ export default function OrderDetailsCard({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
         <Link
           to="/products"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 px-6 rounded-lg text-xs md:text-sm flex items-center justify-center gap-1.5 shadow-sm transition uppercase tracking-wide"
+          className="bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 font-extrabold py-3.5 px-6 rounded-lg text-xs md:text-sm flex items-center justify-center gap-1.5 shadow-sm transition uppercase tracking-wide"
         >
           <span>Tiếp tục mua sắm</span>
           <ArrowRight className="size-4" />

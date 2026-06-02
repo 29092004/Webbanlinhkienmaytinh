@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { Calendar, CheckCheck, Search, Trash2, X } from "lucide-react";
+import { Calendar, CheckCheck, Eye, Search, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { AdminSidebar } from "@/components/admin/layout/AdminSidebar";
@@ -32,7 +32,38 @@ function buildOrderPayload(order, overrides = {}) {
     quantity: Number(overrides.quantity ?? order.quantity ?? 1),
     subtotalPrice: Number(overrides.subtotalPrice ?? order.subtotal_price ?? order.subtotalPrice ?? order.total_price ?? order.totalPrice ?? 0),
     note: overrides.note ?? order.note ?? null,
+    customerAddress:
+      overrides.customerAddress ??
+      order.customer_address ??
+      order.shipping_address ??
+      order.shippingAddress ??
+      order.profile_customer_address ??
+      "",
+    deliveryMethod:
+      overrides.deliveryMethod ??
+      order.shipping_delivery_method ??
+      order.shippingDeliveryMethod ??
+      "Standard",
   };
+}
+
+function formatCurrency(value) {
+  return Number(value || 0).toLocaleString("vi-VN");
+}
+
+function getOrderStatusLabel(status) {
+  switch (status?.toUpperCase()) {
+    case "COMPLETED":
+      return "Đã hoàn thành";
+    case "CANCELLED":
+      return "Đã hủy";
+    case "SHIPPING":
+      return "Đang giao";
+    case "PROCESSING":
+      return "Đang xử lý";
+    default:
+      return "Chờ xử lý";
+  }
 }
 
 function OrderModal({
@@ -181,6 +212,74 @@ function OrderModal({
   );
 }
 
+function OrderDetailsModal({ open, order, onClose }) {
+  if (!open || !order) return null;
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/45 px-4">
+      <div className="w-full max-w-3xl rounded-[24px] bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.22)] max-h-[90vh] overflow-y-auto">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900">Chi tiết đơn hàng #{order.id}</h2>
+            <p className="mt-1 text-sm text-slate-500">Xem nhanh thông tin khách hàng, sản phẩm và tổng tiền của đơn hàng.</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex size-9 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Khách hàng</p>
+            <p className="mt-2 text-base font-semibold text-slate-900">
+              {[order.customer_first_name, order.customer_last_name].filter(Boolean).join(" ") || order.account_username || "N/A"}
+            </p>
+            <p className="mt-1 text-sm text-slate-600">{order.customer_phone || order.customer_email || "Không có liên hệ"}</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">{order.customer_address || "Chưa có địa chỉ giao hàng"}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Thông tin đơn hàng</p>
+            <div className="mt-2 space-y-2 text-sm text-slate-600">
+              <p><span className="font-semibold text-slate-900">Trạng thái:</span> {getOrderStatusLabel(order.status)}</p>
+              <p><span className="font-semibold text-slate-900">Thanh toán:</span> {order.payment_method || "N/A"}</p>
+              <p><span className="font-semibold text-slate-900">Ngày tạo:</span> {order.created_at ? new Date(order.created_at).toLocaleDateString("vi-VN") : "N/A"}</p>
+              <p><span className="font-semibold text-slate-900">Tổng tiền:</span> {formatCurrency(order.final_price || order.total_price)}đ</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-slate-200">
+          <div className="border-b border-slate-200 px-4 py-3">
+            <h3 className="text-sm font-bold text-slate-900">Sản phẩm trong đơn</h3>
+          </div>
+          <div className="divide-y divide-slate-200">
+            {(order.details?.length ? order.details : [order]).map((detail, index) => (
+              <div key={`${detail.product_id || detail.id || index}-${index}`} className="grid gap-2 px-4 py-4 md:grid-cols-[1fr_auto_auto] md:items-center">
+                <div>
+                  <p className="font-semibold text-slate-900">{detail.product_name || order.product_name || "Sản phẩm"}</p>
+                  {detail.note && <p className="mt-1 text-sm text-slate-500">Ghi chú: {detail.note}</p>}
+                </div>
+                <p className="text-sm text-slate-600">SL: {detail.quantity || 1}</p>
+                <p className="text-sm font-semibold text-slate-900">{formatCurrency(detail.subtotal_price || order.total_price)}đ</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-6 flex justify-end">
+          <Button type="button" onClick={onClose} className="h-11 rounded-2xl bg-slate-900 px-5 text-white hover:bg-slate-800">
+            Đóng
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AdminOrders() {
   const currentUser = getStoredUser();
   const canDeleteOrders = currentUser?.role === "admin";
@@ -194,6 +293,7 @@ function AdminOrders() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [modalError, setModalError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewOrder, setPreviewOrder] = useState(null);
 
   const initialFormData = {
     id: "",
@@ -271,6 +371,10 @@ function AdminOrders() {
     setModalError("");
   };
 
+  const openOrderPreview = (order) => {
+    setPreviewOrder(order);
+  };
+
   const approveOrder = async (order) => {
     setModalError("");
     setIsSubmitting(true);
@@ -279,6 +383,19 @@ function AdminOrders() {
       await loadData();
     } catch (requestError) {
       setError(requestError.response?.data?.message || "Không thể duyệt đơn hàng.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const completeOrder = async (order) => {
+    setModalError("");
+    setIsSubmitting(true);
+    try {
+      await api.put(`/orders/${order.id}`, buildOrderPayload(order, { status: "COMPLETED" }));
+      await loadData();
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || "Không thể hoàn thành đơn hàng.");
     } finally {
       setIsSubmitting(false);
     }
@@ -378,7 +495,7 @@ function AdminOrders() {
               <div className="rounded-2xl border border-[#d7e0ec] bg-white px-6 py-6 shadow-sm">
                 <p className="text-[0.85rem] text-slate-500">Đang xử lý / Giao</p>
                 <p className="mt-2 text-2xl font-bold leading-none text-slate-950">
-                  {orders.filter(o => ['PENDING', 'PROCESSING', 'SHIPPING'].includes(o.status?.toUpperCase())).length}
+                  {orders.filter(o => ['PROCESSING', 'SHIPPING'].includes(o.status?.toUpperCase())).length}
                 </p>
               </div>
             </div>
@@ -438,6 +555,13 @@ function AdminOrders() {
                             </td>
                             <td className="px-6 py-4">
                               <div className="flex justify-end gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => openOrderPreview(order)}
+                                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[0.75rem] font-semibold text-slate-700 transition hover:bg-slate-100"
+                                >
+                                  <Eye className="size-3.5" /> Xem
+                                </button>
                                 {order.status?.toUpperCase() === "PENDING" && (
                                   <button
                                     type="button"
@@ -446,6 +570,16 @@ function AdminOrders() {
                                     className="inline-flex items-center gap-1.5 rounded-lg bg-[#2563eb] px-3 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-60"
                                   >
                                     <CheckCheck className="size-3.5" /> Duyệt đơn
+                                  </button>
+                                )}
+                                {order.status?.toUpperCase() === "SHIPPING" && (
+                                  <button
+                                    type="button"
+                                    onClick={() => completeOrder(order)}
+                                    disabled={isSubmitting}
+                                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#16a34a] px-3 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#15803d] disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    <CheckCheck className="size-3.5" /> Hoàn thành
                                   </button>
                                 )}
                                 {canDeleteOrders ? (
@@ -499,6 +633,12 @@ function AdminOrders() {
           error={modalError}
         />
       ) : null}
+
+      <OrderDetailsModal
+        open={Boolean(previewOrder)}
+        order={previewOrder}
+        onClose={() => setPreviewOrder(null)}
+      />
     </div>
   );
 }

@@ -68,6 +68,24 @@ const ShippingModel = {
         return rows[0] || null;
     },
 
+    updateLatestStatusByOrderId: async (orderId, status) => {
+        const [result] = await db.query(
+            `UPDATE ${table_name}
+            SET status = ?
+            WHERE id = (
+                SELECT latest_shipping_id
+                FROM (
+                    SELECT MAX(id) AS latest_shipping_id
+                    FROM ${table_name}
+                    WHERE order_id = ?
+                ) latest_shipping
+            )`,
+            [status, orderId]
+        );
+
+        return result.affectedRows;
+    },
+
     create: async (date, deliveryMethod, status, orderId, shippingAddress) => {
         const [result] = await db.query(
             `INSERT INTO ${table_name} (date, delivery_method, status, order_id, shipping_address) VALUES (?, ?, ?, ?, ?)`,

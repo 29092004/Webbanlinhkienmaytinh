@@ -45,13 +45,6 @@ export default function OrderConfirmation() {
         const storedCreatedOrderId = sessionStorage.getItem(pendingVnpayOrderResultKey);
 
         if (paymentMethod === "VNPAY" && paymentStatus === "success" && !orderId && parsedPendingVnpayOrder) {
-          if (storedCreatedOrderId) {
-            navigate(`/order-confirmation?orderId=${storedCreatedOrderId}&paymentStatus=success&paymentMethod=VNPAY`, {
-              replace: true,
-            });
-            return;
-          }
-
           const activeCreationLock = sessionStorage.getItem(PENDING_VNPAY_ORDER_LOCK_KEY);
 
           if (activeCreationLock && activeCreationLock === txnRef) {
@@ -60,7 +53,7 @@ export default function OrderConfirmation() {
               const resolvedOrderId = sessionStorage.getItem(pendingVnpayOrderResultKey);
 
               if (resolvedOrderId) {
-                navigate(`/order-confirmation?orderId=${resolvedOrderId}&paymentStatus=success&paymentMethod=VNPAY`, {
+                navigate(`/order-confirmation?paymentStatus=success&paymentMethod=VNPAY&txnRef=${txnRef || ""}`, {
                   replace: true,
                 });
                 return;
@@ -88,6 +81,22 @@ export default function OrderConfirmation() {
             customerAddress:
               parsedPendingVnpayOrder.customerAddress ??
               parsedPendingVnpayOrder.customer_address ??
+              "",
+            customerEmail:
+              parsedPendingVnpayOrder.customerEmail ??
+              parsedPendingVnpayOrder.customer_email ??
+              "",
+            customerPhone:
+              parsedPendingVnpayOrder.customerPhone ??
+              parsedPendingVnpayOrder.customer_phone ??
+              "",
+            customerFirstName:
+              parsedPendingVnpayOrder.customerFirstName ??
+              parsedPendingVnpayOrder.customer_first_name ??
+              "",
+            customerLastName:
+              parsedPendingVnpayOrder.customerLastName ??
+              parsedPendingVnpayOrder.customer_last_name ??
               "",
             deliveryMethod:
               parsedPendingVnpayOrder.deliveryMethod ??
@@ -130,16 +139,18 @@ export default function OrderConfirmation() {
           );
 
           if (isMounted) {
-            navigate(`/order-confirmation?orderId=${createdOrderId}&paymentStatus=success&paymentMethod=VNPAY`, {
+            navigate(`/order-confirmation?paymentStatus=success&paymentMethod=VNPAY&txnRef=${txnRef || ""}`, {
               replace: true,
             });
           }
           return;
         }
 
-        if (orderId) {
+        const resolvedOrderId = orderId || parsedSnapshot?.id || storedCreatedOrderId;
+
+        if (resolvedOrderId) {
           const [orderResponse, productResponse] = await Promise.all([
-            api.get(`/orders/${orderId}`),
+            api.get(`/orders/${resolvedOrderId}`),
             api.get("/products"),
           ]);
 
@@ -192,9 +203,10 @@ export default function OrderConfirmation() {
   useEffect(() => {
     const paymentStatus = searchParams.get("paymentStatus");
     const paymentMethod = searchParams.get("paymentMethod");
-    const orderId = searchParams.get("orderId");
     const txnRef = searchParams.get("txnRef");
-    const toastKey = `${paymentMethod || "default"}:${paymentStatus || "default"}:${orderId || txnRef || "no-ref"}`;
+    const storedSnapshot = sessionStorage.getItem(LAST_ORDER_SNAPSHOT_KEY);
+    const parsedSnapshot = storedSnapshot ? JSON.parse(storedSnapshot) : null;
+    const toastKey = `${paymentMethod || "default"}:${paymentStatus || "default"}:${parsedSnapshot?.id || txnRef || "no-ref"}`;
     const lastShownToastKey = sessionStorage.getItem(VNPAY_TOAST_SHOWN_KEY);
 
     if (paymentMethod !== "VNPAY" || !paymentStatus) {
@@ -253,7 +265,6 @@ export default function OrderConfirmation() {
           <div className="w-full max-w-5xl flex flex-col lg:flex-row gap-8 items-start justify-between mt-4">
             <div className="order-left-col">
               <OrderDetailsCard
-                orderCode={orderView.orderCode}
                 paymentStatus={orderView.paymentStatus}
                 paymentMethodBadge={orderView.paymentMethodBadge}
                 deliveryEstimate={orderView.deliveryEstimate}

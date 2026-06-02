@@ -51,7 +51,7 @@ export default function OrderSummaryCard({
         </div>
         <div className="flex justify-between items-center">
           <span>Phí vận chuyển</span>
-          <span className="text-blue-600 font-bold tracking-[-0.01em]">
+          <span className="text-slate-900 font-bold tracking-[-0.01em]">
             {shippingCost === 0 ? "Miễn phí" : `${shippingCost.toLocaleString("vi-VN")}đ`}
           </span>
         </div>
