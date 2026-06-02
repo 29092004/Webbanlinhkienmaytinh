@@ -18,12 +18,12 @@ export default function OrderSuccessHeader({ paymentStatus = "default" }) {
       </div>
 
       {/* Success Title */}
-      <h2 className="mt-4 text-2xl font-bold tracking-[-0.01em] text-gray-900 md:text-3xl">
+      <h2 style={{ textAlign: "center" }} className="mt-4 text-center text-2xl font-bold tracking-[-0.01em] text-gray-900 md:text-3xl">
         {isSuccess ? "Đặt hàng thành công" : "Thanh toán chưa thành công"}
       </h2>
 
       {/* Sub-description */}
-      <p className="mx-auto mt-3 max-w-2xl text-sm font-semibold leading-7 text-slate-500 md:text-[1.05rem]">
+      <p style={{ textAlign: "center" }} className="mx-auto mt-3 max-w-2xl text-center text-sm font-semibold leading-7 text-slate-500 md:text-[1.05rem]">
         {isSuccess
           ? "Cảm ơn bạn đã tin tưởng EXO CORE. Đơn hàng của bạn đã được tiếp nhận và đang được xử lý kỹ thuật tỉ mỉ."
           : "Giao dịch VNPay chưa hoàn tất. Bạn có thể kiểm tra lại đơn hàng hoặc quay về checkout để thực hiện thanh toán lại."}
