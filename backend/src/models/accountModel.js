@@ -106,8 +106,8 @@ const AccountModel = {
         return result.affectedRows;
     },
 
-    delete: async (id) => {
-        const [result] = await db.query(
+    delete: async (id, executor = db) => {
+        const [result] = await executor.query(
             `DELETE FROM ${table_name} WHERE id = ?`,
             [id]
         );

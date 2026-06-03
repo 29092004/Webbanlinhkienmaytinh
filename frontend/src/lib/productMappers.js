@@ -1,6 +1,7 @@
 import {
   calculateDiscountedPrice,
   formatSalePercentage,
+  isSaleCurrentlyActive,
   parseStoredSpecs,
   resolveAssetUrl,
 } from "@/components/admin/product/productUtils";
@@ -71,7 +72,7 @@ export const normalizeBrandIdsFromQuery = (rawBrand) =>
     .filter(Boolean);
 
 export const getSaleLabel = (product) => {
-  if (!product?.sale_id) {
+  if (!isSaleCurrentlyActive(product)) {
     return "";
   }
 
@@ -83,7 +84,7 @@ export const getSaleLabel = (product) => {
 };
 
 export const mapSaleProductsForHome = (products = []) => {
-  const saleProducts = products.filter((product) => Boolean(product.sale_id));
+  const saleProducts = products.filter((product) => isSaleCurrentlyActive(product));
   const maxQuantity = Math.max(...saleProducts.map((product) => Number(product.quantity || 0)), 1);
 
   return saleProducts.map((product) => {
@@ -91,7 +92,7 @@ export const mapSaleProductsForHome = (products = []) => {
       retailPrice: product.retail_price,
       saleType: product.sale_type,
       saleValue: product.sale_value,
-      isOnSale: Boolean(product.sale_id),
+      isOnSale: isSaleCurrentlyActive(product),
     });
 
     return {
@@ -102,7 +103,10 @@ export const mapSaleProductsForHome = (products = []) => {
       price: formatCurrency(pricing.finalPrice),
       originalPrice: pricing.finalPrice < pricing.basePrice ? formatCurrency(pricing.basePrice) : "",
       quantity: Number(product.quantity || 0),
-      progressWidth: `${Math.max(8, Math.round((Number(product.quantity || 0) / maxQuantity) * 100))}%`,
+      progressWidth:
+        Number(product.quantity || 0) > 0
+          ? `${Math.max(8, Math.round((Number(product.quantity || 0) / maxQuantity) * 100))}%`
+          : "0%",
       saleMeta: product.sale_duration ? `${product.sale_duration} ngày` : product.category_name || "Đang sale",
       specs: product.specs,
       warranty: product.warranty,
@@ -114,6 +118,7 @@ export const mapSaleProductsForHome = (products = []) => {
       sale_start_date: product.start_date || null,
       sale_end_date: product.end_date || null,
       sale_is_active: Boolean(product.sale_is_active),
+      sale_is_currently_active: Boolean(Number(product.sale_is_currently_active ?? 0)),
     };
   });
 };
@@ -147,7 +152,7 @@ export const mapCategoryProductsForHome = (products = [], categoryNames = []) =>
         retailPrice: product.retail_price,
         saleType: product.sale_type,
         saleValue: product.sale_value,
-        isOnSale: Boolean(product.sale_id),
+        isOnSale: isSaleCurrentlyActive(product),
       });
 
       return {
@@ -166,6 +171,7 @@ export const mapCategoryProductsForHome = (products = [], categoryNames = []) =>
         sale_id: product.sale_id,
         sale_type: product.sale_type,
         sale_value: product.sale_value,
+        sale_is_currently_active: Boolean(Number(product.sale_is_currently_active ?? 0)),
       };
     });
 };
@@ -175,7 +181,7 @@ export const mapProductForListing = (product) => {
     retailPrice: product.retail_price,
     saleType: product.sale_type === "fixed" ? "fixed" : "percentage",
     saleValue: product.sale_value,
-    isOnSale: Boolean(product.sale_id),
+    isOnSale: isSaleCurrentlyActive(product),
   });
 
   return {
@@ -185,7 +191,7 @@ export const mapProductForListing = (product) => {
     category: slugifyCategory(product.category_name),
     price: salePricing.finalPrice,
     originalPrice: salePricing.finalPrice < salePricing.basePrice ? salePricing.basePrice : null,
-    isOnSale: Boolean(product.sale_id) && salePricing.finalPrice < salePricing.basePrice,
+    isOnSale: isSaleCurrentlyActive(product) && salePricing.finalPrice < salePricing.basePrice,
     rating: buildProductRating(product),
     reviewsCount: Number(product.quantity || 0),
     image: resolveAssetUrl(product.images?.[0]?.url),
@@ -235,7 +241,7 @@ export const mapProductForSearch = (product) => {
     retailPrice: product.retail_price,
     saleType: product.sale_type === "fixed" ? "fixed" : "percentage",
     saleValue: product.sale_value,
-    isOnSale: Boolean(product.sale_id),
+    isOnSale: isSaleCurrentlyActive(product),
   });
   const parsedSpecs = parseStoredSpecs(product.specs);
   const specEntries =
@@ -371,7 +377,7 @@ export const mapProductDetailForView = (product) => {
     retailPrice: product.retail_price,
     saleType: product.sale_type === "fixed" ? "fixed" : "percentage",
     saleValue: product.sale_value,
-    isOnSale: Boolean(product.sale_id),
+    isOnSale: isSaleCurrentlyActive(product),
   });
 
   const descriptionBlocks = [
@@ -403,7 +409,7 @@ export const mapRelatedProduct = (product) => {
     retailPrice: product.retail_price,
     saleType: product.sale_type === "fixed" ? "fixed" : "percentage",
     saleValue: product.sale_value,
-    isOnSale: Boolean(product.sale_id),
+    isOnSale: isSaleCurrentlyActive(product),
   });
 
   return {

@@ -66,7 +66,7 @@ export function ProductModal({
         <form onSubmit={onSubmit}>
           {isDelete ? (
             <p className="text-sm leading-7 text-slate-600">
-              Bạn có chắc muốn xóa sản phẩm <span className="font-bold text-slate-900">{formData.name}</span> không?
+              Bạn có chắc muốn xóa sản phẩm không?
             </p>
           ) : (
             <div className="space-y-4">

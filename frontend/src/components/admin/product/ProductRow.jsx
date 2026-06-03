@@ -1,6 +1,6 @@
 import { Eye, Package, Pencil, Trash2 } from "lucide-react";
 
-import { calculateDiscountedPrice, formatSalePercentage, resolveAssetUrl } from "./productUtils";
+import { calculateDiscountedPrice, formatSalePercentage, isSaleCurrentlyActive, resolveAssetUrl } from "./productUtils";
 
 export function ProductRow({
   product,
@@ -14,11 +14,12 @@ export function ProductRow({
   const brand = brands.find((item) => item.brand_id === product.brand_id);
   const category = categories.find((item) => item.id === product.category_id);
   const image = product.images?.[0]?.url;
+  const isSaleActive = isSaleCurrentlyActive(product);
   const salePricing = calculateDiscountedPrice({
     retailPrice: product.retail_price,
     saleType: product.sale_type,
     saleValue: product.sale_value,
-    isOnSale: Boolean(product.sale_id),
+    isOnSale: isSaleActive,
   });
 
   return (
@@ -45,7 +46,7 @@ export function ProductRow({
       </div>
 
       <div>
-        {product.sale_id ? (
+        {isSaleActive ? (
           <div className="space-y-2">
             <span className="inline-flex whitespace-nowrap rounded-full bg-amber-100 px-2.5 py-1 text-[0.72rem] font-bold text-amber-700">
               Đang sale
@@ -64,7 +65,7 @@ export function ProductRow({
       </div>
 
       <div>
-        {product.sale_id ? (
+        {isSaleActive ? (
           <div className="space-y-1">
             <div className="whitespace-nowrap font-bold text-rose-600">
               {salePricing.finalPrice.toLocaleString("vi-VN")} đ

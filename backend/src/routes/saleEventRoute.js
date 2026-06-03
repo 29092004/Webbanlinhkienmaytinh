@@ -1,12 +1,13 @@
 import express from 'express';
 import saleEventController from '../controllers/saleEventController.js';
+import { authenticateToken, requireAdmin } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.get('/', saleEventController.getSaleEvents);
-router.get('/:saleId', saleEventController.getSaleEventById);
-router.post('/', saleEventController.createSaleEvent);
-router.put('/:saleId', saleEventController.updateSaleEvent);
-router.delete('/:saleId', saleEventController.deleteSaleEvent);
+router.get('/', authenticateToken, requireAdmin, saleEventController.getSaleEvents);
+router.get('/:saleId', authenticateToken, requireAdmin, saleEventController.getSaleEventById);
+router.post('/', authenticateToken, requireAdmin, saleEventController.createSaleEvent);
+router.put('/:saleId', authenticateToken, requireAdmin, saleEventController.updateSaleEvent);
+router.delete('/:saleId', authenticateToken, requireAdmin, saleEventController.deleteSaleEvent);
 
 export default router;

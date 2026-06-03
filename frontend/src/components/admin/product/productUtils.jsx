@@ -1,8 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-import { api } from "@/lib/api";
-
 export const resolveAssetUrl = (value) => {
   if (!value) {
     return "";
@@ -16,20 +14,17 @@ export const resolveAssetUrl = (value) => {
     return `http:${value}`;
   }
 
-  let normalizedPath = value;
-  if (!value.startsWith("/") && !value.startsWith("uploads/")) {
-    normalizedPath = `/uploads/products/${value}`;
-  } else if (value.startsWith("uploads/")) {
-    normalizedPath = `/${value}`;
+  const imageBaseUrl = import.meta.env.VITE_IMAGE_BASE_URL?.trim() || "";
+  const normalizedPath = String(value).replace(/^\/+/, "");
+
+  if (!imageBaseUrl) {
+    return normalizedPath;
   }
 
-  const apiBaseUrl = api.defaults.baseURL ?? "";
-  const apiOrigin = apiBaseUrl.replace(/\/api\/?$/, "");
-
   try {
-    return new URL(normalizedPath, `${apiOrigin}/`).toString();
+    return new URL(normalizedPath, `${imageBaseUrl.replace(/\/+$/, "")}/`).toString();
   } catch {
-    return `${apiOrigin}${normalizedPath.startsWith("/") ? normalizedPath : `/${normalizedPath}`}`;
+    return `${imageBaseUrl.replace(/\/+$/, "")}/${normalizedPath}`;
   }
 };
 
@@ -55,6 +50,48 @@ export const calculateDiscountedPrice = ({ retailPrice, saleType, saleValue, isO
     finalPrice: Math.max(basePrice - discountAmount, 0),
     discountAmount,
   };
+};
+
+const parseSaleDate = (value) => {
+  if (!value) {
+    return null;
+  }
+
+  const normalizedValue =
+    typeof value === "string" && value.includes(" ") && !value.includes("T")
+      ? value.replace(" ", "T")
+      : value;
+  const date = new Date(normalizedValue);
+
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+export const isSaleCurrentlyActive = (product) => {
+  if (product?.sale_is_currently_active !== undefined && product?.sale_is_currently_active !== null) {
+    return Boolean(Number(product.sale_is_currently_active));
+  }
+
+  if (!product?.sale_id) {
+    return false;
+  }
+
+  if (product?.sale_is_active !== undefined && product?.sale_is_active !== null && !Number(product.sale_is_active)) {
+    return false;
+  }
+
+  const now = new Date();
+  const startDate = parseSaleDate(product?.start_date ?? product?.sale_start_date);
+  const endDate = parseSaleDate(product?.end_date ?? product?.sale_end_date);
+
+  if (startDate && startDate > now) {
+    return false;
+  }
+
+  if (endDate && endDate < now) {
+    return false;
+  }
+
+  return true;
 };
 
 export const formatSalePercentage = (value) => {

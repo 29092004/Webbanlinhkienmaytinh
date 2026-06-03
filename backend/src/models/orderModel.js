@@ -120,6 +120,17 @@ const insertOrderDetails = async (connection, orderId, details = []) => {
     }
 };
 
+const incrementVoucherUsage = async (connection, voucherId) => {
+    if (!voucherId) {
+        return;
+    }
+
+    await connection.query(
+        'UPDATE voucher SET used_count = used_count + 1 WHERE id = ?',
+        [voucherId]
+    );
+};
+
 const replaceOrderDetails = async (connection, orderId, details = []) => {
     await connection.query('DELETE FROM order_detail WHERE order_id = ?', [orderId]);
     await insertOrderDetails(connection, orderId, details);
@@ -242,6 +253,7 @@ const OrderModel = {
 
             await insertOrderDetails(connection, result.insertId, details);
             await validateAndReserveProductQuantities(connection, details);
+            await incrementVoucherUsage(connection, voucherId);
             await connection.commit();
 
             return result.insertId;

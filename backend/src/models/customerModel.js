@@ -50,16 +50,16 @@ const CustomerModel = {
         return result.insertId;
     },
 
-    update: async (customerId, firstName, lastName, email, phone, address) => {
-        const [result] = await db.query(
+    update: async (customerId, firstName, lastName, email, phone, address, executor = db) => {
+        const [result] = await executor.query(
             `UPDATE ${table_name} SET first_name = ?, last_name = ?, email = ?, phone = ?, address = ? WHERE customer_id = ?`,
             [firstName, lastName, email, phone, address, customerId]
         );
         return result.affectedRows;
     },
 
-    delete: async (customerId) => {
-        const [result] = await db.query(
+    delete: async (customerId, executor = db) => {
+        const [result] = await executor.query(
             `DELETE FROM ${table_name} WHERE customer_id = ?`,
             [customerId]
         );

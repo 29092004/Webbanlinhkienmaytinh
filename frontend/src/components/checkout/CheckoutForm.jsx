@@ -10,6 +10,8 @@ export default function CheckoutForm({
 
   const [selectedCityCode, setSelectedCityCode] = useState("");
   const [selectedDistrictCode, setSelectedDistrictCode] = useState("");
+  const hasSelectedCity = Boolean(selectedCityCode);
+  const hasSelectedDistrict = hasSelectedCity && Boolean(selectedDistrictCode);
 
   const updateCity = useCallback((name, code) => {
     setSelectedCityCode(code);
@@ -31,17 +33,15 @@ export default function CheckoutForm({
       .then((res) => res.json())
       .then((data) => {
         setCitiesList(data);
-        // Find if current formData.city matches any province name
         const matched = data.find((c) => c.name === formData.city);
         if (matched) {
           setSelectedCityCode(matched.code);
-        } else if (data.length > 0) {
-          // If no match, default to first province
-          updateCity(data[0].name, data[0].code);
+        } else {
+          setSelectedCityCode("");
         }
       })
       .catch((err) => console.error("Lỗi tải danh sách Tỉnh/Thành:", err));
-  }, [formData.city, updateCity]);
+  }, [formData.city]);
 
   // Load districts when selectedCityCode changes
   useEffect(() => {
@@ -92,6 +92,18 @@ export default function CheckoutForm({
 
   const handleCityChange = (e) => {
     const cityName = e.target.value;
+
+    if (!cityName) {
+      setSelectedCityCode("");
+      setSelectedDistrictCode("");
+      setDistrictsList([]);
+      setWardsList([]);
+      onFormChange({ target: { name: "city", value: "" } });
+      onFormChange({ target: { name: "district", value: "" } });
+      onFormChange({ target: { name: "ward", value: "" } });
+      return;
+    }
+
     const cityObj = citiesList.find((c) => c.name === cityName);
     if (cityObj) {
       updateCity(cityName, cityObj.code);
@@ -193,6 +205,7 @@ export default function CheckoutForm({
             onChange={handleCityChange}
             className="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-1 focus:ring-red-500"
           >
+            <option value="">Chọn tỉnh/thành phố</option>
             {citiesList.map((city) => (
               <option key={city.code} value={city.name}>{city.name}</option>
             ))}
@@ -209,10 +222,11 @@ export default function CheckoutForm({
             name="district"
             value={formData.district}
             onChange={handleDistrictChange}
-            className="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-1 focus:ring-red-500"
+            disabled={!hasSelectedCity}
+            className="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-1 focus:ring-red-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
           >
             <option value="">Chọn quận/huyện</option>
-            {districtsList.map((d) => (
+            {(hasSelectedCity ? districtsList : []).map((d) => (
               <option key={d.code} value={d.name}>{d.name}</option>
             ))}
           </select>
@@ -228,10 +242,11 @@ export default function CheckoutForm({
             name="ward"
             value={formData.ward}
             onChange={onFormChange}
-            className="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-1 focus:ring-red-500"
+            disabled={!hasSelectedDistrict}
+            className="w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-1 focus:ring-red-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
           >
             <option value="">Chọn phường/xã</option>
-            {wardsList.map((w) => (
+            {(hasSelectedDistrict ? wardsList : []).map((w) => (
               <option key={w.code} value={w.name}>{w.name}</option>
             ))}
           </select>

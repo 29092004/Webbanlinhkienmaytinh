@@ -6,13 +6,13 @@ import nodemailer from 'nodemailer';
 import accountModel from '../models/accountModel.js';
 import customerModel from '../models/customerModel.js';
 import db from '../config/mysql.js';
+import otpModel from '../models/otpModel.js';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const ALLOWED_ROLES = ['admin', 'staff', 'user'];
 const ACCESS_TOKEN_EXPIRES_IN = process.env.ACCESS_TOKEN_EXPIRES_IN || '15m';
 const REFRESH_TOKEN_EXPIRES_IN = process.env.REFRESH_TOKEN_EXPIRES_IN || '7d';
 const OTP_EXPIRES_MINUTES = Number(process.env.OTP_EXPIRES_MINUTES || 5);
-const otpStore = new Map();
 
 const emailTransporter = nodemailer.createTransport({
     service: 'gmail',
@@ -34,31 +34,32 @@ const generateOtpCode = () => Math.floor(100000 + Math.random() * 900000).toStri
 
 const storeOtp = async (email, otp) => {
     const otpHash = await bcrypt.hash(otp, 10);
-
-    otpStore.set(email, {
+    await otpModel.deleteExpiredOtps();
+    await otpModel.saveOtp({
+        email,
         otpHash,
         expiresAt: Date.now() + OTP_EXPIRES_MINUTES * 60 * 1000,
     });
 };
 
 const verifyStoredOtp = async (email, otp) => {
-    const otpRecord = otpStore.get(email);
+    const otpRecord = await otpModel.getOtpByEmail(email);
 
     if (!otpRecord) {
         return { valid: false, message: 'OTP not found or has not been sent' };
     }
 
-    if (Date.now() > otpRecord.expiresAt) {
-        otpStore.delete(email);
+    if (Date.now() > new Date(otpRecord.expires_at).getTime()) {
+        await otpModel.deleteOtpByEmail(email);
         return { valid: false, message: 'OTP has expired' };
     }
 
-    const isMatch = await bcrypt.compare(otp, otpRecord.otpHash);
+    const isMatch = await bcrypt.compare(otp, otpRecord.otp_hash);
     if (!isMatch) {
         return { valid: false, message: 'OTP is invalid' };
     }
 
-    otpStore.delete(email);
+    await otpModel.deleteOtpByEmail(email);
     return { valid: true };
 };
 
@@ -83,13 +84,21 @@ const buildRefreshToken = (user) =>
         { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
 
-const setRefreshTokenCookie = (res, refreshToken) => {
-    res.cookie('refreshToken', refreshToken, {
+const buildRefreshCookieOptions = () => {
+    const isProduction = process.env.NODE_ENV === 'production';
+    const configuredSameSite = String(process.env.AUTH_COOKIE_SAME_SITE || '').trim().toLowerCase();
+    const sameSite = configuredSameSite || (isProduction ? 'none' : 'lax');
+
+    return {
         httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
+        sameSite,
+        secure: isProduction,
         maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    };
+};
+
+const setRefreshTokenCookie = (res, refreshToken) => {
+    res.cookie('refreshToken', refreshToken, buildRefreshCookieOptions());
 };
 
 const issueAuthResponse = async (res, user, extraData = {}) => {
@@ -103,7 +112,6 @@ const issueAuthResponse = async (res, user, extraData = {}) => {
     return res.json({
         success: true,
         accessToken,
-        refreshToken,
         user: safeUser,
         ...extraData,
     });
@@ -386,7 +394,7 @@ const authController = {
                 }
             }
 
-            res.clearCookie('refreshToken');
+            res.clearCookie('refreshToken', buildRefreshCookieOptions());
             res.json({ success: true, message: 'Logout success' });
         } catch (error) {
             return res.status(500).json({ message: 'Internal Server Error' });

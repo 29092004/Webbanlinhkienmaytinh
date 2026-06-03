@@ -89,6 +89,7 @@ function ProductDetail() {
   }, [id]);
 
   const displayProduct = useMemo(() => mapProductDetailForView(product), [product]);
+  const isOutOfStock = Number(product?.quantity || 0) <= 0;
 
   const savingAmount = (displayProduct?.originalPrice || 0) - (displayProduct?.price || 0);
   const savingPct = displayProduct?.originalPrice
@@ -103,6 +104,14 @@ function ProductDetail() {
 
   const handleAddCurrentProductToCart = async ({ redirectToCheckout = false } = {}) => {
     if (!displayProduct?.id) {
+      return;
+    }
+
+    if (isOutOfStock) {
+      showToast({
+        message: `${displayProduct.name} hiện đã hết hàng.`,
+        type: "error",
+      });
       return;
     }
 
@@ -121,7 +130,7 @@ function ProductDetail() {
     } catch (error) {
       console.error("Failed to add current product to cart", error);
       showToast({
-        message: "Không thêm được sản phẩm vào giỏ hàng.",
+        message: error?.message || "Không thêm được sản phẩm vào giỏ hàng.",
         type: "error",
       });
     }
@@ -172,6 +181,13 @@ function ProductDetail() {
                 <span className="text-[10px] font-bold text-slate-400">
                   SKU: {displayProduct.sku}
                 </span>
+                <span
+                  className={`rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em] ${
+                    isOutOfStock ? "bg-slate-900 text-white" : "bg-emerald-100 text-emerald-700"
+                  }`}
+                >
+                  {isOutOfStock ? "Hết hàng" : "Còn hàng"}
+                </span>
               </div>
               
               <h1 className="text-2xl md:text-3xl font-extrabold text-slate-950 tracking-tight leading-snug">
@@ -194,7 +210,7 @@ function ProductDetail() {
                   {displayProduct.reviewsCount} Đánh giá
                 </button>
                 <span className="text-slate-300">|</span>
-                <span>{displayProduct.soldText}</span>
+                <span>{isOutOfStock ? "Hết hàng" : displayProduct.soldText}</span>
               </div>
             </div>
 
@@ -229,16 +245,26 @@ function ProductDetail() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   onClick={() => handleAddCurrentProductToCart({ redirectToCheckout: true })}
-                  className="bg-red-600 hover:bg-red-700 text-white font-extrabold py-3.5 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition-colors uppercase cursor-pointer"
+                  disabled={isOutOfStock}
+                  className={`font-extrabold py-3.5 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition-colors uppercase ${
+                    isOutOfStock
+                      ? "cursor-not-allowed bg-slate-200 text-slate-500"
+                      : "cursor-pointer bg-red-600 text-white hover:bg-red-700"
+                  }`}
                 >
-                  MUA NGAY
+                  {isOutOfStock ? "HẾT HÀNG" : "MUA NGAY"}
                 </button>
                 <button
                   onClick={() => handleAddCurrentProductToCart()}
-                  className="bg-[#e21a36] hover:bg-red-700 text-white font-extrabold py-3.5 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 transition-colors uppercase cursor-pointer"
+                  disabled={isOutOfStock}
+                  className={`font-extrabold py-3.5 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 transition-colors uppercase ${
+                    isOutOfStock
+                      ? "cursor-not-allowed bg-slate-200 text-slate-500"
+                      : "cursor-pointer bg-[#e21a36] text-white hover:bg-red-700"
+                  }`}
                 >
                   <ShoppingBag className="size-4" />
-                  THÊM GIỎ HÀNG
+                  {isOutOfStock ? "HẾT HÀNG" : "THÊM GIỎ HÀNG"}
                 </button>
               </div>
               <button className="w-full border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold py-3.5 px-4 rounded-2xl text-[10px] flex items-center justify-center transition-colors uppercase">

@@ -15,8 +15,6 @@ import { Header } from "@/components/ui/Header";
 import { Footer } from "@/components/ui/Footer";
 import { api } from "@/lib/api";
 
-const HOME_PRODUCTS_CACHE_KEY = "exo_home_products_cache_v2";
-
 const HOME_CATEGORY_SECTIONS = [
   {
     key: "laptop",
@@ -57,27 +55,9 @@ function buildHomeSections(products = []) {
   }));
 }
 
-function readCachedHomeProducts() {
-  try {
-    const cachedValue = localStorage.getItem(HOME_PRODUCTS_CACHE_KEY);
-    const cachedProducts = cachedValue ? JSON.parse(cachedValue) : [];
-    const normalizedProducts = Array.isArray(cachedProducts) ? cachedProducts : [];
-
-    return {
-      saleProducts: mapSaleProductsForHome(normalizedProducts),
-      categorySections: buildHomeSections(normalizedProducts),
-    };
-  } catch {
-    return {
-      saleProducts: [],
-      categorySections: buildHomeSections([]),
-    };
-  }
-}
-
 function Home() {
-  const [saleProducts, setSaleProducts] = useState(() => readCachedHomeProducts().saleProducts);
-  const [categorySections, setCategorySections] = useState(() => readCachedHomeProducts().categorySections);
+  const [saleProducts, setSaleProducts] = useState([]);
+  const [categorySections, setCategorySections] = useState(() => buildHomeSections([]));
 
   useEffect(() => {
     let isMounted = true;
@@ -91,7 +71,6 @@ function Home() {
           return;
         }
 
-        localStorage.setItem(HOME_PRODUCTS_CACHE_KEY, JSON.stringify(products));
         setSaleProducts(mapSaleProductsForHome(products));
         setCategorySections(buildHomeSections(products));
       } catch (error) {
@@ -100,16 +79,17 @@ function Home() {
         }
 
         console.error("Failed to fetch home products", error);
-        const cachedHomeState = readCachedHomeProducts();
-        setSaleProducts(cachedHomeState.saleProducts);
-        setCategorySections(cachedHomeState.categorySections);
+        setSaleProducts([]);
+        setCategorySections(buildHomeSections([]));
       }
     };
 
     fetchHomeProducts();
+    const intervalId = window.setInterval(fetchHomeProducts, 60000);
 
     return () => {
       isMounted = false;
+      window.clearInterval(intervalId);
     };
   }, []);
 

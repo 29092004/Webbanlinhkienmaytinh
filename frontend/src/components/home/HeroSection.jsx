@@ -1,23 +1,21 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { resolveAssetUrl } from "@/components/admin/product/productUtils";
+
 
 import subBannerDeal from "@/assets/home-banners/sub-banner-deal.png";
 import subBannerInstallment from "@/assets/home-banners/sub-banner-installment.png";
 
-const heroBanner1 = resolveAssetUrl("Anh_Banner_1.jpg");
-const heroBanner2 = resolveAssetUrl("banner_2.jpg");
-const heroBanner3 = resolveAssetUrl("bannner_3.jpg");
-
 const slides = [
   {
-    image: heroBanner1,
+    image: "https://pub-a37bb828e19547c6ac16ab62282dd9e5.r2.dev/Anh_Banner_1.jpg",
+    
   },
   {
-    image: heroBanner2,
+    image: "https://pub-a37bb828e19547c6ac16ab62282dd9e5.r2.dev/banner_2.jpg",
   },
   {
-    image: heroBanner3,
+    image: "https://pub-a37bb828e19547c6ac16ab62282dd9e5.r2.dev/bannner_3.jpg",
+    
   },
 ];
 

@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Header } from "@/components/ui/Header";
@@ -11,18 +10,15 @@ import CheckoutPayment from "@/components/checkout/CheckoutPayment";
 import CheckoutSummary from "@/components/checkout/CheckoutSummary";
 import { api } from "@/lib/api";
 import { getStoredUser, isAuthenticated } from "@/lib/auth";
-import { mapCartEntriesToItems, mapGuestCartItems } from "@/lib/cartMappers";
+import { mapCartEntriesToItems } from "@/lib/cartMappers";
 import {
-  clearGuestCart,
   clearServerCart,
   fetchServerCartEntries,
-  getGuestCartItems,
   notifyCartStateChanged,
 } from "@/lib/cartStore";
 import { showToast } from "@/lib/toast";
 
 const LAST_ORDER_SNAPSHOT_KEY = "last_order_snapshot";
-const PENDING_VNPAY_ORDER_KEY = "pending_vnpay_order";
 const VOUCHER_DATE_FORMATTER = new Intl.DateTimeFormat("vi-VN", {
   day: "2-digit",
   month: "2-digit",
@@ -93,6 +89,24 @@ function formatVoucherSummary(voucher) {
   )}đ - HSD ${voucher.expiredDate ? VOUCHER_DATE_FORMATTER.format(new Date(voucher.expiredDate)) : "không giới hạn"}`;
 }
 
+function formatVoucherBenefit(voucher) {
+  if (!voucher) {
+    return "";
+  }
+
+  if (voucher.discountType === "PERCENT") {
+    const percentLabel = `${Number(voucher.discountValue || 0).toLocaleString("vi-VN")}%`;
+
+    if (voucher.maxDiscountValue !== null && voucher.maxDiscountValue !== undefined && Number(voucher.maxDiscountValue) > 0) {
+      return `giảm tối đa ${Number(voucher.maxDiscountValue).toLocaleString("vi-VN")}đ`;
+    }
+
+    return `giảm ${percentLabel}`;
+  }
+
+  return `giảm ${Number(voucher.discountValue || 0).toLocaleString("vi-VN")}đ`;
+}
+
 function isVoucherEligible(voucher, orderAmount) {
   return orderAmount >= Number(voucher.minOrderValue || 0);
 }
@@ -112,7 +126,7 @@ function buildVoucherProgressHint(vouchers, orderAmount) {
     return "";
   }
 
-  return `Mua thêm ${missingAmount.toLocaleString("vi-VN")}đ để dùng mã ${upcomingVoucher.voucherCode}.`;
+  return `Mua thêm ${missingAmount.toLocaleString("vi-VN")}đ để ${formatVoucherBenefit(upcomingVoucher)}.`;
 }
 
 function normalizeCheckoutAddress(value) {
@@ -153,7 +167,6 @@ export default function Checkout() {
   // State Management
   const [products, setProducts] = useState([]);
   const [cartEntries, setCartEntries] = useState([]);
-  const [guestCartEntries, setGuestCartEntries] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedMethod, setSelectedMethod] = useState("cod"); // Default COD
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -167,16 +180,13 @@ export default function Checkout() {
     phone: "",
     email: userEmail || userUsername || "",
     address: "",
-    city: "Hồ Chí Minh",
+    city: "",
     district: "",
     ward: "",
     note: "",
   });
 
-  const cartItems = useMemo(
-    () => (isLoggedIn ? mapCartEntriesToItems(cartEntries, products) : mapGuestCartItems(guestCartEntries, products)),
-    [cartEntries, guestCartEntries, isLoggedIn, products]
-  );
+  const cartItems = useMemo(() => mapCartEntriesToItems(cartEntries, products), [cartEntries, products]);
 
   useEffect(() => {
     let isMounted = true;
@@ -207,7 +217,6 @@ export default function Checkout() {
           }
 
           setCartEntries(nextCartEntries);
-          setGuestCartEntries([]);
           setFormData((current) => ({
             ...current,
             fullName: buildCheckoutFullName(
@@ -224,14 +233,6 @@ export default function Checkout() {
             email: customer?.email || userEmail || userUsername || current.email,
             address: normalizeCheckoutAddress(customer?.address) || current.address,
           }));
-        } else {
-          setCartEntries([]);
-          setGuestCartEntries(getGuestCartItems());
-          setFormData((current) => ({
-            ...current,
-            fullName: "",
-            email: userEmail || userUsername || current.email,
-          }));
         }
       } catch (error) {
         if (!isMounted) {
@@ -241,7 +242,6 @@ export default function Checkout() {
         console.error("Failed to fetch checkout data", error);
         setProducts([]);
         setCartEntries([]);
-        setGuestCartEntries([]);
         setVouchers([]);
       } finally {
         if (isMounted) {
@@ -290,16 +290,7 @@ export default function Checkout() {
     [availableVouchers, selectedVoucherId]
   );
 
-  useEffect(() => {
-    if (!selectedVoucherId) {
-      return;
-    }
-
-    const stillAvailable = availableVouchers.some((voucher) => String(voucher.id) === String(selectedVoucherId));
-    if (!stillAvailable) {
-      setSelectedVoucherId("");
-    }
-  }, [availableVouchers, selectedVoucherId]);
+  const effectiveSelectedVoucherId = selectedVoucher ? String(selectedVoucher.id) : "";
 
   const voucherDiscount = useMemo(() => {
     return calculateVoucherDiscount(selectedVoucher, orderAmountBeforeDiscount);
@@ -320,13 +311,24 @@ export default function Checkout() {
       return;
     }
 
+    if (!isLoggedIn) {
+      showToast({ message: "Vui lòng đăng nhập lại để tiếp tục thanh toán.", type: "error" });
+      navigate("/login", { replace: true, state: { redirectedFrom: "/checkout" } });
+      return;
+    }
+
     if (!formData.fullName.trim() || !formData.phone.trim()) {
       showToast({ message: "Vui lòng nhập họ tên và số điện thoại giao hàng.", type: "error" });
       return;
     }
 
-    if (!formData.district.trim() || !formData.ward.trim()) {
-      showToast({ message: "Vui lòng chọn quận/huyện và phường/xã giao hàng.", type: "error" });
+    if (!formData.city.trim() || !formData.district.trim() || !formData.ward.trim()) {
+      showToast({ message: "Vui lòng chọn đầy đủ tỉnh/thành phố, quận/huyện và phường/xã giao hàng.", type: "error" });
+      return;
+    }
+
+    if (!formData.address.trim()) {
+      showToast({ message: "Vui lòng nhập địa chỉ giao hàng chi tiết.", type: "error" });
       return;
     }
 
@@ -340,7 +342,7 @@ export default function Checkout() {
       createdAt: new Date().toISOString().slice(0, 19).replace("T", " "),
       paymentMethod: String(selectedMethod || "cod").toUpperCase(),
       status: "PENDING",
-      accountId: customerId || 999999,
+      accountId: customerId,
       voucherId: selectedVoucher?.id ?? null,
       totalPrice: orderAmountBeforeDiscount,
       discountAmount: voucherDiscount,
@@ -388,54 +390,36 @@ export default function Checkout() {
     };
 
     try {
-      if (isLoggedIn) {
-        if (selectedMethod === "vnpay") {
-          sessionStorage.setItem(PENDING_VNPAY_ORDER_KEY, JSON.stringify(snapshot));
-          const paymentResponse = await api.post("/vnpay/create-payment-url", {
-            totalPrice: orderPayload.finalPrice,
-          });
-          const paymentUrl = paymentResponse.data?.paymentUrl;
+      if (selectedMethod === "vnpay") {
+        const paymentResponse = await api.post("/vnpay/create-payment-url", {
+          ...orderPayload,
+          fullName: formData.fullName.trim(),
+        });
+        const paymentUrl = paymentResponse.data?.paymentUrl;
 
-          if (!paymentUrl) {
-            throw new Error("VNPay payment URL was not returned");
-          }
-
-          window.location.assign(paymentUrl);
-          return;
+        if (!paymentUrl) {
+          throw new Error("VNPay payment URL was not returned");
         }
 
-        const response = await api.post("/orders", orderPayload);
-        const orderId = response.data?.orderId;
-
-        sessionStorage.removeItem(PENDING_VNPAY_ORDER_KEY);
-        sessionStorage.setItem(
-          LAST_ORDER_SNAPSHOT_KEY,
-          JSON.stringify({
-            ...snapshot,
-            id: orderId,
-          })
-        );
-
-        await clearCurrentServerCart();
-        setCartEntries([]);
-        setGuestCartEntries([]);
-
-        navigate("/order-confirmation");
-      } else {
-        sessionStorage.removeItem(PENDING_VNPAY_ORDER_KEY);
-        clearGuestCart();
-        setGuestCartEntries([]);
-
-        sessionStorage.setItem(
-          LAST_ORDER_SNAPSHOT_KEY,
-          JSON.stringify({
-            ...snapshot,
-            id: `guest-${Date.now()}`,
-          })
-        );
-
-        navigate("/order-confirmation");
+        window.location.assign(paymentUrl);
+        return;
       }
+
+      const response = await api.post("/orders", orderPayload);
+      const orderId = response.data?.orderId;
+
+      sessionStorage.setItem(
+        LAST_ORDER_SNAPSHOT_KEY,
+        JSON.stringify({
+          ...snapshot,
+          id: orderId,
+        })
+      );
+
+      await clearCurrentServerCart();
+      setCartEntries([]);
+
+      navigate("/order-confirmation");
     } catch (error) {
       console.error("Failed to submit order", error);
       showToast({ message: "Không thể tạo đơn hàng lúc này.", type: "error" });
@@ -472,19 +456,6 @@ export default function Checkout() {
         {isLoading ? (
           <div className="rounded-3xl border border-slate-100 bg-white p-12 text-center text-sm font-semibold text-slate-400 shadow-sm">
             Dang tai du lieu thanh toan...
-          </div>
-        ) : !isLoggedIn && cartItems.length === 0 ? (
-          <div className="rounded-3xl border border-slate-100 bg-white p-12 text-center shadow-sm space-y-4">
-            <h2 className="text-xl font-extrabold text-slate-900">Chua the vao trang thanh toan</h2>
-            <p className="text-sm font-medium text-slate-500">
-              Ban chua dang nhap va gio hang hien dang trong. Hay them san pham vao gio hang truoc.
-            </p>
-            <Link
-              to="/cart"
-              className="inline-flex rounded-xl bg-blue-600 px-5 py-3 text-xs font-bold uppercase text-white transition-colors hover:bg-blue-700"
-            >
-              Quay lai gio hang
-            </Link>
           </div>
         ) : cartItems.length === 0 ? (
           <div className="rounded-3xl border border-slate-100 bg-white p-12 text-center shadow-sm space-y-4">
@@ -533,7 +504,7 @@ export default function Checkout() {
                     summaryLabel: formatVoucherSummary(voucher),
                     isEligible: isVoucherEligible(voucher, orderAmountBeforeDiscount),
                   }))}
-                  selectedVoucherId={selectedVoucherId}
+                  selectedVoucherId={effectiveSelectedVoucherId}
                   onSelectVoucher={setSelectedVoucherId}
                   selectedVoucher={selectedVoucher}
                   isLoadingVouchers={isLoadingVouchers}
