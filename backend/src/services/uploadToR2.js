@@ -1,6 +1,6 @@
 import { DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { R2_BUCKET_NAME, hasR2Config, r2Client } from '../config/r2.js';
-import { sanitizeFileName } from '../middleware/upload.js';
+import { sanitizeFileName } from '../middlewares/upload.js';
 
 const ensureR2Ready = () => {
     if (!hasR2Config || !r2Client || !String(R2_BUCKET_NAME || '').trim()) {
