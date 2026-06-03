@@ -1,59 +1,88 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, ImageOff, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
+import { isSaleCurrentlyActive } from "@/components/admin/product/productUtils";
 
 export function FlashSaleSection({ products = [] }) {
-  const resolveSaleEndTime = () => {
-    const fallbackTarget = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
 
-    const saleTargets = products
-      .filter((product) => product?.sale_is_active !== false)
+  useEffect(() => {
+    const tick = window.setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(tick);
+  }, []);
+
+  const activeProducts = useMemo(
+    () => {
+      const referenceTime = currentTime;
+
+      return products.filter((product) => {
+        if (referenceTime < 0) {
+          return false;
+        }
+
+        return isSaleCurrentlyActive(product);
+      });
+    },
+    [products, currentTime]
+  );
+
+  const saleEndTime = useMemo(() => {
+    const saleTargets = activeProducts
       .map((product) => {
         if (!product?.sale_end_date) {
           return null;
         }
 
-        const endDate = new Date(`${product.sale_end_date}T23:59:59`);
+        const normalizedValue =
+          typeof product.sale_end_date === "string" && product.sale_end_date.includes(" ") && !product.sale_end_date.includes("T")
+            ? product.sale_end_date.replace(" ", "T")
+            : product.sale_end_date;
+        const endDate = new Date(normalizedValue);
         return Number.isNaN(endDate.getTime()) ? null : endDate;
       })
       .filter(Boolean)
       .sort((left, right) => left.getTime() - right.getTime());
 
-    return saleTargets[0] ?? fallbackTarget;
-  };
+    return saleTargets[0]?.getTime() ?? null;
+  }, [activeProducts]);
 
   // 1. Live Countdown Timer
-  const [timeLeft, setTimeLeft] = useState({ hours: "24", minutes: "00", seconds: "00" });
+  const [timeLeft, setTimeLeft] = useState({ days: "00", hours: "00", minutes: "00", seconds: "00" });
 
   useEffect(() => {
-    const saleEndTime = resolveSaleEndTime();
-
     const calculateTimeLeft = () => {
-      const now = new Date();
-      const diff = saleEndTime.getTime() - now.getTime();
-      if (diff <= 0) {
-        return { hours: "00", minutes: "00", seconds: "00" };
+      if (!saleEndTime) {
+        return { days: "00", hours: "00", minutes: "00", seconds: "00" };
       }
 
-      const hrs = Math.floor(diff / (1000 * 60 * 60));
+      const now = new Date();
+      const diff = saleEndTime - now.getTime();
+      if (diff <= 0) {
+        return { days: "00", hours: "00", minutes: "00", seconds: "00" };
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hrs = Math.floor((diff / (1000 * 60 * 60)) % 24);
       const mins = Math.floor((diff / (1000 * 60)) % 60);
       const secs = Math.floor((diff / 1000) % 60);
 
       return {
+        days: String(days).padStart(2, "0"),
         hours: String(hrs).padStart(2, "0"),
         minutes: String(mins).padStart(2, "0"),
         seconds: String(secs).padStart(2, "0")
       };
     };
 
-    setTimeLeft(calculateTimeLeft());
     const timer = setInterval(() => {
       setTimeLeft(calculateTimeLeft());
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [products]);
+  }, [saleEndTime]);
 
   // 2. Responsive Carousel Slide Logic
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -73,16 +102,17 @@ export function FlashSaleSection({ products = [] }) {
   };
 
   const cardsPerPage = getCardsPerPage();
-  const maxStartIndex = Math.max(products.length - cardsPerPage, 0);
+  const maxStartIndex = Math.max(activeProducts.length - cardsPerPage, 0);
+  const visibleCurrentIndex = Math.min(currentIndex, maxStartIndex);
 
   // Auto-play interval
   useEffect(() => {
-    if (products.length <= cardsPerPage || isHovered) return;
+    if (activeProducts.length <= cardsPerPage || isHovered) return;
     const autoPlayTimer = setInterval(() => {
       setCurrentIndex((prev) => (prev >= maxStartIndex ? 0 : prev + 1));
     }, 4000);
     return () => clearInterval(autoPlayTimer);
-  }, [products.length, maxStartIndex, isHovered, cardsPerPage]);
+  }, [activeProducts.length, maxStartIndex, isHovered, cardsPerPage]);
 
   const handlePrev = () => {
     setCurrentIndex((prev) => Math.max(prev - 1, 0));
@@ -95,13 +125,13 @@ export function FlashSaleSection({ products = [] }) {
   const getTranslateXStyle = () => {
     if (windowWidth < 640) {
       // 1 card per page, 16px gap
-      return `translateX(calc(-${currentIndex} * (100% + 16px)))`;
+      return `translateX(calc(-${visibleCurrentIndex} * (100% + 16px)))`;
     } else if (windowWidth < 1024) {
       // 2 cards per page, 16px gap
-      return `translateX(calc(-${currentIndex} * (50% + 16px)))`;
+      return `translateX(calc(-${visibleCurrentIndex} * (50% + 16px)))`;
     } else {
       // 4 cards per page, 16px gap
-      return `translateX(calc(-${currentIndex} * (25% + 16px)))`;
+      return `translateX(calc(-${visibleCurrentIndex} * (25% + 16px)))`;
     }
   };
 
@@ -117,11 +147,17 @@ export function FlashSaleSection({ products = [] }) {
             </div>
             <div className="flex items-center gap-2 text-[15px] font-semibold text-slate-800 tracking-[-0.01em]">
               <span className="text-[15px] text-slate-400 font-semibold mr-1">Kết thúc sau:</span>
+              <span className="bg-slate-900 text-white px-2.5 py-1.5 rounded-lg font-mono text-sm tracking-widest">{timeLeft.days}</span>
+              <span className="text-xs font-bold uppercase text-slate-500">ngày</span>
+              <span className="text-slate-950 animate-pulse">:</span>
               <span className="bg-slate-900 text-white px-2.5 py-1.5 rounded-lg font-mono text-sm tracking-widest">{timeLeft.hours}</span>
+              <span className="text-xs font-bold uppercase text-slate-500">giờ</span>
               <span className="text-slate-950 animate-pulse">:</span>
               <span className="bg-slate-900 text-white px-2.5 py-1.5 rounded-lg font-mono text-sm tracking-widest">{timeLeft.minutes}</span>
+              <span className="text-xs font-bold uppercase text-slate-500">phút</span>
               <span className="text-slate-950 animate-pulse">:</span>
               <span className="bg-slate-900 text-white px-2.5 py-1.5 rounded-lg font-mono text-sm tracking-widest">{timeLeft.seconds}</span>
+              <span className="text-xs font-bold uppercase text-slate-500">giây</span>
             </div>
           </div>
           <Link to="/products" className="text-[#e21a36] hover:text-red-700 hover:underline text-sm font-semibold tracking-[-0.01em]">
@@ -136,12 +172,12 @@ export function FlashSaleSection({ products = [] }) {
           onMouseLeave={() => setIsHovered(false)}
         >
           {/* Navigation Controls */}
-          {products.length > cardsPerPage && (
+          {activeProducts.length > cardsPerPage && (
             <>
               <button
                 type="button"
                 onClick={handlePrev}
-                disabled={currentIndex === 0}
+                disabled={visibleCurrentIndex === 0}
                 aria-label="Xem sản phẩm sale trước"
                 className="absolute -left-5 top-1/2 z-30 -translate-y-1/2 rounded-full border border-slate-100 bg-white p-3 text-slate-700 shadow-lg transition hover:bg-slate-50 hover:text-[#e21a36] disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:text-slate-700 md:inline-flex hidden"
               >
@@ -150,7 +186,7 @@ export function FlashSaleSection({ products = [] }) {
               <button
                 type="button"
                 onClick={handleNext}
-                disabled={currentIndex >= maxStartIndex}
+                disabled={visibleCurrentIndex >= maxStartIndex}
                 aria-label="Xem thêm sản phẩm sale"
                 className="absolute -right-5 top-1/2 z-30 -translate-y-1/2 rounded-full border border-slate-100 bg-white p-3 text-slate-700 shadow-lg transition hover:bg-slate-50 hover:text-[#e21a36] disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:text-slate-700 md:inline-flex hidden"
               >
@@ -165,15 +201,19 @@ export function FlashSaleSection({ products = [] }) {
               className="flex transition-transform duration-500 ease-in-out gap-4"
               style={{ transform: getTranslateXStyle() }}
             >
-              {products.length > 0 ? (
-                products.map((p) => (
+              {activeProducts.length > 0 ? (
+                activeProducts.map((p) => (
                   <div 
                     key={p.id} 
                     className="w-full sm:w-[calc(50%-8px)] md:w-[calc(25%-12px)] shrink-0 bg-white rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.015)] border border-slate-100 flex flex-col relative group hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] transition-all duration-300"
                   >
                     {/* Sale label */}
-                    <div className="absolute top-3 left-3 bg-[#e21a36] text-white text-[11px] font-semibold tracking-[-0.01em] px-2 py-1 rounded-lg z-10 shadow-sm">
-                      {p.discount || "Sale"}
+                    <div
+                      className={`absolute top-3 left-3 text-white text-[11px] font-semibold tracking-[-0.01em] px-2 py-1 rounded-lg z-10 shadow-sm ${
+                        Number(p.quantity || 0) > 0 ? "bg-[#e21a36]" : "bg-slate-900"
+                      }`}
+                    >
+                      {Number(p.quantity || 0) > 0 ? (p.discount || "Sale") : "Hết hàng"}
                     </div>
                     
                     {/* Image container */}
@@ -210,11 +250,18 @@ export function FlashSaleSection({ products = [] }) {
                     {/* Progress details */}
                     <div className="mt-auto pt-2 border-t border-slate-50">
                       <div className="w-full bg-slate-100 h-1.5 rounded-full mb-1.5 overflow-hidden">
-                        <div className="bg-[#e21a36] h-full rounded-full" style={{ width: p.progressWidth || "40%" }}></div>
+                        <div
+                          className={`h-full rounded-full ${Number(p.quantity || 0) > 0 ? "bg-[#e21a36]" : "bg-slate-300"}`}
+                          style={{ width: p.progressWidth || "0%" }}
+                        ></div>
                       </div>
                       <div className="flex justify-between text-[11px] text-slate-500 font-medium tracking-[-0.01em]">
-                        <span className="text-red-400">{p.saleMeta || "Đang bán chạy"}</span>
-                        <span className="text-[#e21a36] font-semibold">Còn lại {p.quantity || 5}</span>
+                        <span className={Number(p.quantity || 0) > 0 ? "text-red-400" : "text-slate-400"}>
+                          {p.saleMeta || "Đang bán chạy"}
+                        </span>
+                        <span className={`font-semibold ${Number(p.quantity || 0) > 0 ? "text-[#e21a36]" : "text-slate-500"}`}>
+                          {Number(p.quantity || 0) > 0 ? `Còn lại ${Number(p.quantity || 0)}` : "Hết hàng"}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -228,7 +275,7 @@ export function FlashSaleSection({ products = [] }) {
           </div>
 
           {/* Dots Indicator */}
-          {products.length > cardsPerPage && (
+          {activeProducts.length > cardsPerPage && (
             <div className="mt-6 flex items-center justify-center gap-2">
               {Array.from({ length: maxStartIndex + 1 }, (_, index) => (
                 <button
@@ -237,7 +284,7 @@ export function FlashSaleSection({ products = [] }) {
                   onClick={() => setCurrentIndex(index)}
                   aria-label={`Xem vị trí sale ${index + 1}`}
                   className={`h-2 rounded-full transition-all duration-300 ${
-                    index === currentIndex ? "w-6 bg-[#e21a36]" : "w-2 bg-slate-300 hover:bg-slate-400"
+                    index === visibleCurrentIndex ? "w-6 bg-[#e21a36]" : "w-2 bg-slate-300 hover:bg-slate-400"
                   }`}
                 />
               ))}

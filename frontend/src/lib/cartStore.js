@@ -151,7 +151,27 @@ export const addProductToCart = async ({ productId, quantity = 1 }) => {
     return { mode: "noop" };
   }
 
+  const productResponse = await api.get(`/products/${numericProductId}`);
+  const product = productResponse.data?.data || null;
+  const availableQuantity = Number(product?.quantity || 0);
+
+  if (availableQuantity <= 0) {
+    const stockError = new Error("Sản phẩm hiện đã hết hàng.");
+    stockError.code = "OUT_OF_STOCK";
+    throw stockError;
+  }
+
   if (!isAuthenticated()) {
+    const currentGuestItems = getGuestCartItems();
+    const existingGuestItem = currentGuestItems.find((item) => item.productId === numericProductId);
+    const nextGuestQuantity = Number(existingGuestItem?.quantity || 0) + numericQuantity;
+
+    if (nextGuestQuantity > availableQuantity) {
+      const stockError = new Error(`Sản phẩm chỉ còn ${availableQuantity} chiếc.`);
+      stockError.code = "INSUFFICIENT_STOCK";
+      throw stockError;
+    }
+
     const guestItems = addGuestCartItem(numericProductId, numericQuantity);
     return { mode: "guest", guestItems };
   }
@@ -173,6 +193,12 @@ export const addProductToCart = async ({ productId, quantity = 1 }) => {
     const existingItem = (existingEntry.items || []).find((item) => Number(item.product_id) === numericProductId);
     const nextQuantity = Number(existingItem?.quantity || 0) + numericQuantity;
 
+    if (nextQuantity > availableQuantity) {
+      const stockError = new Error(`Sản phẩm chỉ còn ${availableQuantity} chiếc.`);
+      stockError.code = "INSUFFICIENT_STOCK";
+      throw stockError;
+    }
+
     await api.put(`/carts/${existingEntry.id}`, {
       customerId,
       items: [
@@ -186,6 +212,12 @@ export const addProductToCart = async ({ productId, quantity = 1 }) => {
     notifyCartStateChanged();
 
     return { mode: "server", customerId, cartId: existingEntry.id, quantity: nextQuantity };
+  }
+
+  if (numericQuantity > availableQuantity) {
+    const stockError = new Error(`Sản phẩm chỉ còn ${availableQuantity} chiếc.`);
+    stockError.code = "INSUFFICIENT_STOCK";
+    throw stockError;
   }
 
   const response = await api.post("/carts", {

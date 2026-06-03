@@ -2,38 +2,7 @@ import orderModel from '../models/orderModel.js';
 import shippingModel from '../models/shippingModel.js';
 import customerModel from '../models/customerModel.js';
 import { emailService } from '../services/emailService.js';
-
-const normalizeOrderDetails = (
-    value,
-    fallbackProductId = null,
-    fallbackQuantity = 1,
-    fallbackSubtotalPrice = null,
-    fallbackNote = null
-) => {
-    if (Array.isArray(value)) {
-        return value;
-    }
-
-    if (typeof value === 'string' && value.trim()) {
-        try {
-            const parsedValue = JSON.parse(value);
-            return Array.isArray(parsedValue) ? parsedValue : [];
-        } catch {
-            return [];
-        }
-    }
-
-    if (fallbackProductId) {
-        return [{
-            productId: fallbackProductId,
-            quantity: fallbackQuantity,
-            subtotalPrice: fallbackSubtotalPrice,
-            note: fallbackNote,
-        }];
-    }
-
-    return [];
-};
+import { buildSecureOrderPayload } from '../services/orderPricingService.js';
 
 const parseRequiredNumber = (value) => {
     if (value === undefined || value === null || value === '') {
@@ -44,45 +13,40 @@ const parseRequiredNumber = (value) => {
     return Number.isFinite(parsed) ? parsed : null;
 };
 
-const normalizeOrderPayload = (body = {}) => {
-    const createdAt = body.createdAt ?? body.created_at;
-    const paymentMethod = body.paymentMethod ?? body.payment_method;
-    const status = body.status;
-    const accountId = body.accountId ?? body.account_id;
-    const voucherId = body.voucherId ?? body.voucher_id ?? null;
-    const totalPrice = parseRequiredNumber(body.totalPrice ?? body.total_price);
-    const discountAmount = parseRequiredNumber(body.discountAmount ?? body.discount_amount ?? 0);
-    const finalPrice = parseRequiredNumber(body.finalPrice ?? body.final_price ?? body.totalPrice ?? body.total_price);
-    const customerAddress = body.customerAddress ?? body.customer_address ?? '';
-    const customerEmail = body.customerEmail ?? body.customer_email ?? '';
-    const customerPhone = body.customerPhone ?? body.customer_phone ?? '';
-    const customerFirstName = body.customerFirstName ?? body.customer_first_name ?? '';
-    const customerLastName = body.customerLastName ?? body.customer_last_name ?? '';
-    const deliveryMethod = body.deliveryMethod ?? body.delivery_method ?? 'Standard';
-    const legacyProductId = body.productId ?? body.product_id ?? null;
-    const quantity = body.quantity ?? 1;
-    const subtotalPrice = body.subtotalPrice ?? body.subtotal_price ?? totalPrice ?? null;
-    const note = body.note ?? null;
-    const details = normalizeOrderDetails(body.details, legacyProductId, quantity, subtotalPrice, note);
+const normalizeOrderDetails = (value) => {
+    if (Array.isArray(value)) {
+        return value;
+    }
 
-    return {
-        createdAt,
-        paymentMethod,
-        status,
-        accountId,
-        voucherId,
-        totalPrice,
-        discountAmount,
-        finalPrice,
-        customerAddress,
-        customerEmail,
-        customerPhone,
-        customerFirstName,
-        customerLastName,
-        deliveryMethod,
-        details,
-    };
+    if (typeof value === 'string' && value.trim()) {
+        try {
+            const parsed = JSON.parse(value);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch {
+            return [];
+        }
+    }
+
+    return [];
 };
+
+const normalizeOrderPayload = (body = {}) => ({
+    createdAt: body.createdAt ?? body.created_at,
+    paymentMethod: body.paymentMethod ?? body.payment_method,
+    status: body.status,
+    accountId: body.accountId ?? body.account_id,
+    voucherId: body.voucherId ?? body.voucher_id ?? null,
+    totalPrice: parseRequiredNumber(body.totalPrice ?? body.total_price),
+    discountAmount: parseRequiredNumber(body.discountAmount ?? body.discount_amount ?? 0),
+    finalPrice: parseRequiredNumber(body.finalPrice ?? body.final_price ?? body.totalPrice ?? body.total_price),
+    customerAddress: body.customerAddress ?? body.customer_address ?? '',
+    customerEmail: body.customerEmail ?? body.customer_email ?? '',
+    customerPhone: body.customerPhone ?? body.customer_phone ?? '',
+    customerFirstName: body.customerFirstName ?? body.customer_first_name ?? '',
+    customerLastName: body.customerLastName ?? body.customer_last_name ?? '',
+    deliveryMethod: body.deliveryMethod ?? body.delivery_method ?? 'Standard',
+    details: normalizeOrderDetails(body.details),
+});
 
 const isValidOrderPayload = (payload, { requireCustomerAddress = true } = {}) => {
     if (!payload.createdAt || !payload.paymentMethod || !payload.status || !payload.accountId) {
@@ -97,7 +61,7 @@ const isValidOrderPayload = (payload, { requireCustomerAddress = true } = {}) =>
         return false;
     }
 
-    return true;
+    return Array.isArray(payload.details);
 };
 
 const orderController = {
@@ -133,12 +97,16 @@ const orderController = {
 
     createOrder: async (req, res, next) => {
         try {
-            const payload = normalizeOrderPayload(req.body);
-            payload.status = 'PENDING';
-
-            if (!isValidOrderPayload(payload, { requireCustomerAddress: true })) {
-                return res.status(400).json({ message: 'Invalid input' });
+            const requestedPaymentMethod = String(req.body.paymentMethod ?? req.body.payment_method ?? '').trim().toUpperCase();
+            if (requestedPaymentMethod === 'VNPAY') {
+                return res.status(400).json({ message: 'Vui lòng sử dụng cổng thanh toán VNPay để tạo đơn hàng online.' });
             }
+
+            const payload = await buildSecureOrderPayload({
+                body: req.body,
+                authenticatedUser: req.user,
+                allowPrivilegedAccountOverride: true,
+            });
 
             const existingCustomer = await customerModel.getById(payload.accountId);
             if (existingCustomer) {

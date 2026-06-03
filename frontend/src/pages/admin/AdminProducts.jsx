@@ -9,6 +9,7 @@ import {
   createImageSlotFromExisting,
   fillImageSlots,
   getImageDisplayName,
+  isSaleCurrentlyActive,
   normalizeExistingImage,
   parseStoredSpecs,
   resolveAssetUrl,
@@ -49,7 +50,7 @@ function AdminProducts() {
     saleId: "",
     saleType: "percentage",
     saleValue: "",
-    saleDuration: "",
+    saleDuration: "7",
     brandId: "",
     categoryId: "",
     origin: "",
@@ -154,8 +155,8 @@ function AdminProducts() {
   }, [products, searchTerm]);
 
   const groupedProducts = useMemo(() => ({
-    onSale: filteredProducts.filter((product) => Boolean(product.sale_id)),
-    regular: filteredProducts.filter((product) => !product.sale_id),
+    onSale: filteredProducts.filter((product) => isSaleCurrentlyActive(product)),
+    regular: filteredProducts.filter((product) => !isSaleCurrentlyActive(product)),
   }), [filteredProducts]);
 
   const normalizePriceInputValue = (value) => {
@@ -480,7 +481,7 @@ function AdminProducts() {
       saleId: product.sale_id ?? "",
       saleType: product.sale_type ?? "percentage",
       saleValue: product.sale_value ?? "",
-      saleDuration: product.sale_duration ? String(product.sale_duration) : "",
+      saleDuration: product.sale_duration ? String(product.sale_duration) : "7",
       brandId: product.brand_id ?? "",
       categoryId: product.category_id ?? "",
       origin: normalizeTextInputValue(product.origin),
@@ -665,14 +666,23 @@ function AdminProducts() {
       let resolvedSpecsValue = serializeSpecsValue(formData.specs);
 
       if (modalMode !== "delete" && formData.isOnSale) {
+        const normalizedSaleDuration = Number(formData.saleDuration || 7);
         const salePayload = {
           saleType: formData.saleType,
           saleValue: Number(formData.saleValue),
-          saleDuration: Number(formData.saleDuration || 7),
+          saleDuration: normalizedSaleDuration,
         };
 
-        if (formData.saleId) {
+        const hasSaleConfigChanged =
+          !selectedProduct ||
+          String(selectedProduct.sale_type ?? "percentage") !== String(formData.saleType) ||
+          Number(selectedProduct.sale_value ?? 0) !== Number(formData.saleValue) ||
+          Number(selectedProduct.sale_duration ?? 7) !== normalizedSaleDuration;
+
+        if (formData.saleId && hasSaleConfigChanged) {
           await api.put(`/sale-events/${formData.saleId}`, salePayload);
+          resolvedSaleId = formData.saleId;
+        } else if (formData.saleId) {
           resolvedSaleId = formData.saleId;
         } else {
           const saleResponse = await api.post("/sale-events", salePayload);
@@ -915,6 +925,7 @@ function AdminProducts() {
             isSubmitting={isSubmitting}
             error={modalError}
             validationErrors={validationErrors}
+            isDelete
           />
         </>
       ) : null}

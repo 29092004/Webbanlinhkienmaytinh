@@ -1,43 +1,40 @@
-import { useEffect } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { BrowserRouter, Navigate, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 
 import {
   getPostLoginRoute,
   getStoredUser,
-  hasRole,
   isAuthenticated,
   subscribeToSessionExpired,
 } from "./lib/auth";
 import { showToast } from "./lib/toast";
 import { ToastViewport } from "./components/ui/ToastViewport";
-import Home from "./pages/Home";
-import Login from "./pages/auth/Login";
-import Register from "./pages/auth/Register";
-import Otp from "./pages/auth/Otp";
-import Products from "./pages/Products";
-import ProductDetail from "./pages/ProductDetail";
-import SearchResults from "./pages/SearchResults";
-import PCBuilder from "./pages/PCBuilder";
-import Promotions from "./pages/Promotions";
-import UserProfile from "./pages/UserProfile";
-import Cart from "./pages/Cart";
-import Checkout from "./pages/Checkout";
-import OrderConfirmation from "./pages/OrderConfirmation";
-import OrderDetail from "./pages/OrderDetail";
-import Compare from "./pages/Compare";
-
-// Admin Pages
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminBrands from "./pages/admin/AdminBrands";
-import AdminCategories from "./pages/admin/AdminCategories";
-import AdminVouchers from "./pages/admin/AdminVouchers";
-import AdminCustomers from "./pages/admin/AdminCustomers";
-import AdminProducts from "./pages/admin/AdminProducts";
-import AdminOrders from "./pages/admin/AdminOrders";
-import AdminShipping from "./pages/admin/AdminShipping";
-import AdminAccounts from "./pages/admin/AdminAccounts";
-import AdminSupport from "./pages/admin/AdminSupport";
 import { SupportChatWidget } from "./components/support/SupportChatWidget";
+
+const Home = lazy(() => import("./pages/Home"));
+const Login = lazy(() => import("./pages/auth/Login"));
+const Register = lazy(() => import("./pages/auth/Register"));
+const Otp = lazy(() => import("./pages/auth/Otp"));
+const Products = lazy(() => import("./pages/Products"));
+const ProductDetail = lazy(() => import("./pages/ProductDetail"));
+const SearchResults = lazy(() => import("./pages/SearchResults"));
+const PCBuilder = lazy(() => import("./pages/PCBuilder"));
+const UserProfile = lazy(() => import("./pages/UserProfile"));
+const Cart = lazy(() => import("./pages/Cart"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const OrderConfirmation = lazy(() => import("./pages/OrderConfirmation"));
+const OrderDetail = lazy(() => import("./pages/OrderDetail"));
+const Compare = lazy(() => import("./pages/Compare"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminBrands = lazy(() => import("./pages/admin/AdminBrands"));
+const AdminCategories = lazy(() => import("./pages/admin/AdminCategories"));
+const AdminVouchers = lazy(() => import("./pages/admin/AdminVouchers"));
+const AdminCustomers = lazy(() => import("./pages/admin/AdminCustomers"));
+const AdminProducts = lazy(() => import("./pages/admin/AdminProducts"));
+const AdminOrders = lazy(() => import("./pages/admin/AdminOrders"));
+const AdminShipping = lazy(() => import("./pages/admin/AdminShipping"));
+const AdminAccounts = lazy(() => import("./pages/admin/AdminAccounts"));
+const AdminSupport = lazy(() => import("./pages/admin/AdminSupport"));
 
 function ScrollToTop() {
   const location = useLocation();
@@ -97,8 +94,9 @@ function PublicOnly({ children }) {
   return <Navigate to={getPostLoginRoute(user?.role)} replace />;
 }
 
-function RequireRole({ roles, fallbackTo = "/", children }) {
+function AdminAreaGuard({ adminOnly = false, children }) {
   const location = useLocation();
+  const user = getStoredUser();
 
   if (!isAuthenticated()) {
     return (
@@ -110,11 +108,23 @@ function RequireRole({ roles, fallbackTo = "/", children }) {
     );
   }
 
-  if (!hasRole(...roles)) {
-    return <Navigate to={fallbackTo} replace />;
+  if (!user || !["admin", "staff"].includes(user.role)) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (adminOnly && user.role !== "admin") {
+    return <Navigate to="/admin" replace />;
   }
 
   return children;
+}
+
+function RouteLoadingFallback() {
+  return (
+    <div className="min-h-screen bg-slate-50 px-4 py-16 text-center text-sm font-semibold text-slate-500">
+      Đang tải trang...
+    </div>
+  );
 }
 
 function App() {
@@ -124,44 +134,44 @@ function App() {
       <SessionExpiredHandler />
       <ToastViewport />
       <SupportChatWidget />
+      <Suspense fallback={<RouteLoadingFallback />}>
+        <Routes>
 
-      <Routes>
+          {/* Public Routes */}
+          <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
+          <Route path="/register" element={<PublicOnly><Register /></PublicOnly>} />
+          <Route path="/otp" element={<PublicOnly><Otp /></PublicOnly>} />
 
-        {/* Public Routes */}
-        <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
-        <Route path="/register" element={<PublicOnly><Register /></PublicOnly>} />
-        <Route path="/otp" element={<PublicOnly><Otp /></PublicOnly>} />
+          <Route path="/" element={<RequireAuth><Home /></RequireAuth>} />
+          <Route path="/products" element={<RequireAuth><Products /></RequireAuth>} />
+          <Route path="/product/:id" element={<RequireAuth><ProductDetail /></RequireAuth>} />
+          <Route path="/compare" element={<RequireAuth><Compare /></RequireAuth>} />
+          <Route path="/search" element={<RequireAuth><SearchResults /></RequireAuth>} />
+          <Route path="/pc-builder" element={<RequireAuth><PCBuilder /></RequireAuth>} />
+          <Route path="/profile" element={<RequireAuth><UserProfile section="profile" /></RequireAuth>} />
+          <Route path="/profile/orders" element={<RequireAuth><UserProfile section="orders" /></RequireAuth>} />
+          <Route path="/cart" element={<RequireAuth><Cart /></RequireAuth>} />
+          <Route path="/checkout" element={<RequireAuth><Checkout /></RequireAuth>} />
+          <Route path="/order-confirmation" element={<RequireAuth><OrderConfirmation /></RequireAuth>} />
+          <Route path="/order-details" element={<RequireAuth><OrderDetail /></RequireAuth>} />
+          <Route path="/order/:id" element={<RequireAuth><OrderDetail /></RequireAuth>} />
 
-        <Route path="/" element={<RequireAuth><Home /></RequireAuth>} />
-        <Route path="/products" element={<RequireAuth><Products /></RequireAuth>} />
-        <Route path="/product/:id" element={<RequireAuth><ProductDetail /></RequireAuth>} />
-        <Route path="/compare" element={<RequireAuth><Compare /></RequireAuth>} />
-        <Route path="/search" element={<RequireAuth><SearchResults /></RequireAuth>} />
-        <Route path="/pc-builder" element={<RequireAuth><PCBuilder /></RequireAuth>} />
-        <Route path="/promotions" element={<RequireAuth><Promotions /></RequireAuth>} />
-        <Route path="/profile" element={<RequireAuth><UserProfile section="profile" /></RequireAuth>} />
-        <Route path="/profile/orders" element={<RequireAuth><UserProfile section="orders" /></RequireAuth>} />
-        <Route path="/cart" element={<RequireAuth><Cart /></RequireAuth>} />
-        <Route path="/checkout" element={<RequireAuth><Checkout /></RequireAuth>} />
-        <Route path="/order-confirmation" element={<RequireAuth><OrderConfirmation /></RequireAuth>} />
-        <Route path="/order-details" element={<RequireAuth><OrderDetail /></RequireAuth>} />
-        <Route path="/order/:id" element={<RequireAuth><OrderDetail /></RequireAuth>} />
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminAreaGuard><AdminDashboard /></AdminAreaGuard>} />
+          <Route path="/admin/brands" element={<AdminAreaGuard adminOnly><AdminBrands /></AdminAreaGuard>} />
+          <Route path="/admin/categories" element={<AdminAreaGuard adminOnly><AdminCategories /></AdminAreaGuard>} />
+          <Route path="/admin/vouchers" element={<AdminAreaGuard adminOnly><AdminVouchers /></AdminAreaGuard>} />
+          <Route path="/admin/accounts" element={<AdminAreaGuard adminOnly><AdminAccounts /></AdminAreaGuard>} />
+          <Route path="/admin/customers" element={<AdminAreaGuard><AdminCustomers /></AdminAreaGuard>} />
+          <Route path="/admin/products" element={<AdminAreaGuard><AdminProducts /></AdminAreaGuard>} />
+          <Route path="/admin/orders" element={<AdminAreaGuard><AdminOrders /></AdminAreaGuard>} />
+          <Route path="/admin/shipping" element={<AdminAreaGuard><AdminShipping /></AdminAreaGuard>} />
+          <Route path="/admin/support" element={<AdminAreaGuard><AdminSupport /></AdminAreaGuard>} />
 
-        {/* Admin Routes */}
-        <Route path="/admin" element={<RequireRole roles={["admin", "staff"]} fallbackTo="/"><AdminDashboard /></RequireRole>} />
-        <Route path="/admin/brands" element={<RequireRole roles={["admin"]} fallbackTo="/admin"><AdminBrands /></RequireRole>} />
-        <Route path="/admin/categories" element={<RequireRole roles={["admin"]} fallbackTo="/admin"><AdminCategories /></RequireRole>} />
-        <Route path="/admin/vouchers" element={<RequireRole roles={["admin"]} fallbackTo="/admin"><AdminVouchers /></RequireRole>} />
-        <Route path="/admin/accounts" element={<RequireRole roles={["admin"]} fallbackTo="/admin"><AdminAccounts /></RequireRole>} />
-        <Route path="/admin/customers" element={<RequireRole roles={["admin", "staff"]} fallbackTo="/"><AdminCustomers /></RequireRole>} />
-        <Route path="/admin/products" element={<RequireRole roles={["admin", "staff"]} fallbackTo="/"><AdminProducts /></RequireRole>} />
-        <Route path="/admin/orders" element={<RequireRole roles={["admin", "staff"]} fallbackTo="/"><AdminOrders /></RequireRole>} />
-        <Route path="/admin/shipping" element={<RequireRole roles={["admin", "staff"]} fallbackTo="/"><AdminShipping /></RequireRole>} />
-        <Route path="/admin/support" element={<RequireRole roles={["admin", "staff"]} fallbackTo="/"><AdminSupport /></RequireRole>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-
-      </Routes>
+        </Routes>
+      </Suspense>
 
     </BrowserRouter>
   );

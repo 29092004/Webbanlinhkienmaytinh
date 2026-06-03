@@ -13,10 +13,7 @@ import { getStoredUser } from "@/lib/auth";
 import { showToast } from "@/lib/toast";
 
 const LAST_ORDER_SNAPSHOT_KEY = "last_order_snapshot";
-const PENDING_VNPAY_ORDER_KEY = "pending_vnpay_order";
-const PENDING_VNPAY_ORDER_LOCK_KEY = "pending_vnpay_order_lock";
 const VNPAY_TOAST_SHOWN_KEY = "vnpay_toast_shown";
-const buildPendingVnpayOrderResultKey = (txnRef) => `pending_vnpay_order_result_${txnRef || "default"}`;
 
 export default function OrderConfirmation() {
   const navigate = useNavigate();
@@ -36,117 +33,9 @@ export default function OrderConfirmation() {
         const orderId = searchParams.get("orderId");
         const paymentStatus = searchParams.get("paymentStatus");
         const paymentMethod = searchParams.get("paymentMethod");
-        const txnRef = searchParams.get("txnRef");
         const storedSnapshot = sessionStorage.getItem(LAST_ORDER_SNAPSHOT_KEY);
-        const pendingVnpayOrder = sessionStorage.getItem(PENDING_VNPAY_ORDER_KEY);
         const parsedSnapshot = storedSnapshot ? JSON.parse(storedSnapshot) : null;
-        const parsedPendingVnpayOrder = pendingVnpayOrder ? JSON.parse(pendingVnpayOrder) : null;
-        const pendingVnpayOrderResultKey = buildPendingVnpayOrderResultKey(txnRef);
-        const storedCreatedOrderId = sessionStorage.getItem(pendingVnpayOrderResultKey);
-
-        if (paymentMethod === "VNPAY" && paymentStatus === "success" && !orderId && parsedPendingVnpayOrder) {
-          const activeCreationLock = sessionStorage.getItem(PENDING_VNPAY_ORDER_LOCK_KEY);
-
-          if (activeCreationLock && activeCreationLock === txnRef) {
-            for (let attempt = 0; attempt < 10; attempt += 1) {
-              await new Promise((resolve) => window.setTimeout(resolve, 250));
-              const resolvedOrderId = sessionStorage.getItem(pendingVnpayOrderResultKey);
-
-              if (resolvedOrderId) {
-                navigate(`/order-confirmation?paymentStatus=success&paymentMethod=VNPAY&txnRef=${txnRef || ""}`, {
-                  replace: true,
-                });
-                return;
-              }
-            }
-
-            return;
-          }
-
-          sessionStorage.setItem(PENDING_VNPAY_ORDER_LOCK_KEY, txnRef || "creating");
-
-          const createOrderPayload = {
-            createdAt: parsedPendingVnpayOrder.createdAt ?? parsedPendingVnpayOrder.created_at,
-            paymentMethod: parsedPendingVnpayOrder.paymentMethod ?? parsedPendingVnpayOrder.payment_method,
-            status: "PENDING",
-            accountId: parsedPendingVnpayOrder.accountId ?? parsedPendingVnpayOrder.account_id,
-            voucherId: parsedPendingVnpayOrder.voucherId ?? parsedPendingVnpayOrder.voucher_id ?? null,
-            totalPrice: parsedPendingVnpayOrder.totalPrice ?? parsedPendingVnpayOrder.total_price,
-            discountAmount: parsedPendingVnpayOrder.discountAmount ?? parsedPendingVnpayOrder.discount_amount ?? 0,
-            finalPrice:
-              parsedPendingVnpayOrder.finalPrice ??
-              parsedPendingVnpayOrder.final_price ??
-              parsedPendingVnpayOrder.totalPrice ??
-              parsedPendingVnpayOrder.total_price,
-            customerAddress:
-              parsedPendingVnpayOrder.customerAddress ??
-              parsedPendingVnpayOrder.customer_address ??
-              "",
-            customerEmail:
-              parsedPendingVnpayOrder.customerEmail ??
-              parsedPendingVnpayOrder.customer_email ??
-              "",
-            customerPhone:
-              parsedPendingVnpayOrder.customerPhone ??
-              parsedPendingVnpayOrder.customer_phone ??
-              "",
-            customerFirstName:
-              parsedPendingVnpayOrder.customerFirstName ??
-              parsedPendingVnpayOrder.customer_first_name ??
-              "",
-            customerLastName:
-              parsedPendingVnpayOrder.customerLastName ??
-              parsedPendingVnpayOrder.customer_last_name ??
-              "",
-            deliveryMethod:
-              parsedPendingVnpayOrder.deliveryMethod ??
-              parsedPendingVnpayOrder.delivery_method ??
-              "Standard",
-            details: (parsedPendingVnpayOrder.details || []).map((detail) => ({
-              productId: detail.productId ?? detail.product_id,
-              quantity: detail.quantity,
-              subtotalPrice: detail.subtotalPrice ?? detail.subtotal_price,
-              note: detail.note ?? null,
-            })),
-          };
-          const response = await api.post("/orders", createOrderPayload);
-          const createdOrderId = response.data?.orderId;
-
-          if (!createdOrderId) {
-            throw new Error("Order was not created after VNPay success");
-          }
-
-          await clearServerCart(userId).catch(() => null);
-          sessionStorage.removeItem(PENDING_VNPAY_ORDER_KEY);
-          sessionStorage.removeItem(PENDING_VNPAY_ORDER_LOCK_KEY);
-          sessionStorage.setItem(pendingVnpayOrderResultKey, String(createdOrderId));
-          sessionStorage.setItem(
-            LAST_ORDER_SNAPSHOT_KEY,
-            JSON.stringify({
-              ...parsedPendingVnpayOrder,
-              id: createdOrderId,
-              status: "PENDING",
-              created_at: parsedPendingVnpayOrder.createdAt ?? parsedPendingVnpayOrder.created_at,
-              payment_method: parsedPendingVnpayOrder.paymentMethod ?? parsedPendingVnpayOrder.payment_method,
-              total_price: parsedPendingVnpayOrder.totalPrice ?? parsedPendingVnpayOrder.total_price,
-              discount_amount: parsedPendingVnpayOrder.discountAmount ?? parsedPendingVnpayOrder.discount_amount ?? 0,
-              final_price:
-                parsedPendingVnpayOrder.finalPrice ??
-                parsedPendingVnpayOrder.final_price ??
-                parsedPendingVnpayOrder.totalPrice ??
-                parsedPendingVnpayOrder.total_price,
-            })
-          );
-
-          if (isMounted) {
-            navigate(`/order-confirmation?paymentStatus=success&paymentMethod=VNPAY&txnRef=${txnRef || ""}`, {
-              replace: true,
-            });
-          }
-          return;
-        }
-
-        const resolvedOrderId = orderId || parsedSnapshot?.id || storedCreatedOrderId;
+        const resolvedOrderId = orderId || (paymentMethod === "VNPAY" ? null : parsedSnapshot?.id);
 
         if (resolvedOrderId) {
           const [orderResponse, productResponse] = await Promise.all([
@@ -161,24 +50,22 @@ export default function OrderConfirmation() {
           const orderRow = orderResponse.data?.data || null;
           const productRows = Array.isArray(productResponse.data?.data) ? productResponse.data.data : [];
           setOrderView(mapOrderConfirmationForView(orderRow, productRows));
+
+          if (paymentMethod === "VNPAY" && paymentStatus === "success" && userId > 0) {
+            await clearServerCart(userId).catch(() => null);
+          }
           return;
         }
 
-        if (parsedSnapshot) {
+        if (paymentMethod !== "VNPAY" && parsedSnapshot) {
           setOrderView(
             mapOrderConfirmationForView(parsedSnapshot, [])
           );
           return;
         }
 
-        if (paymentMethod === "VNPAY" && parsedPendingVnpayOrder) {
-          setOrderView(mapOrderConfirmationForView(parsedPendingVnpayOrder, []));
-          return;
-        }
-
         setOrderView(null);
       } catch (error) {
-        sessionStorage.removeItem(PENDING_VNPAY_ORDER_LOCK_KEY);
         if (!isMounted) {
           return;
         }

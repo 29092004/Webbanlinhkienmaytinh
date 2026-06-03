@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 const supportLinks = [
   { label: "Hướng dẫn mua hàng", href: "/products" },
   { label: "Xây dựng cấu hình PC", href: "/pc-builder" },
-  { label: "Khuyến mãi đang áp dụng", href: "/promotions" },
   { label: "Tra cứu đơn hàng", href: "/profile/orders" },
 ];
 
@@ -18,10 +17,10 @@ const categoryLinks = [
 ];
 
 const policyLinks = [
-  { label: "Chính sách bảo hành", href: "/promotions" },
-  { label: "Chính sách đổi trả", href: "/promotions" },
-  { label: "Chính sách vận chuyển", href: "/promotions" },
-  { label: "Điều khoản sử dụng", href: "/promotions" },
+  { label: "Chính sách bảo hành", href: "/" },
+  { label: "Chính sách đổi trả", href: "/" },
+  { label: "Chính sách vận chuyển", href: "/" },
+  { label: "Điều khoản sử dụng", href: "/" },
 ];
 
 export function Footer() {

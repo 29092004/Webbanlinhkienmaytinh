@@ -27,9 +27,9 @@ const saleEventController = {
         try {
             const saleType = req.body.saleType ?? req.body.sale_type;
             const saleValue = req.body.saleValue ?? req.body.sale_value;
-            const saleDuration = req.body.saleDuration ?? req.body.sale_duration;
+            const saleDuration = req.body.saleDuration ?? req.body.sale_duration ?? 7;
 
-            if (!saleType || saleValue === undefined || !saleDuration) {
+            if (!saleType || saleValue === undefined) {
                 return res.status(400).json({ message: 'Invalid input' });
             }
 
@@ -45,9 +45,9 @@ const saleEventController = {
             const { saleId } = req.params;
             const saleType = req.body.saleType ?? req.body.sale_type;
             const saleValue = req.body.saleValue ?? req.body.sale_value;
-            const saleDuration = req.body.saleDuration ?? req.body.sale_duration;
+            const saleDuration = req.body.saleDuration ?? req.body.sale_duration ?? 7;
 
-            if (!saleType || saleValue === undefined || !saleDuration) {
+            if (!saleType || saleValue === undefined) {
                 return res.status(400).json({ message: 'Invalid input' });
             }
 

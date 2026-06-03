@@ -20,7 +20,6 @@ const navItems = [
   { label: "Trang chủ", href: "/" },
   { label: "Sản phẩm", href: "/products" },
   { label: "Xây dựng cấu hình", href: "/pc-builder" },
-  { label: "Khuyến mãi", href: "/promotions" },
 ];
 
 function getUserDisplayName(user) {

@@ -3,7 +3,8 @@ import axios from "axios";
 import { getAccessToken, notifySessionExpired } from "@/lib/auth";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL?.trim() || "http://localhost:9000/api";
+  import.meta.env.VITE_API_URL?.trim() ||
+  (import.meta.env.PROD ? "/api" : "http://localhost:9000/api");
 export const API_BASE_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
 
 export const api = axios.create({

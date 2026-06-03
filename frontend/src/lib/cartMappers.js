@@ -1,4 +1,4 @@
-import { calculateDiscountedPrice, resolveAssetUrl } from "@/components/admin/product/productUtils";
+import { calculateDiscountedPrice, isSaleCurrentlyActive, resolveAssetUrl } from "@/components/admin/product/productUtils";
 
 const buildCartItemDetails = (product) => {
   const specs = [];
@@ -24,12 +24,12 @@ export const mapCartEntriesToItems = (cartEntries = [], products = []) => {
   return cartEntries.flatMap((entry) =>
     (entry.items || []).map((item, index) => {
       const product = productsById.get(Number(item.product_id));
-      const pricing = calculateDiscountedPrice({
-        retailPrice: product?.retail_price,
-        saleType: product?.sale_type === "fixed" ? "fixed" : "percentage",
-        saleValue: product?.sale_value,
-        isOnSale: Boolean(product?.sale_id),
-      });
+        const pricing = calculateDiscountedPrice({
+          retailPrice: product?.retail_price,
+          saleType: product?.sale_type === "fixed" ? "fixed" : "percentage",
+          saleValue: product?.sale_value,
+          isOnSale: isSaleCurrentlyActive(product),
+        });
 
       return {
         id: `${entry.id}-${item.product_id}-${index}`,
@@ -59,7 +59,7 @@ export const mapCartSuggestions = (products = [], cartItems = []) => {
         retailPrice: product.retail_price,
         saleType: product.sale_type === "fixed" ? "fixed" : "percentage",
         saleValue: product.sale_value,
-        isOnSale: Boolean(product.sale_id),
+        isOnSale: isSaleCurrentlyActive(product),
       });
 
       return {
@@ -80,7 +80,7 @@ export const mapGuestCartItems = (guestItems = [], products = []) => {
       retailPrice: product?.retail_price,
       saleType: product?.sale_type === "fixed" ? "fixed" : "percentage",
       saleValue: product?.sale_value,
-      isOnSale: Boolean(product?.sale_id),
+      isOnSale: isSaleCurrentlyActive(product),
     });
 
     return {

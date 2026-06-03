@@ -1,5 +1,24 @@
 import cartModel from '../models/cartModel.js';
 
+const isAdminOrStaff = (role) => role === 'admin' || role === 'staff';
+const normalizeCustomerId = (value) => Number(value ?? 0);
+const canAccessCustomerCart = (req, customerId) =>
+    isAdminOrStaff(req.user?.role) || Number(req.user?.id) === normalizeCustomerId(customerId);
+
+const getCartIfAllowed = async (req, cartId) => {
+    const cart = await cartModel.getById(cartId);
+
+    if (!cart) {
+        return { cart: null };
+    }
+
+    if (!canAccessCustomerCart(req, cart.customer_id)) {
+        return { cart: null, forbidden: true };
+    }
+
+    return { cart };
+};
+
 const normalizeCartItems = (value, fallbackProductId = null, fallbackQuantity = null) => {
     if (Array.isArray(value)) {
         return value;
@@ -37,7 +56,12 @@ const cartController = {
     getCartById: async (req, res) => {
         try {
             const { id } = req.params;
-            const row = await cartModel.getById(id);
+            const { cart: row, forbidden } = await getCartIfAllowed(req, id);
+
+            if (forbidden) {
+                return res.status(403).json({ message: 'Forbidden' });
+            }
+
             if (!row) {
                 return res.status(404).json({ message: 'Cart not found' });
             }
@@ -50,6 +74,11 @@ const cartController = {
     getCartsByCustomerId: async (req, res) => {
         try {
             const { customerId } = req.params;
+
+            if (!canAccessCustomerCart(req, customerId)) {
+                return res.status(403).json({ message: 'Forbidden' });
+            }
+
             const rows = await cartModel.getByCustomerId(customerId);
             res.json({ success: true, data: rows });
         } catch (error) {
@@ -67,6 +96,10 @@ const cartController = {
 
             if (!customerId) {
                 return res.status(400).json({ message: 'customerId is required' });
+            }
+
+            if (!canAccessCustomerCart(req, customerId)) {
+                return res.status(403).json({ message: 'Forbidden' });
             }
 
             const cartId = await cartModel.create(customerId, createdAt, items);
@@ -89,6 +122,11 @@ const cartController = {
                 return res.status(400).json({ message: 'customerId is required' });
             }
 
+            const { forbidden } = await getCartIfAllowed(req, id);
+            if (forbidden || !canAccessCustomerCart(req, customerId)) {
+                return res.status(403).json({ message: 'Forbidden' });
+            }
+
             const affectedRows = await cartModel.update(id, customerId, createdAt, items);
             if (affectedRows === 0) {
                 return res.status(404).json({ message: 'Cart not found' });
@@ -102,6 +140,12 @@ const cartController = {
     deleteCart: async (req, res) => {
         try {
             const { id } = req.params;
+            const { forbidden } = await getCartIfAllowed(req, id);
+
+            if (forbidden) {
+                return res.status(403).json({ message: 'Forbidden' });
+            }
+
             const affectedRows = await cartModel.delete(id);
             if (affectedRows === 0) {
                 return res.status(404).json({ message: 'Cart not found' });

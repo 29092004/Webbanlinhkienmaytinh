@@ -5,8 +5,17 @@ import { showToast } from "@/lib/toast";
 
 export function ProductCard({ product }) {
   const productDetailPath = `/product/${product.id || 3}`;
+  const isOutOfStock = Number(product?.quantity || 0) <= 0;
 
   const handleAddToCart = async () => {
+    if (isOutOfStock) {
+      showToast({
+        message: `${product.name} hiện đã hết hàng.`,
+        type: "error",
+      });
+      return;
+    }
+
     try {
       await addProductToCart({ productId: product.id, quantity: 1 });
       showToast({
@@ -16,7 +25,7 @@ export function ProductCard({ product }) {
     } catch (error) {
       console.error("Failed to add product to cart", error);
       showToast({
-        message: "Không thêm được sản phẩm vào giỏ hàng.",
+        message: error?.message || "Không thêm được sản phẩm vào giỏ hàng.",
         type: "error",
       });
     }
@@ -26,7 +35,11 @@ export function ProductCard({ product }) {
     <div
       className="bg-white rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-slate-100 flex flex-col relative group hover:shadow-[0_10px_30px_rgba(0,0,0,0.05)] transition-all duration-300"
     >
-      {product.isOnSale ? (
+      {isOutOfStock ? (
+        <span className="absolute left-3 top-3 z-10 rounded-lg bg-slate-900 px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.08em] text-white shadow-sm">
+          Hết hàng
+        </span>
+      ) : product.isOnSale ? (
         <span className="absolute left-3 top-3 z-10 rounded-lg bg-[#e21a36] px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.08em] text-white shadow-sm">
           Sale
         </span>
@@ -73,16 +86,24 @@ export function ProductCard({ product }) {
         ) : (
           <span className="text-transparent text-xs select-none">0đ</span>
         )}
+        <span className={`text-xs font-bold ${isOutOfStock ? "text-slate-500" : "text-emerald-600"}`}>
+          {isOutOfStock ? "Hết hàng" : `Còn ${Number(product.quantity || 0)} sản phẩm`}
+        </span>
       </div>
 
       {/* Add to Cart button */}
       <button
         type="button"
         onClick={handleAddToCart}
-        className="w-full bg-[#e21a36] hover:bg-red-700 text-white rounded-xl py-3 text-xs font-bold flex items-center justify-center gap-2 transition-colors"
+        disabled={isOutOfStock}
+        className={`w-full rounded-xl py-3 text-xs font-bold flex items-center justify-center gap-2 transition-colors ${
+          isOutOfStock
+            ? "cursor-not-allowed bg-slate-200 text-slate-500"
+            : "bg-[#e21a36] text-white hover:bg-red-700"
+        }`}
       >
         <ShoppingCart className="size-4 shrink-0" />
-        Thêm vào giỏ hàng
+        {isOutOfStock ? "Hết hàng" : "Thêm vào giỏ hàng"}
       </button>
     </div>
   );

@@ -1,4 +1,12 @@
+import db from '../config/mysql.js';
+import accountModel from '../models/accountModel.js';
 import customerModel from '../models/customerModel.js';
+
+const isAdminOrStaff = (role) => role === 'admin' || role === 'staff';
+
+const canAccessCustomerRecord = (req, customerId) => (
+    isAdminOrStaff(req.user?.role) || Number(req.user?.id) === Number(customerId)
+);
 
 const customerController = {
     getCustomers: async (req, res) => {
@@ -13,6 +21,11 @@ const customerController = {
     getCustomerById: async (req, res) => {
         try {
             const { customerId } = req.params;
+
+            if (!canAccessCustomerRecord(req, customerId)) {
+                return res.status(403).json({ message: 'Forbidden' });
+            }
+
             const row = await customerModel.getById(customerId);
             if (!row) {
                 return res.status(404).json({ message: 'Customer not found' });
@@ -44,6 +57,11 @@ const customerController = {
     updateCustomer: async (req, res, next) => {
         try {
             const { customerId } = req.params;
+
+            if (!canAccessCustomerRecord(req, customerId)) {
+                return res.status(403).json({ message: 'Forbidden' });
+            }
+
             const firstName = String(req.body.firstName ?? req.body.first_name ?? '').trim();
             const lastName = String(req.body.lastName ?? req.body.last_name ?? '').trim();
             const { email, phone, address } = req.body;
@@ -63,15 +81,42 @@ const customerController = {
     },
 
     deleteCustomer: async (req, res) => {
+        let connection;
+
         try {
             const { customerId } = req.params;
-            const affectedRows = await customerModel.delete(customerId);
-            if (affectedRows === 0) {
+            const existingCustomer = await customerModel.getById(customerId);
+
+            if (!existingCustomer) {
                 return res.status(404).json({ message: 'Customer not found' });
             }
+
+            connection = await db.getConnection();
+            await connection.beginTransaction();
+
+            await customerModel.delete(customerId, connection);
+            const deletedAccounts = await accountModel.delete(customerId, connection);
+
+            if (deletedAccounts === 0) {
+                throw new Error('Account not found');
+            }
+
+            await connection.commit();
             res.json({ success: true });
         } catch (error) {
+            if (connection) {
+                await connection.rollback();
+            }
+
+            if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.code === 'ER_ROW_IS_REFERENCED') {
+                return res.status(409).json({
+                    message: 'Không thể xóa khách hàng này vì vẫn còn dữ liệu liên quan trong hệ thống.',
+                });
+            }
+
             return res.status(500).json({ message: 'Internal Server Error' });
+        } finally {
+            connection?.release();
         }
     },
 };

@@ -1,8 +1,8 @@
-import fs from 'fs/promises';
 import path from 'path';
 import XLSX from 'xlsx';
 import productModel from '../models/productModel.js';
-import { createUniqueFileName, productUploadDir } from '../middlewares/uploadMiddleware.js';
+import { hasR2Config } from '../config/r2.js';
+import { deleteMultipleFilesFromR2, uploadMultipleFilesToR2 } from '../services/uploadToR2.js';
 
 const normalizeImageValues = (value) => {
     if (typeof value === 'string') {
@@ -33,31 +33,6 @@ const normalizeImageValues = (value) => {
     }
 
     return [];
-};
-
-const finalizeUploadedImages = async (files = []) => {
-    if (!Array.isArray(files) || files.length === 0) {
-        return [];
-    }
-
-    const finalizedNames = [];
-
-    for (const file of files) {
-        if (!file?.buffer) {
-            continue;
-        }
-
-        const finalName = createUniqueFileName(productUploadDir, file.originalname, 'product');
-        const finalPath = path.join(productUploadDir, finalName);
-
-        await fs.writeFile(finalPath, file.buffer);
-
-        file.filename = finalName;
-        file.path = finalPath;
-        finalizedNames.push(finalName);
-    }
-
-    return finalizedNames;
 };
 
 const normalizeImageSlots = (value) => {
@@ -241,25 +216,8 @@ const resolveSpecs = async (body, specFile, fallbackSpecs = null) => {
     return normalizeSpecsValue(fallbackSpecs);
 };
 
-const cleanupUploadedFiles = async (files = []) => {
-    await Promise.all(
-        files
-            .filter((file) => file?.path)
-            .map((file) => fs.unlink(file.path).catch(() => null))
-    );
-};
-
-const collectUploadedFiles = (fileGroups = {}) =>
-    Object.values(fileGroups)
-        .flat()
-        .filter(Boolean);
-
 const cleanupProductImageNames = async (imageNames = []) => {
-    await Promise.all(
-        imageNames
-            .filter((imageName) => typeof imageName === 'string' && imageName.trim())
-            .map((imageName) => fs.unlink(path.join(productUploadDir, imageName)).catch(() => null))
-    );
+    await deleteMultipleFilesFromR2(imageNames);
 };
 
 const normalizeSaleId = (value, fallback = null) => {
@@ -274,11 +232,53 @@ const normalizeSaleId = (value, fallback = null) => {
     return value;
 };
 
+const parsePositiveInteger = (value, fallback) => {
+    const parsed = Number(value);
+
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+        return fallback;
+    }
+
+    return parsed;
+};
+
+const parseListQuery = (value) =>
+    String(value || '')
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+
 const productController = {
     getProducts: async (req, res) => {
         try {
-            const rows = await productModel.getAll();
-            res.json({ success: true, data: rows });
+            const hasPagingParams = typeof req.query.page !== 'undefined' || typeof req.query.limit !== 'undefined';
+
+            if (!hasPagingParams) {
+                const rows = await productModel.getAll();
+                return res.json({ success: true, data: rows });
+            }
+
+            const page = parsePositiveInteger(req.query.page, 1);
+            const limit = parsePositiveInteger(req.query.limit, 8);
+            const search = String(req.query.q ?? '').trim();
+            const categoryNames = parseListQuery(req.query.categories);
+            const brandNames = parseListQuery(req.query.brands);
+            const minPrice = req.query.minPrice ?? null;
+            const maxPrice = req.query.maxPrice ?? null;
+            const sortBy = String(req.query.sort ?? 'newest').trim();
+
+            const { rows, pagination } = await productModel.getPaged({
+                page,
+                limit,
+                search,
+                categoryNames,
+                brandNames,
+                minPrice,
+                maxPrice,
+                sortBy,
+            });
+
+            return res.json({ success: true, data: rows, pagination });
         } catch (error) {
             return res.status(500).json({ message: 'Internal Server Error' });
         }
@@ -312,15 +312,17 @@ const productController = {
             });
         } catch (error) {
             next(error);
-        } finally {
-            await cleanupUploadedFiles(req.files?.specFile ?? []);
         }
     },
 
     createProduct: async (req, res, next) => {
-        let shouldCleanupUploadedImages = true;
+        let uploadedImageKeys = [];
 
         try {
+            if (!hasR2Config) {
+                return res.status(500).json({ message: 'Cloudflare R2 is not configured' });
+            }
+
             const { name, description, origin, warranty, quantity } = req.body;
             const importPrice = req.body.importPrice ?? req.body.import_price;
             const retailPrice = req.body.retailPrice ?? req.body.retail_price;
@@ -329,10 +331,10 @@ const productController = {
             const saleId = normalizeSaleId(req.body.saleId ?? req.body.sale_id, null);
             const specFile = req.files?.specFile?.[0] ?? null;
             const specs = await resolveSpecs(req.body, specFile);
-            const uploadedImages = await finalizeUploadedImages(req.files?.images);
+            uploadedImageKeys = await uploadMultipleFilesToR2(req.files?.images ?? []);
             const imageSlots = normalizeImageSlots(req.body.imageSlots ?? req.body.image_slots);
             const images = resolveOrderedImages({
-                uploadedImages,
+                uploadedImages: uploadedImageKeys,
                 existingImages: [],
                 imageSlots,
             });
@@ -356,26 +358,25 @@ const productController = {
                 images
             );
 
-            shouldCleanupUploadedImages = false;
-            res.status(201).json({ success: true, productId });
+            res.status(201).json({ success: true, productId, imageKeys: images });
         } catch (error) {
+            if (uploadedImageKeys.length > 0) {
+                await deleteMultipleFilesFromR2(uploadedImageKeys);
+            }
             next(error);
-        } finally {
-            const uploadedFiles = collectUploadedFiles(req.files);
-            const filesToCleanup = shouldCleanupUploadedImages
-                ? uploadedFiles
-                : (req.files?.specFile ?? []);
-
-            await cleanupUploadedFiles(filesToCleanup);
         }
     },
 
     updateProduct: async (req, res, next) => {
-        let shouldCleanupUploadedImages = true;
         let previousImageUrls = [];
         let nextImageUrls = [];
+        let uploadedImageKeys = [];
 
         try {
+            if (!hasR2Config) {
+                return res.status(500).json({ message: 'Cloudflare R2 is not configured' });
+            }
+
             const { id } = req.params;
             const { name, description, origin, warranty, quantity } = req.body;
             const importPrice = req.body.importPrice ?? req.body.import_price;
@@ -394,12 +395,12 @@ const productController = {
 
             const specFile = req.files?.specFile?.[0] ?? null;
             const specs = await resolveSpecs(req.body, specFile, currentProduct.specs);
-            const uploadedImages = await finalizeUploadedImages(req.files?.images);
+            uploadedImageKeys = await uploadMultipleFilesToR2(req.files?.images ?? []);
             const existingImages = normalizeImageValues(req.body.existingImages ?? req.body.existing_images);
             const imageSlots = normalizeImageSlots(req.body.imageSlots ?? req.body.image_slots);
             const hasExplicitImageSlots = typeof (req.body.imageSlots ?? req.body.image_slots) !== 'undefined';
             let images = resolveOrderedImages({
-                uploadedImages,
+                uploadedImages: uploadedImageKeys,
                 existingImages,
                 imageSlots,
             });
@@ -433,19 +434,14 @@ const productController = {
                 return res.status(404).json({ message: 'Product not found' });
             }
 
-            shouldCleanupUploadedImages = false;
             const removedImageUrls = previousImageUrls.filter((imageUrl) => !nextImageUrls.includes(imageUrl));
             await cleanupProductImageNames(removedImageUrls);
-            res.json({ success: true });
+            res.json({ success: true, imageKeys: nextImageUrls });
         } catch (error) {
+            if (uploadedImageKeys.length > 0) {
+                await deleteMultipleFilesFromR2(uploadedImageKeys);
+            }
             next(error);
-        } finally {
-            const uploadedFiles = collectUploadedFiles(req.files);
-            const filesToCleanup = shouldCleanupUploadedImages
-                ? uploadedFiles
-                : (req.files?.specFile ?? []);
-
-            await cleanupUploadedFiles(filesToCleanup);
         }
     },
 

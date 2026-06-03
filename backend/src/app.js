@@ -1,16 +1,13 @@
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import apiRoutes from './routes/index.js';
 
 const app = express();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const isProduction = process.env.NODE_ENV === 'production';
 const allowedOrigins = (
     process.env.FRONTEND_URLS ||
-    'http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174'
+    (isProduction ? '' : 'http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174')
 )
     .split(',')
     .map((origin) => origin.trim())
@@ -23,7 +20,7 @@ app.use(
             if (
                 !origin ||
                 allowedOrigins.includes(origin) ||
-                localhostPattern.test(origin)
+                (!isProduction && localhostPattern.test(origin))
             ) {
                 return callback(null, true);
             }
@@ -36,7 +33,6 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 
 app.get('/', (req, res) => {
     res.json({

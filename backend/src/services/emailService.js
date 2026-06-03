@@ -1,13 +1,7 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
 
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const emailTransporter = nodemailer.createTransport({
     service: 'gmail',
@@ -21,41 +15,35 @@ const formatCurrency = (value) => {
     return Number(value || 0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
 };
 
-const getLocalProductImagePath = (url) => {
-    if (!url) return null;
-    
-    // Extract filename
-    let filename = url;
-    if (url.startsWith('/uploads/products/')) {
-        filename = url.replace('/uploads/products/', '');
-    } else if (url.startsWith('uploads/products/')) {
-        filename = url.replace('uploads/products/', '');
-    } else if (url.startsWith('/uploads/')) {
-        filename = url.replace('/uploads/', '');
-    } else if (url.startsWith('uploads/')) {
-        filename = url.replace('uploads/', '');
+const IMAGE_PLACEHOLDER_URL = 'https://placehold.co/100x100?text=No+Image';
+
+const resolveProductImageUrl = (value) => {
+    if (!value) return IMAGE_PLACEHOLDER_URL;
+
+    const rawValue = String(value).trim();
+    if (!rawValue) return IMAGE_PLACEHOLDER_URL;
+
+    if (/^https?:\/\//i.test(rawValue)) {
+        return rawValue;
     }
 
-    // Decode URL encoded characters (like %20 for spaces)
+    let objectKey = rawValue.replace(/^\/+/, '');
+    objectKey = objectKey.replace(/^uploads\/products\//i, '');
+    objectKey = objectKey.replace(/^uploads\//i, '');
+    objectKey = objectKey.replace(/^products\//i, '');
+
     try {
-        filename = decodeURIComponent(filename);
-    } catch (e) {
-        // Fallback to original filename
+        objectKey = decodeURIComponent(objectKey);
+    } catch (error) {
+        // Keep the original object key if it is not URL encoded.
     }
-    
-    // Try in uploads/products
-    const pathInProducts = path.resolve(__dirname, '../../uploads/products', filename);
-    if (fs.existsSync(pathInProducts)) {
-        return pathInProducts;
+
+    const imageBaseUrl = process.env.IMAGE_BASE_URL?.trim().replace(/\/+$/, '');
+    if (!imageBaseUrl) {
+        return IMAGE_PLACEHOLDER_URL;
     }
-    
-    // Try in uploads/
-    const pathInUploads = path.resolve(__dirname, '../../uploads', filename);
-    if (fs.existsSync(pathInUploads)) {
-        return pathInUploads;
-    }
-    
-    return null;
+
+    return `${imageBaseUrl}/${objectKey}`;
 };
 
 const formatDate = (dateString) => {
@@ -249,23 +237,9 @@ export const emailService = {
             return;
         }
 
-        const attachments = [];
-        const itemsHtml = (order.details || []).map((item, index) => {
+        const itemsHtml = (order.details || []).map((item) => {
             const rawImgUrl = item.productImage || item.product_image;
-            const localPath = getLocalProductImagePath(rawImgUrl);
-            
-            let imgHtmlSrc;
-            if (localPath) {
-                const cidName = `product_image_${index}`;
-                imgHtmlSrc = `cid:${cidName}`;
-                attachments.push({
-                    filename: path.basename(localPath),
-                    path: localPath,
-                    cid: cidName
-                });
-            } else {
-                imgHtmlSrc = 'https://placehold.co/100x100?text=No+Image';
-            }
+            const imgHtmlSrc = resolveProductImageUrl(rawImgUrl);
 
             return `
                 <tr>
@@ -346,7 +320,6 @@ export const emailService = {
             to: order.customer_email,
             subject: '[Computer Store] Xác nhận đơn hàng thành công',
             html: emailHtml,
-            attachments,
         });
     },
 
@@ -356,23 +329,9 @@ export const emailService = {
             return;
         }
 
-        const attachments = [];
-        const itemsHtml = (order.details || []).map((item, index) => {
+        const itemsHtml = (order.details || []).map((item) => {
             const rawImgUrl = item.productImage || item.product_image;
-            const localPath = getLocalProductImagePath(rawImgUrl);
-            
-            let imgHtmlSrc;
-            if (localPath) {
-                const cidName = `product_image_${index}`;
-                imgHtmlSrc = `cid:${cidName}`;
-                attachments.push({
-                    filename: path.basename(localPath),
-                    path: localPath,
-                    cid: cidName
-                });
-            } else {
-                imgHtmlSrc = 'https://placehold.co/100x100?text=No+Image';
-            }
+            const imgHtmlSrc = resolveProductImageUrl(rawImgUrl);
 
             return `
                 <tr>
@@ -419,7 +378,6 @@ export const emailService = {
             to: order.customer_email,
             subject: `[Computer Store] Trạng thái đơn hàng: ${statusInfo.label}`,
             html: emailHtml,
-            attachments,
         });
     },
 
@@ -429,23 +387,9 @@ export const emailService = {
             return;
         }
 
-        const attachments = [];
-        const itemsHtml = (order.details || []).map((item, index) => {
+        const itemsHtml = (order.details || []).map((item) => {
             const rawImgUrl = item.productImage || item.product_image;
-            const localPath = getLocalProductImagePath(rawImgUrl);
-            
-            let imgHtmlSrc;
-            if (localPath) {
-                const cidName = `product_image_${index}`;
-                imgHtmlSrc = `cid:${cidName}`;
-                attachments.push({
-                    filename: path.basename(localPath),
-                    path: localPath,
-                    cid: cidName
-                });
-            } else {
-                imgHtmlSrc = 'https://placehold.co/100x100?text=No+Image';
-            }
+            const imgHtmlSrc = resolveProductImageUrl(rawImgUrl);
 
             return `
                 <tr>
@@ -489,7 +433,6 @@ export const emailService = {
             to: order.customer_email,
             subject: '[Computer Store] Đơn hàng đang được vận chuyển',
             html: emailHtml,
-            attachments,
         });
     }
 };
