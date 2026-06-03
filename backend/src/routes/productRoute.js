@@ -1,7 +1,7 @@
 import express from 'express';
 import productController from '../controllers/productController.js';
 import { authenticateToken, requireAdmin } from '../middlewares/authMiddleware.js';
-import { withUploadProductAssets, withUploadProductSpecPreview } from '../middleware/upload.js';
+import { withUploadProductAssets, withUploadProductSpecPreview } from '../middlewares/upload.js';
 
 const router = express.Router();
 
