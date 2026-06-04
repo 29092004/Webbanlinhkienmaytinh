@@ -142,12 +142,12 @@ function App() {
           <Route path="/register" element={<PublicOnly><Register /></PublicOnly>} />
           <Route path="/otp" element={<PublicOnly><Otp /></PublicOnly>} />
 
-          <Route path="/" element={<RequireAuth><Home /></RequireAuth>} />
-          <Route path="/products" element={<RequireAuth><Products /></RequireAuth>} />
-          <Route path="/product/:id" element={<RequireAuth><ProductDetail /></RequireAuth>} />
-          <Route path="/compare" element={<RequireAuth><Compare /></RequireAuth>} />
-          <Route path="/search" element={<RequireAuth><SearchResults /></RequireAuth>} />
-          <Route path="/pc-builder" element={<RequireAuth><PCBuilder /></RequireAuth>} />
+          <Route path="/" element={<Home />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/compare" element={<Compare />} />
+          <Route path="/search" element={<SearchResults />} />
+          <Route path="/pc-builder" element={<PCBuilder />} />
           <Route path="/profile" element={<RequireAuth><UserProfile section="profile" /></RequireAuth>} />
           <Route path="/profile/orders" element={<RequireAuth><UserProfile section="orders" /></RequireAuth>} />
           <Route path="/cart" element={<RequireAuth><Cart /></RequireAuth>} />
