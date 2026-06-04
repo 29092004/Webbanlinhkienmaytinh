@@ -7,21 +7,45 @@ const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
 const allowedOrigins = (
     process.env.FRONTEND_URLS ||
-    (isProduction ? '' : 'http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174')
+    (isProduction ? '' : 'https://webbanlinhkienmaytinh.vercel.app,https://webbanlinhkienmaytinh-git-develop-vinhs-projects-b1a0df0d.vercel.app,https://webbanlinhkienmaytinh-bwyvlf7if-vinhs-projects-b1a0df0d.vercel.app')
 )
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
 const localhostPattern = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+const allowVercelPreviews =
+    process.env.ALLOW_VERCEL_PREVIEWS === 'true' ||
+    allowedOrigins.some((origin) => origin.endsWith('.vercel.app'));
+
+function isAllowedOrigin(origin) {
+    if (!origin) {
+        return true;
+    }
+
+    if (allowedOrigins.includes(origin)) {
+        return true;
+    }
+
+    if (!isProduction && localhostPattern.test(origin)) {
+        return true;
+    }
+
+    if (!allowVercelPreviews) {
+        return false;
+    }
+
+    try {
+        const parsedOrigin = new URL(origin);
+        return parsedOrigin.protocol === 'https:' && parsedOrigin.hostname.endsWith('.vercel.app');
+    } catch {
+        return false;
+    }
+}
 
 app.use(
     cors({
         origin(origin, callback) {
-            if (
-                !origin ||
-                allowedOrigins.includes(origin) ||
-                (!isProduction && localhostPattern.test(origin))
-            ) {
+            if (isAllowedOrigin(origin)) {
                 return callback(null, true);
             }
 

@@ -2,9 +2,24 @@ import axios from "axios";
 
 import { getAccessToken, notifySessionExpired } from "@/lib/auth";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL?.trim() ||
-  (import.meta.env.PROD ? "/api" : "http://localhost:9000/api");
+function normalizeApiBaseUrl(rawValue) {
+  const fallback = import.meta.env.PROD ? "/api" : "http://localhost:9000/api";
+  const trimmedValue = rawValue?.trim();
+
+  if (!trimmedValue) {
+    return fallback;
+  }
+
+  const normalizedValue = trimmedValue.replace(/\/+$/, "");
+
+  if (/\/api$/i.test(normalizedValue)) {
+    return normalizedValue;
+  }
+
+  return `${normalizedValue}/api`;
+}
+
+const API_BASE_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
 export const API_BASE_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
 
 export const api = axios.create({
