@@ -1,23 +1,42 @@
 /* eslint-disable react-refresh/only-export-components */
 import { ChevronDown, ChevronUp } from "lucide-react";
 
+const DEFAULT_IMAGE_BASE_URL = "https://pub-a37bb828e19547c6ac16ab62282dd9e5.r2.dev";
+
 export const resolveAssetUrl = (value) => {
   if (!value) {
     return "";
   }
 
-  if (/^https?:\/\//i.test(value)) {
-    return value;
+  const rawValue = String(value).trim();
+
+  if (!rawValue) {
+    return "";
   }
 
-  if (/^\/\//.test(value)) {
-    return `http:${value}`;
+  if (/^https?:\/\//i.test(rawValue)) {
+    return rawValue;
   }
 
-  const imageBaseUrl = import.meta.env.VITE_IMAGE_BASE_URL?.trim() || "";
-  const normalizedPath = String(value).replace(/^\/+/, "");
+  if (/^\/\//.test(rawValue)) {
+    return `https:${rawValue}`;
+  }
 
-  if (!imageBaseUrl) {
+  const imageBaseUrl = import.meta.env.VITE_IMAGE_BASE_URL?.trim() || DEFAULT_IMAGE_BASE_URL;
+  let normalizedPath = rawValue
+    .replace(/\\/g, "/")
+    .replace(/^\/+/, "")
+    .replace(/^uploads\/products\//i, "")
+    .replace(/^uploads\//i, "")
+    .replace(/^products\//i, "");
+
+  try {
+    normalizedPath = decodeURIComponent(normalizedPath);
+  } catch {
+    // Keep the original path when it is not URL encoded.
+  }
+
+  if (!imageBaseUrl || !normalizedPath) {
     return normalizedPath;
   }
 

@@ -38,6 +38,18 @@ function getUserDisplayName(user) {
   return "User";
 }
 
+function GuestMenuLink({ to, onClick, children, className = "" }) {
+  return (
+    <Link
+      to={to}
+      onClick={onClick}
+      className={`flex w-full items-center justify-center rounded-xl px-3 py-3 text-sm font-bold transition ${className}`}
+    >
+      {children}
+    </Link>
+  );
+}
+
 export function Header() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -166,7 +178,7 @@ export function Header() {
 
     clearAuthSession();
     setIsMenuOpen(false);
-    navigate("/login");
+    navigate("/");
   };
 
   const handleSearchSubmit = (event) => {
@@ -277,41 +289,67 @@ export function Header() {
 
               {isMenuOpen ? (
                 <div className="absolute right-0 top-12 w-80 rounded-2xl border border-slate-200 bg-white p-3 text-left text-slate-700 shadow-[0_18px_45px_rgba(15,23,42,0.14)]">
-                  <div className="flex items-center gap-3 border-b border-slate-100 px-3 pb-4 pt-2">
-                    <div className="size-11 rounded-full bg-slate-950 text-white flex items-center justify-center shrink-0">
-                      <UserRound className="size-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-[18px] font-bold tracking-[-0.01em] text-slate-950">
-                        {displayName}
-                      </p>
-                    </div>
-                  </div>
+                  {authState.isLoggedIn ? (
+                    <>
+                      <div className="flex items-center gap-3 border-b border-slate-100 px-3 pb-4 pt-2">
+                        <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-slate-950 text-white">
+                          <UserRound className="size-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-[18px] font-bold tracking-[-0.01em] text-slate-950">
+                            {displayName}
+                          </p>
+                        </div>
+                      </div>
 
-                  <div className="space-y-1 pt-2">
-                    <ProfileMenuLink
-                      to="/profile"
-                      icon={UserRound}
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Hồ sơ cá nhân
-                    </ProfileMenuLink>
-                    <ProfileMenuLink
-                      to="/profile/orders"
-                      icon={History}
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Lịch sử đơn hàng
-                    </ProfileMenuLink>
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-red-600 transition hover:bg-red-50"
-                    >
-                      <LogOut className="size-4" />
-                      Đăng xuất
-                    </button>
-                  </div>
+                      <div className="space-y-1 pt-2">
+                        <ProfileMenuLink
+                          to="/profile"
+                          icon={UserRound}
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          Hồ sơ cá nhân
+                        </ProfileMenuLink>
+                        <ProfileMenuLink
+                          to="/profile/orders"
+                          icon={History}
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          Lịch sử đơn hàng
+                        </ProfileMenuLink>
+                        <button
+                          type="button"
+                          onClick={handleLogout}
+                          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-red-600 transition hover:bg-red-50"
+                        >
+                          <LogOut className="size-4" />
+                          Đăng xuất
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="space-y-3 px-2 py-2">
+                      <div className="border-b border-slate-100 px-1 pb-3 text-center">
+                        <p className="text-base font-bold text-slate-950">Tài khoản</p>
+                        <p className="mt-1 text-sm text-slate-500">Đăng nhập hoặc tạo tài khoản để mua hàng và theo dõi đơn hàng.</p>
+                      </div>
+
+                      <GuestMenuLink
+                        to="/login"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="bg-slate-950 text-white hover:bg-red-600"
+                      >
+                        Đăng nhập
+                      </GuestMenuLink>
+                      <GuestMenuLink
+                        to="/register"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="border border-slate-200 text-slate-700 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                      >
+                        Đăng ký
+                      </GuestMenuLink>
+                    </div>
+                  )}
                 </div>
               ) : null}
             </div>
