@@ -1,4 +1,4 @@
-import { ImageOff, Trash2, Plus, ShoppingCart, Star } from "lucide-react";
+import { ImageOff, Trash2, Plus, ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { addProductToCart } from "@/lib/cartStore";
 import { showToast } from "@/lib/toast";
@@ -82,17 +82,6 @@ export function CompareHeader({
                     </div>
                   )}
                 </Link>
-
-                {/* Rating */}
-                <div className="flex items-center gap-1 pl-0.5">
-                  <Star className="size-3.5 fill-amber-400 text-amber-400" />
-                  <span className="text-xs font-bold text-slate-700">
-                    {product.rating}
-                  </span>
-                  <span className="text-[11px] text-slate-400 font-semibold">
-                    ({product.reviewsCount})
-                  </span>
-                </div>
 
                 {/* Name */}
                 <Link to={detailPath} className="block">

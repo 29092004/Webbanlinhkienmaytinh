@@ -38,14 +38,6 @@ const buildProductDescription = (product) => {
   return product.warranty || "Linh kiện chính hãng";
 };
 
-const buildProductRating = (product) => {
-  if (product.sale_id) {
-    return 4.9;
-  }
-
-  return product.quantity > 0 ? 4.7 : 4.5;
-};
-
 export const slugifyCategory = (value) =>
   String(value || "")
     .trim()
@@ -192,8 +184,6 @@ export const mapProductForListing = (product) => {
     price: salePricing.finalPrice,
     originalPrice: salePricing.finalPrice < salePricing.basePrice ? salePricing.basePrice : null,
     isOnSale: isSaleCurrentlyActive(product) && salePricing.finalPrice < salePricing.basePrice,
-    rating: buildProductRating(product),
-    reviewsCount: Number(product.quantity || 0),
     image: resolveAssetUrl(product.images?.[0]?.url),
     specs: product.specs,
     warranty: product.warranty,
@@ -395,8 +385,6 @@ export const mapProductDetailForView = (product) => {
     sku: `SP-${String(product.id).padStart(4, "0")}`,
     price: pricing.finalPrice,
     originalPrice: pricing.finalPrice < pricing.basePrice ? pricing.basePrice : null,
-    rating: buildProductRating(product),
-    reviewsCount: Number(product.quantity || 0),
     soldText: `${Number(product.quantity || 0)} trong kho`,
     images: (product.images || []).map((image) => resolveAssetUrl(image?.url)).filter(Boolean),
     specs: normalizeSpecsForTable(product.specs, product),
@@ -417,8 +405,6 @@ export const mapRelatedProduct = (product) => {
     name: product.name,
     price: salePricing.finalPrice,
     originalPrice: salePricing.finalPrice < salePricing.basePrice ? salePricing.basePrice : null,
-    rating: buildProductRating(product),
-    reviewsCount: Number(product.quantity || 0),
     image: resolveAssetUrl(product.images?.[0]?.url),
   };
 };
