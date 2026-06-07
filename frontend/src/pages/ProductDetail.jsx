@@ -3,9 +3,8 @@ import { Header } from "@/components/ui/Header";
 import { Footer } from "@/components/ui/Footer";
 import { ProductGallery } from "@/components/products/ProductGallery";
 import { ProductSpecsTable } from "@/components/products/ProductSpecsTable";
-import { ProductReviewsTab } from "@/components/products/ProductReviewsTab";
 import { ProductCard } from "@/components/products/ProductCard";
-import { Star, ShoppingBag, RefreshCw } from "lucide-react";
+import { ShoppingBag, RefreshCw } from "lucide-react";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -99,7 +98,6 @@ function ProductDetail() {
   const tabs = [
     { id: "specs", label: "THÔNG SỐ KỸ THUẬT" },
     { id: "desc", label: "MÔ TẢ CHI TIẾT" },
-    { id: "reviews", label: `ĐÁNH GIÁ (${displayProduct?.reviewsCount || 0})` }
   ];
 
   const handleAddCurrentProductToCart = async ({ redirectToCheckout = false } = {}) => {
@@ -194,22 +192,7 @@ function ProductDetail() {
                 {displayProduct.name}
               </h1>
 
-              {/* Stars & review counter */}
               <div className="flex items-center gap-1.5 mt-3 text-xs font-semibold text-slate-500">
-                <div className="flex items-center text-amber-400">
-                  {Array.from({ length: 5 }, (_, i) => (
-                    <Star key={i} className="size-3.5 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <span className="text-amber-500 font-bold">{displayProduct.rating}</span>
-                <span className="text-slate-300">|</span>
-                <button
-                  onClick={() => setActiveTab("reviews")}
-                  className="text-slate-900 hover:underline transition font-bold"
-                >
-                  {displayProduct.reviewsCount} Đánh giá
-                </button>
-                <span className="text-slate-300">|</span>
                 <span>{isOutOfStock ? "Hết hàng" : displayProduct.soldText}</span>
               </div>
             </div>
@@ -322,10 +305,6 @@ function ProductDetail() {
                   <p>Thông tin mô tả đang được cập nhật.</p>
                 )}
               </div>
-            )}
-
-            {activeTab === "reviews" && (
-              <ProductReviewsTab />
             )}
           </div>
         </div>
